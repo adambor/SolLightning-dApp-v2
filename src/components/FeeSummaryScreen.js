@@ -1,0 +1,4 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+export function FeeSummaryScreen() {
+    return (_jsxs("div", { children: [_jsxs("div", Object.assign({ className: "d-flex my-2" }, { children: [_jsx("span", { children: "Amount:" }), _jsx("span", Object.assign({ className: "ms-auto" }, { children: "0.02736 SOL" }))] })), _jsxs("div", Object.assign({ className: "d-flex my-2" }, { children: [_jsx("span", { children: "Swap fee:" }), _jsx("span", Object.assign({ className: "ms-auto" }, { children: "0.00026 SOL" }))] })), _jsxs("div", Object.assign({ className: "d-flex my-2" }, { children: [_jsx("span", { children: "Network fee:" }), _jsx("span", Object.assign({ className: "ms-auto" }, { children: "0.00036 SOL" }))] })), _jsxs("div", Object.assign({ className: "d-flex fw-bold" }, { children: [_jsx("span", { children: "Total:" }), _jsx("span", Object.assign({ className: "ms-auto" }, { children: "0.02987 SOL" }))] }))] }));
+}
