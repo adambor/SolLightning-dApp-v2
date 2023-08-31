@@ -3,13 +3,19 @@ import ValidatedInput from "../ValidatedInput";
 import { CurrencyDropdown } from "../CurrencyDropdown";
 import { useEffect, useRef, useState } from "react";
 import { FeeSummaryScreen } from "../FeeSummaryScreen";
-import { Alert, Spinner } from "react-bootstrap";
+import { Alert, Button, Spinner } from "react-bootstrap";
 import { SwapType } from "sollightning-sdk";
 import BigNumber from "bignumber.js";
 import * as BN from "bn.js";
 import { btcCurrency, fromHumanReadable, smartChainCurrencies, toHumanReadable } from "../../utils/Currencies";
 import { QuoteSummary } from "../QuoteSummary";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Topbar } from "../Topbar";
 export function Step2Screen(props) {
+    const navigate = useNavigate();
+    const { search } = useLocation();
+    const params = new URLSearchParams(search);
+    const propAddress = params.get("address") || params.get("lightning");
     const [selectedCurrency, setSelectedCurrency] = useState(null);
     const [lnurlLoading, setLnurlLoading] = useState(false);
     const [addressError, setAddressError] = useState(null);
@@ -23,10 +29,16 @@ export function Step2Screen(props) {
     const [quoteLoading, setQuoteLoading] = useState(null);
     const [quoteError, setQuoteError] = useState(null);
     const [quote, setQuote] = useState(null);
+    const [isLocked, setLocked] = useState(false);
     useEffect(() => {
+        console.log("Prop address: ", propAddress);
+        if (propAddress == null) {
+            navigate("/scan");
+            return;
+        }
         if (props.swapper != null) {
             let lightning = false;
-            let resultText = props.address;
+            let resultText = propAddress;
             if (resultText.startsWith("lightning:")) {
                 resultText = resultText.substring(10);
             }
@@ -163,7 +175,7 @@ export function Step2Screen(props) {
             }
             setAddressError("Invalid address, lightning invoice or LNURL!");
         }
-    }, [props.address, props.swapper]);
+    }, [propAddress, props.swapper]);
     const quoteUpdates = useRef(0);
     const currentQuotation = useRef(Promise.resolve());
     const getQuote = () => {
@@ -216,26 +228,13 @@ export function Step2Screen(props) {
     useEffect(() => {
         getQuote();
     }, [amount, selectedCurrency]);
-    const [quoteTimeRemaining, setQuoteTimeRemaining] = useState();
-    const [initialQuoteTimeout, setInitialQuoteTimeout] = useState();
-    useEffect(() => {
-        if (quote == null)
-            return () => { };
-        let interval;
-        interval = setInterval(() => {
-            let dt = quote.getExpiry() - Date.now();
-            if (dt <= 0) {
-                clearInterval(interval);
-                dt = 0;
-            }
-            setQuoteTimeRemaining(Math.floor(dt / 1000));
-        }, 500);
-        const dt = Math.floor((quote.getExpiry() - Date.now()) / 1000);
-        setInitialQuoteTimeout(dt);
-        setQuoteTimeRemaining(dt);
-        return () => {
-            clearInterval(interval);
-        };
-    }, [quote]);
-    return (_jsx("div", Object.assign({ className: "d-flex flex-column flex-fill justify-content-center align-items-center bg-dark text-white" }, { children: _jsxs("div", Object.assign({ className: "p-3 quickscan-summary-panel flex-fill" }, { children: [_jsx(ValidatedInput, { type: "text", className: "mb-3", disabled: true, value: address }), addressError ? (_jsxs(Alert, Object.assign({ variant: "danger" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] }))) : "", lnurlLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center" }, { children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] }))) : "", addressError == null && props.swapper != null && !lnurlLoading ? (_jsxs("div", Object.assign({ className: "mb-4" }, { children: [_jsx("label", Object.assign({ className: "fw-bold mb-1" }, { children: type === "send" ? "Pay" : "Withdraw" })), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs(_Fragment, { children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints.min, max: amountConstraints === null || amountConstraints === void 0 ? void 0 : amountConstraints.max, disabled: amountConstraints != null && amountConstraints.min.eq(amountConstraints.max), size: "lg", inputRef: amountRef, value: amount, onChange: setAmount, placeholder: "Input amount" }), _jsx("label", Object.assign({ className: "fw-bold mb-1" }, { children: type === "send" ? "with" : "to" })), _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: setSelectedCurrency, value: selectedCurrency })] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote, className: "mb-3" }), _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote })] })) : ""] })) })));
+    const goBack = () => {
+        navigate("/scan");
+    };
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: true }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill justify-content-center align-items-center bg-dark text-white" }, { children: _jsxs("div", Object.assign({ className: "p-3 quickscan-summary-panel flex-fill" }, { children: [_jsx(ValidatedInput, { type: "text", className: "mb-3", disabled: true, value: address }), addressError ? (_jsxs(Alert, Object.assign({ variant: "danger" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] }))) : "", lnurlLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center" }, { children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] }))) : "", addressError == null && props.swapper != null && !lnurlLoading ? (_jsxs("div", Object.assign({ className: "mb-4" }, { children: [_jsx("label", Object.assign({ className: "fw-bold mb-1" }, { children: type === "send" ? "Pay" : "Withdraw" })), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs(_Fragment, { children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints.min, max: amountConstraints === null || amountConstraints === void 0 ? void 0 : amountConstraints.max, disabled: (amountConstraints != null && amountConstraints.min.eq(amountConstraints.max)) ||
+                                        isLocked, size: "lg", inputRef: amountRef, value: amount, onChange: setAmount, placeholder: "Input amount" }), _jsx("label", Object.assign({ className: "fw-bold mb-1" }, { children: type === "send" ? "with" : "to" })), _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: val => {
+                                        if (isLocked)
+                                            return;
+                                        setSelectedCurrency(val);
+                                    }, value: selectedCurrency })] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quoteError || addressError ? (_jsx(Button, Object.assign({ variant: "secondary", onClick: goBack }, { children: "Back" }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote, className: "mb-3" }), _jsx(QuoteSummary, { setAmountLock: setLocked, type: "payment", quote: quote, refreshQuote: getQuote })] })) : ""] })) }))] }));
 }

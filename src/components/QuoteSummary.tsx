@@ -10,7 +10,8 @@ import ValidatedInput from "./ValidatedInput";
 function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
     refreshQuote: () => void,
-    setAmountLock: (isLocked: boolean) => void
+    setAmountLock: (isLocked: boolean) => void,
+    type?: "payment" | "swap"
 }) {
 
     const [state, setState] = useState<FromBTCSwapState>(null);
@@ -58,30 +59,54 @@ function FromBTCQuoteSummary(props: {
 
         let paymentSubscribed = false;
 
-        // setState(props.quote.getState());
+        // setState(FromBTCSwapState.CLAIM_COMMITED);
+        // setTxData({
+        //     txId: "c2a779af671bccd5d0b17e4327a2aefbf465eb39097f0b2a7c702689dbfa09b2",
+        //     confirmations: 0,
+        //     confTarget: 2
+        // });
 
-        setState(FromBTCSwapState.CLAIM_COMMITED);
-        setTxData({
-            txId: "c2a779af671bccd5d0b17e4327a2aefbf465eb39097f0b2a7c702689dbfa09b2",
-            confirmations: 0,
-            confTarget: 2
-        });
-
-        props.quote.events.on("swapState", listener = (quote: FromBTCSwap<any>) => {
-            setState(quote.getState());
-            if(quote.getState()===FromBTCSwapState.CLAIM_COMMITED) {
-                if(!paymentSubscribed) props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number) => {
-                    setTxData({
-                        txId,
-                        confirmations,
-                        confTarget: confirmationTarget
+        const stateChange = (state: FromBTCSwapState) => {
+            setState(state);
+            if(state===FromBTCSwapState.CLAIM_COMMITED) {
+                if(!paymentSubscribed) {
+                    props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number) => {
+                        setTxData({
+                            txId,
+                            confirmations,
+                            confTarget: confirmationTarget
+                        });
                     });
-                });
+                    let paymentInterval;
+                    paymentInterval = setInterval(() => {
+                        if(abortController.signal.aborted) {
+                            clearInterval(paymentInterval);
+                            return;
+                        }
+                        let dt = expiryTime.current-Date.now();
+                        if(dt<=0) {
+                            clearInterval(interval);
+                            dt = 0;
+                        }
+                        setQuoteTimeRemaining(Math.floor(dt/1000));
+                    }, 500);
+
+                    expiryTime.current = props.quote.getTimeoutTime();
+                    const dt = Math.floor((expiryTime.current-Date.now())/1000);
+                    setInitialQuoteTimeout(dt);
+                    setQuoteTimeRemaining(dt);
+                }
                 paymentSubscribed = true;
             }
-            if(quote.getState()===FromBTCSwapState.CLAIM_CLAIMED) {
+            if(state===FromBTCSwapState.CLAIM_CLAIMED) {
                 if(props.setAmountLock) props.setAmountLock(false);
             }
+        };
+
+        stateChange(props.quote.getState());
+
+        props.quote.events.on("swapState", listener = (quote: FromBTCSwap<any>) => {
+            stateChange(quote.getState());
         });
 
         return () => {
@@ -157,11 +182,23 @@ function FromBTCQuoteSummary(props: {
                         size={300}
                         includeMargin={true}
                     />
-                    <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
-                    <ValidatedInput
-                        type={"text"}
-                        value={props.quote.getAddress()}
-                    />
+                    <div className="d-flex flex-column my-3">
+                        {quoteTimeRemaining===0 ? (
+                            <label>Swap address expired, please do not send any funds!</label>
+                        ) : (
+                            <label>Swap address expires in {quoteTimeRemaining} seconds</label>
+                        )}
+                        <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
+                    </div>
+                    {quoteTimeRemaining===0 ? "" : (
+                        <>
+                            <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
+                            <ValidatedInput
+                                type={"text"}
+                                value={props.quote.getAddress()}
+                            />
+                        </>
+                    )}
                 </>
             ) : (
                 <div className="d-flex flex-column align-items-center">
@@ -198,7 +235,8 @@ function FromBTCQuoteSummary(props: {
 function FromBTCLNQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
     refreshQuote: () => void,
-    setAmountLock: (isLocked: boolean) => void
+    setAmountLock: (isLocked: boolean) => void,
+    type?: "payment" | "swap"
 }) {
 
     const [state, setState] = useState<FromBTCLNSwapState>(null);
@@ -386,7 +424,8 @@ function FromBTCLNQuoteSummary(props: {
 function ToBTCQuoteSummary(props: {
     quote: IToBTCSwap<any>,
     refreshQuote: () => void,
-    setAmountLock: (isLocked: boolean) => void
+    setAmountLock: (isLocked: boolean) => void,
+    type?: "payment" | "swap"
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
@@ -499,7 +538,7 @@ function ToBTCQuoteSummary(props: {
                 ) : (
                     <Button onClick={onContinue} disabled={loading} size="lg">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
-                        Pay
+                        {props.type==="payment" ? "Pay" : "Swap"}
                     </Button>
                 )
             ) : (
@@ -533,7 +572,8 @@ function ToBTCQuoteSummary(props: {
 function LNURLWithdrawQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
     refreshQuote: () => void,
-    setAmountLock: (isLocked: boolean) => void
+    setAmountLock: (isLocked: boolean) => void,
+    type?: "payment" | "swap"
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
@@ -633,19 +673,19 @@ export function QuoteSummary(props: {
     quote: ISwap,
     refreshQuote: () => void,
     setAmountLock?: (isLocked: boolean) => void,
-    type?: "payment" | swap
+    type?: "payment" | "swap"
 }) {
 
-    if(props.quote instanceof IToBTCSwap) return <ToBTCQuoteSummary setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
+    if(props.quote instanceof IToBTCSwap) return <ToBTCQuoteSummary type={props.type} setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
     if(props.quote instanceof IFromBTCSwap) {
         if(props.quote instanceof FromBTCLNSwap) {
             if(props.quote.lnurl!=null) {
-                return <LNURLWithdrawQuoteSummary setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
+                return <LNURLWithdrawQuoteSummary type={props.type} setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
             } else {
-                return <FromBTCLNQuoteSummary setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
+                return <FromBTCLNQuoteSummary type={props.type} setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
             }
         }
-        if(props.quote instanceof FromBTCSwap) return <FromBTCQuoteSummary setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
+        if(props.quote instanceof FromBTCSwap) return <FromBTCQuoteSummary type={props.type} setAmountLock={props.setAmountLock} quote={props.quote} refreshQuote={props.refreshQuote}/>;
     }
 
 }

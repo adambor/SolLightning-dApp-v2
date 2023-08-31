@@ -38,6 +38,10 @@
   }
 }
 
+.currency-icon-history {
+  width: 24px;
+}
+
 .currency-icon {
   width: 24px;
   margin-right: 8px;
@@ -68,12 +72,12 @@
 
 .quickscan-summary-panel {
   max-width: 400px;
-  min-width: 350px;
+  min-width: 370px;
 }
 
 .swap-panel {
   max-width: 500px;
-  min-width: 350px;
+  min-width: 370px;
 }
 
 .font-bigger {
@@ -91,4 +95,18 @@
 
 .swap-direction-btn {
   width: 50px
+}
+
+.no-wallet-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 101;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.75) 50%, rgba(0, 0, 0, 0.25) 100%);
+}
+
+.height-50 {
+  height: 50%;
 }

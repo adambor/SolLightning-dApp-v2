@@ -35,17 +35,16 @@ function FromBTCQuoteSummary(props) {
         let listener;
         const abortController = new AbortController();
         let paymentSubscribed = false;
-        // setState(props.quote.getState());
-        setState(FromBTCSwapState.CLAIM_COMMITED);
-        setTxData({
-            txId: "c2a779af671bccd5d0b17e4327a2aefbf465eb39097f0b2a7c702689dbfa09b2",
-            confirmations: 0,
-            confTarget: 2
-        });
-        props.quote.events.on("swapState", listener = (quote) => {
-            setState(quote.getState());
-            if (quote.getState() === FromBTCSwapState.CLAIM_COMMITED) {
-                if (!paymentSubscribed)
+        // setState(FromBTCSwapState.CLAIM_COMMITED);
+        // setTxData({
+        //     txId: "c2a779af671bccd5d0b17e4327a2aefbf465eb39097f0b2a7c702689dbfa09b2",
+        //     confirmations: 0,
+        //     confTarget: 2
+        // });
+        const stateChange = (state) => {
+            setState(state);
+            if (state === FromBTCSwapState.CLAIM_COMMITED) {
+                if (!paymentSubscribed) {
                     props.quote.waitForPayment(abortController.signal, null, (txId, confirmations, confirmationTarget) => {
                         setTxData({
                             txId,
@@ -53,12 +52,34 @@ function FromBTCQuoteSummary(props) {
                             confTarget: confirmationTarget
                         });
                     });
+                    let paymentInterval;
+                    paymentInterval = setInterval(() => {
+                        if (abortController.signal.aborted) {
+                            clearInterval(paymentInterval);
+                            return;
+                        }
+                        let dt = expiryTime.current - Date.now();
+                        if (dt <= 0) {
+                            clearInterval(interval);
+                            dt = 0;
+                        }
+                        setQuoteTimeRemaining(Math.floor(dt / 1000));
+                    }, 500);
+                    expiryTime.current = props.quote.getTimeoutTime();
+                    const dt = Math.floor((expiryTime.current - Date.now()) / 1000);
+                    setInitialQuoteTimeout(dt);
+                    setQuoteTimeRemaining(dt);
+                }
                 paymentSubscribed = true;
             }
-            if (quote.getState() === FromBTCSwapState.CLAIM_CLAIMED) {
+            if (state === FromBTCSwapState.CLAIM_CLAIMED) {
                 if (props.setAmountLock)
                     props.setAmountLock(false);
             }
+        };
+        stateChange(props.quote.getState());
+        props.quote.events.on("swapState", listener = (quote) => {
+            stateChange(quote.getState());
         });
         return () => {
             clearInterval(interval);
@@ -94,7 +115,7 @@ function FromBTCQuoteSummary(props) {
             setError(e.toString());
         }
     };
-    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap failed" }) }), error] }))) : "", state === FromBTCSwapState.PR_CREATED ? (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onCommit, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] })))] })) : "", state === FromBTCSwapState.CLAIM_COMMITED ? (txData == null ? (_jsxs(_Fragment, { children: [_jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true }), _jsxs("label", { children: ["Please send exactly ", toHumanReadableString(props.quote.getInAmount(), btcCurrency), " ", btcCurrency.ticker, " to the address"] }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress() })] })) : (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center" }, { children: [_jsx("label", { children: "Transaction successfully received, waiting for confirmations..." }), _jsx(Spinner, {}), _jsxs("label", { children: [txData.confirmations, " / ", txData.confTarget] }), _jsx("label", { children: "Confirmations" })] })))) : "", state === FromBTCSwapState.BTC_TX_CONFIRMED ? (_jsxs(_Fragment, { children: [_jsx("label", { children: "Transaction received & confirmed" }), _jsxs(Button, Object.assign({ onClick: onClaim, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] }))] })) : "", state === FromBTCSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, Object.assign({ variant: "success" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap successful" }) }), "Swap was concluded successfully"] }))) : ""] }));
+    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap failed" }) }), error] }))) : "", state === FromBTCSwapState.PR_CREATED ? (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onCommit, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] })))] })) : "", state === FromBTCSwapState.CLAIM_COMMITED ? (txData == null ? (_jsxs(_Fragment, { children: [_jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true }), _jsxs("div", Object.assign({ className: "d-flex flex-column my-3" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap address expired, please do not send any funds!" })) : (_jsxs("label", { children: ["Swap address expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? "" : (_jsxs(_Fragment, { children: [_jsxs("label", { children: ["Please send exactly ", toHumanReadableString(props.quote.getInAmount(), btcCurrency), " ", btcCurrency.ticker, " to the address"] }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress() })] }))] })) : (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center" }, { children: [_jsx("label", { children: "Transaction successfully received, waiting for confirmations..." }), _jsx(Spinner, {}), _jsxs("label", { children: [txData.confirmations, " / ", txData.confTarget] }), _jsx("label", { children: "Confirmations" })] })))) : "", state === FromBTCSwapState.BTC_TX_CONFIRMED ? (_jsxs(_Fragment, { children: [_jsx("label", { children: "Transaction received & confirmed" }), _jsxs(Button, Object.assign({ onClick: onClaim, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] }))] })) : "", state === FromBTCSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, Object.assign({ variant: "success" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap successful" }) }), "Swap was concluded successfully"] }))) : ""] }));
 }
 function FromBTCLNQuoteSummary(props) {
     const [state, setState] = useState(null);
@@ -261,7 +282,7 @@ function ToBTCQuoteSummary(props) {
         }
         setRefunding(false);
     };
-    return (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), success === null ? (quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onContinue, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Pay"] })))) : (success ? (_jsxs(Alert, Object.assign({ variant: "success" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap successful" }) }), "Swap was concluded successfully"] }))) : (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap failed" }) }), error] })), refund ? (_jsxs(Button, Object.assign({ onClick: onRefund, className: refunded ? "d-none" : "", disabled: refunding, variant: "secondary" }, { children: [refunding ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Refund deposit"] }))) : (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" })))] })))] }));
+    return (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), success === null ? (quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onContinue, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", props.type === "payment" ? "Pay" : "Swap"] })))) : (success ? (_jsxs(Alert, Object.assign({ variant: "success" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap successful" }) }), "Swap was concluded successfully"] }))) : (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Swap failed" }) }), error] })), refund ? (_jsxs(Button, Object.assign({ onClick: onRefund, className: refunded ? "d-none" : "", disabled: refunding, variant: "secondary" }, { children: [refunding ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Refund deposit"] }))) : (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" })))] })))] }));
 }
 function LNURLWithdrawQuoteSummary(props) {
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState();
@@ -315,17 +336,17 @@ function LNURLWithdrawQuoteSummary(props) {
 }
 export function QuoteSummary(props) {
     if (props.quote instanceof IToBTCSwap)
-        return _jsx(ToBTCQuoteSummary, { setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+        return _jsx(ToBTCQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
     if (props.quote instanceof IFromBTCSwap) {
         if (props.quote instanceof FromBTCLNSwap) {
             if (props.quote.lnurl != null) {
-                return _jsx(LNURLWithdrawQuoteSummary, { setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+                return _jsx(LNURLWithdrawQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
             }
             else {
-                return _jsx(FromBTCLNQuoteSummary, { setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+                return _jsx(FromBTCLNQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
             }
         }
         if (props.quote instanceof FromBTCSwap)
-            return _jsx(FromBTCQuoteSummary, { setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+            return _jsx(FromBTCQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
     }
 }

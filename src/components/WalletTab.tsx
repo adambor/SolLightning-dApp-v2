@@ -31,22 +31,7 @@ function WalletTab(props: {
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
-
-                    <Navbar bg="dark" variant="dark">
-                        <Container>
-                            <Navbar.Brand href="#home" className="fw-semibold">
-                                SolLightning
-                            </Navbar.Brand>
-
-                            <div className="ms-auto">
-                                <WalletMultiButton />
-                            </div>
-                        </Container>
-                    </Navbar>
-
-                    <div className="d-flex flex-grow-1">
-                        {props.children}
-                    </div>
+                    {props.children}
                 </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
