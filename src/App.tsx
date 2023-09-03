@@ -105,7 +105,7 @@ function WrappedApp() {
                                     ) : (
                                         <>
                                             <WalletMultiButton />
-                                            <h2>Connect your wallet to start</h2>
+                                            <h2 className="mt-3">Connect your wallet to start</h2>
                                         </>
                                     )}
                                 </div>

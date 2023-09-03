@@ -162,7 +162,7 @@ function FromBTCQuoteSummary(props: {
                         )}
                         <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                     </div>
-                    {quoteTimeRemaining===0 ? (
+                    {quoteTimeRemaining===0 && !loading ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote
                         </Button>
@@ -325,12 +325,12 @@ function FromBTCLNQuoteSummary(props: {
         setLoading(true);
         try {
             await props.quote.commitAndClaim();
-            setLoading(false);
             setSuccess(true);
         } catch (e) {
             setSuccess(false);
             setError(e.toString());
         }
+        setLoading(false);
     };
 
     return (
@@ -352,7 +352,7 @@ function FromBTCLNQuoteSummary(props: {
                         )}
                         <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                     </div>
-                    {quoteTimeRemaining===0 ? (
+                    {quoteTimeRemaining===0 && !loading ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote
                         </Button>
@@ -397,7 +397,7 @@ function FromBTCLNQuoteSummary(props: {
                         </div>
                     ) : ""}
 
-                    {quoteTimeRemaining===0 ? (
+                    {quoteTimeRemaining===0 && !loading ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote
                         </Button>
@@ -531,7 +531,7 @@ function ToBTCQuoteSummary(props: {
             </div>
 
             {success===null ? (
-                quoteTimeRemaining===0 ? (
+                quoteTimeRemaining===0 && !loading ? (
                     <Button onClick={props.refreshQuote} variant="secondary">
                         New quote
                     </Button>
@@ -642,7 +642,7 @@ function LNURLWithdrawQuoteSummary(props: {
             </div>
 
             {success===null ? (
-                quoteTimeRemaining===0 ? (
+                quoteTimeRemaining===0 && !loading ? (
                     <Button onClick={props.refreshQuote} variant="secondary">
                         New quote
                     </Button>
@@ -659,10 +659,15 @@ function LNURLWithdrawQuoteSummary(props: {
                         Swap was concluded successfully
                     </Alert>
                 ) : (
-                    <Alert variant="danger" className="mb-3">
-                        <p><strong>Swap failed</strong></p>
-                        {error}
-                    </Alert>
+                    <>
+                        <Alert variant="danger" className="mb-3">
+                            <p><strong>Swap failed</strong></p>
+                            {error}
+                        </Alert>
+                        <Button onClick={props.refreshQuote} variant="secondary">
+                            New quote
+                        </Button>
+                    </>
                 )
             )}
 
