@@ -1,13 +1,13 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { FromBTCSwap, IFromBTCSwap, IToBTCSwap, SwapType, ToBTCSwap } from "sollightning-sdk";
-import { Button, Card, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Spinner } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
 import BigNumber from "bignumber.js";
 import { bitcoinCurrencies, btcCurrency, fromHumanReadableString, getCurrencySpec, smartChainCurrencies, toHumanReadable, toHumanReadableString } from "../../utils/Currencies";
 import { CurrencyDropdown } from "../CurrencyDropdown";
 import { SimpleFeeSummaryScreen } from "../SimpleFeeScreen";
-import { QuoteSummary } from "../QuoteSummary";
+import { QuoteSummary } from "../quotes/QuoteSummary";
 import { Topbar } from "../Topbar";
 import { useLocation, useNavigate } from "react-router-dom";
 export function SwapTab(props) {
@@ -146,8 +146,9 @@ export function SwapTab(props) {
                 return;
         }
         if ((outCurrency === null || outCurrency === void 0 ? void 0 : outCurrency.ticker) === "BTC-LN") {
-            //TODO: ENable if we want to support LNURL
+            //TODO: Enable if we wanna support LNURL
             //if(!outAmountRef.current.validate()) return;
+            outAmountRef.current.validate();
             if (!addressRef.current.validate())
                 return;
         }
@@ -197,7 +198,7 @@ export function SwapTab(props) {
             return;
         getQuote();
     }, [address, amount, inCurrency, outCurrency, exactIn, props.swapper]);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center bg-dark text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel border-0 mx-3" }, { children: [_jsxs(Card, Object.assign({ className: "d-flex flex-row bg-dark bg-opacity-10 border-0 p-3" }, { children: [_jsx(ValidatedInput, { disabled: locked || (exactIn && disabled), inputRef: inAmountRef, className: "flex-fill strip-group-text", type: "number", value: kind === "tobtc" ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: kind === "tobtc" && quoteLoading ? (_jsx(Spinner, { size: "sm" })) : null, onChange: val => {
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center bg-dark text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel border-0 mx-3" }, { children: [_jsxs(Alert, Object.assign({ show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsxs(Card, Object.assign({ className: "d-flex flex-row bg-dark bg-opacity-10 border-0 p-3" }, { children: [_jsx(ValidatedInput, { disabled: locked || (exactIn && disabled), inputRef: inAmountRef, className: "flex-fill strip-group-text", type: "number", value: kind === "tobtc" ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: kind === "tobtc" && quoteLoading ? (_jsx(Spinner, { size: "sm" })) : null, onChange: val => {
                                         if (kind === "tobtc")
                                             return;
                                         setAmount(val);
@@ -223,33 +224,37 @@ export function SwapTab(props) {
                                                     setDisabled(false);
                                                     setAddress("");
                                                 }
-                                            }, value: outCurrency })] })), kind === "tobtc" ? (_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
-                                        setAddress(val);
-                                        if (props.swapper.isValidBitcoinAddress(val)) {
-                                            setOutCurrency(bitcoinCurrencies[0]);
-                                            setDisabled(false);
-                                            if (outAmountRef.current.validate()) {
-                                                const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
-                                                const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                                                const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                                                if (currentAmt.lt(min)) {
-                                                    setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
+                                            }, value: outCurrency })] })), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
+                                                setAddress(val);
+                                                if (props.swapper.isValidBitcoinAddress(val)) {
+                                                    setOutCurrency(bitcoinCurrencies[0]);
+                                                    setDisabled(false);
+                                                    if (outAmountRef.current.validate()) {
+                                                        const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
+                                                        const min = props.swapper.getMinimum(SwapType.TO_BTC);
+                                                        const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                                                        if (currentAmt.lt(min)) {
+                                                            setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
+                                                        }
+                                                        if (currentAmt.gt(max)) {
+                                                            setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
+                                                        }
+                                                    }
                                                 }
-                                                if (currentAmt.gt(max)) {
-                                                    setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
+                                                if (props.swapper.isValidLightningInvoice(val)) {
+                                                    setOutCurrency(bitcoinCurrencies[1]);
+                                                    const outAmt = props.swapper.getLightningInvoiceValue(val);
+                                                    setAmount(toHumanReadableString(outAmt, btcCurrency));
+                                                    setDisabled(true);
+                                                    return;
                                                 }
-                                            }
-                                        }
-                                        if (props.swapper.isValidLightningInvoice(val)) {
-                                            setOutCurrency(bitcoinCurrencies[1]);
-                                            const outAmt = props.swapper.getLightningInvoiceValue(val);
-                                            setAmount(toHumanReadableString(outAmt, btcCurrency));
-                                            setDisabled(true);
-                                            return;
-                                        }
-                                        setDisabled(false);
-                                    }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
-                                        return props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
-                                            : "Invalid bitcoin address/lightning network invoice";
-                                    } })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked }) }))] })) : ""] })) }))] }));
+                                                setDisabled(false);
+                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
+                                                return props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
+                                                    : "Invalid bitcoin address/lightning network invoice";
+                                            } }), outCurrency === bitcoinCurrencies[1] ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
+                                            setLocked(false);
+                                            setQuote(null);
+                                            setAmount("");
+                                        } }) }))] })) : ""] })) }))] }));
 }

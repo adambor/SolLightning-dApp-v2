@@ -10,7 +10,7 @@ export function CurrencyDropdown(props: {
 
     return (
         <Dropdown>
-            <Dropdown.Toggle variant="light" id="dropdown-basic" size="lg">
+            <Dropdown.Toggle variant="light" id="dropdown-basic" size="lg" className="px-2">
                 {props.value==null ? "" : <img className="currency-icon" src={props.value.icon}/>}
                 {props.value==null ? "Select currency" : props.value.ticker}
             </Dropdown.Toggle>

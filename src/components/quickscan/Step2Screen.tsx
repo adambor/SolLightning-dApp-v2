@@ -13,7 +13,7 @@ import {
     smartChainCurrencies,
     toHumanReadable
 } from "../../utils/Currencies";
-import {QuoteSummary} from "../QuoteSummary";
+import {QuoteSummary} from "../quotes/QuoteSummary";
 import {useLocation, useNavigate} from "react-router-dom";
 import {Topbar} from "../Topbar";
 import * as React from "react";
@@ -233,7 +233,7 @@ export function Step2Screen(props: {
                         }
                     }
                 } else {
-                    promise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, true);
+                    promise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
                 }
                 currentQuotation.current = promise.then((swap) => {
                     if(quoteUpdates.current!==updateNum) {
@@ -263,10 +263,10 @@ export function Step2Screen(props: {
 
     return (
         <>
-            <Topbar selected={1} enabled={true}/>
+            <Topbar selected={1} enabled={!isLocked}/>
 
             <div className="d-flex flex-column flex-fill justify-content-center align-items-center bg-dark text-white">
-                <div className="p-3 quickscan-summary-panel flex-fill">
+                <div className="p-3 quickscan-summary-panel flex-fill d-flex flex-column">
 
                     <ValidatedInput
                         type={"text"}
@@ -350,6 +350,13 @@ export function Step2Screen(props: {
                             <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote} refreshQuote={getQuote}/>
                         </>
                     ) : ""}
+
+                    <div className="d-flex mt-auto pt-4">
+                        <Button variant="secondary flex-fill" disabled={isLocked} onClick={goBack}>
+                            &lt; Back
+                        </Button>
+                    </div>
+
 
                 </div>
             </div>
