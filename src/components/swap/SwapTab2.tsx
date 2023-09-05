@@ -1,4 +1,4 @@
-import {FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap} from "sollightning-sdk";
+import {FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, OutOfBoundsError, SolanaSwapper, SwapType, ToBTCSwap} from "sollightning-sdk";
 import {Alert, Button, Card, Spinner} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
@@ -16,7 +16,12 @@ import {SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
+import {exact} from "prop-types";
 
+const defaultConstraints = {
+    min: new BigNumber("0.000001"),
+    max: null
+}
 
 export function SwapTab(props: {
     swapper: SolanaSwapper,
@@ -29,15 +34,25 @@ export function SwapTab(props: {
     const inAmountRef = useRef<ValidatedInputRef>();
     const outAmountRef = useRef<ValidatedInputRef>();
     const [disabled, setDisabled] = useState<boolean>(false);
-    const [btcAmountConstraints, setBtcAmountConstraints] = useState<{
-        min: BigNumber,
-        max: BigNumber
-    }>({
-        min: new BigNumber("0.00001"),
-        max: null
-    });
 
-    const [kind, setKind] = useState<"frombtc" | "tobtc">("frombtc");
+    const [btcAmountConstraints, setBtcAmountConstraints] = useState<
+        {
+            [key: number]: {
+                min: BigNumber,
+                max: BigNumber
+            }
+        }
+    >();
+
+    const [tokenConstraints, setTokenConstraints] = useState<{
+        [token: string] : {
+            [key: number]: {
+                min: BigNumber,
+                max: BigNumber
+            }
+        }
+    }>();
+
     const [exactIn, setExactIn] = useState<boolean>(true);
 
     const [address, setAddress] = useState<string>();
@@ -56,6 +71,47 @@ export function SwapTab(props: {
     const [doValidate, setDoValidate] = useState<boolean>();
 
     const navigate = useNavigate();
+
+    let swapType: SwapType;
+    if(outCurrency?.ticker==="BTC") swapType = SwapType.TO_BTC;
+    if(outCurrency?.ticker==="BTC-LN") swapType = SwapType.TO_BTCLN;
+    if(inCurrency?.ticker==="BTC") swapType = SwapType.FROM_BTC;
+    if(inCurrency?.ticker==="BTC-LN") swapType = SwapType.FROM_BTCLN;
+
+    let kind: "frombtc" | "tobtc";
+    if(swapType===SwapType.TO_BTC || swapType===SwapType.TO_BTCLN) {
+        kind = "tobtc";
+    } else {
+        kind = "frombtc";
+    }
+
+    let inConstraints: {min: BigNumber, max:BigNumber};
+    let outConstraints: {min: BigNumber, max:BigNumber};
+    if(exactIn) {
+        outConstraints = defaultConstraints;
+        if(kind==="frombtc") {
+            inConstraints = btcAmountConstraints==null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+        } else {
+            const constraint = tokenConstraints==null ? null : tokenConstraints[inCurrency.address.toString()];
+            if(constraint!=null) {
+                inConstraints = constraint[swapType] || defaultConstraints;
+            } else {
+                inConstraints = defaultConstraints;
+            }
+        }
+    } else { //exact out
+        inConstraints = defaultConstraints;
+        if(kind==="frombtc") {
+            const constraint = tokenConstraints==null ? null : tokenConstraints[outCurrency.address.toString()];
+            if(constraint!=null) {
+                outConstraints = constraint[swapType] || defaultConstraints;
+            } else {
+                outConstraints = defaultConstraints;
+            }
+        } else { //tobtc
+            outConstraints = btcAmountConstraints==null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+        }
+    }
 
     useEffect(() => {
         if(!doValidate) return;
@@ -78,7 +134,6 @@ export function SwapTab(props: {
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getOutAmount(), outCurr));
                     setAddress(foundSwap.getAddress());
-                    setKind("tobtc");
                     setExactIn(false);
                 } else if(foundSwap instanceof IFromBTCSwap) {
                     const inCurr = foundSwap instanceof FromBTCSwap ? bitcoinCurrencies[0] : bitcoinCurrencies[1];
@@ -86,7 +141,6 @@ export function SwapTab(props: {
                     setInCurrency(inCurr);
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getInAmount(), inCurr));
-                    setKind("frombtc");
                     setExactIn(true);
                 }
                 setDoValidate(true);
@@ -97,48 +151,30 @@ export function SwapTab(props: {
 
     useEffect(() => {
         if(props.swapper==null) {
-            setBtcAmountConstraints({
-                min: new BigNumber("0.00001"),
-                max: null
-            });
+            setBtcAmountConstraints(null);
             return;
         }
-        if(inCurrency?.ticker==="BTC") {
-            setBtcAmountConstraints({
-                min: toHumanReadable(props.swapper.getMinimum(SwapType.FROM_BTC), inCurrency),
-                max: toHumanReadable(props.swapper.getMaximum(SwapType.FROM_BTC), inCurrency),
-            });
-        }
-        if(inCurrency?.ticker==="BTC-LN") {
-            setBtcAmountConstraints({
-                min: toHumanReadable(props.swapper.getMinimum(SwapType.FROM_BTCLN), inCurrency),
-                max: toHumanReadable(props.swapper.getMaximum(SwapType.FROM_BTCLN), inCurrency),
-            });
-        }
-        if(outCurrency?.ticker==="BTC") {
-            setBtcAmountConstraints({
-                min: toHumanReadable(props.swapper.getMinimum(SwapType.TO_BTC), outCurrency),
-                max: toHumanReadable(props.swapper.getMaximum(SwapType.TO_BTC), outCurrency),
-            });
-        }
-        if(outCurrency?.ticker==="BTC-LN") {
-            setBtcAmountConstraints({
-                min: toHumanReadable(props.swapper.getMinimum(SwapType.TO_BTCLN), outCurrency),
-                max: toHumanReadable(props.swapper.getMaximum(SwapType.TO_BTCLN), outCurrency),
-            });
-        }
+
+        const constraints: {
+            [key in SwapType]?: {
+                min: BigNumber,
+                max: BigNumber
+            }
+        } = {};
+        [SwapType.FROM_BTC, SwapType.TO_BTC, SwapType.FROM_BTCLN, SwapType.TO_BTCLN].forEach(swapType =>
+            constraints[swapType] = {
+                min: toHumanReadable(props.swapper.getMinimum(swapType), btcCurrency),
+                max: toHumanReadable(props.swapper.getMaximum(swapType), btcCurrency),
+            }
+        );
+        setBtcAmountConstraints(constraints);
+
         setDoValidate(true);
-    }, [inCurrency, outCurrency, props.swapper]);
+    }, [props.swapper]);
 
     const changeDirection = () => {
         if(locked) return;
-        if(kind==="frombtc") {
-            setKind("tobtc");
-            setExactIn(false);
-        } else {
-            setKind("frombtc");
-            setExactIn(true);
-        }
+        setExactIn(!exactIn);
         setInCurrency(outCurrency);
         setOutCurrency(inCurrency);
         setDisabled(false);
@@ -156,20 +192,18 @@ export function SwapTab(props: {
         setQuoteError(null);
         setQuoteLoading(false);
 
-        if(inCurrency?.ticker==="BTC") {
+        if(exactIn) {
+            outAmountRef.current.validate();
             if(!inAmountRef.current.validate()) return;
-        }
-        if(inCurrency?.ticker==="BTC-LN") {
-            if(!inAmountRef.current.validate()) return;
-        }
-        if(outCurrency?.ticker==="BTC") {
+        } else {
+            inAmountRef.current.validate();
             if(!outAmountRef.current.validate()) return;
+        }
+
+        if(outCurrency?.ticker==="BTC") {
             if(!addressRef.current.validate()) return;
         }
         if(outCurrency?.ticker==="BTC-LN") {
-            //TODO: Enable if we wanna support LNURL
-            //if(!outAmountRef.current.validate()) return;
-            outAmountRef.current.validate();
             if(!addressRef.current.validate()) return;
         }
 
@@ -179,16 +213,26 @@ export function SwapTab(props: {
             }
             setQuoteLoading(true);
             let promise: Promise<ISwap>;
+            let tokenCurrency: CurrencySpec;
+            let quoteCurrency: CurrencySpec;
             if(inCurrency?.ticker==="BTC") {
-                promise = props.swapper.createFromBTCSwap(outCurrency.address, fromHumanReadableString(amount, inCurrency));
+                tokenCurrency = outCurrency;
+                quoteCurrency = exactIn ? inCurrency : outCurrency;
+                promise = props.swapper.createFromBTCSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn);
             }
             if(inCurrency?.ticker==="BTC-LN") {
-                promise = props.swapper.createFromBTCLNSwap(outCurrency.address, fromHumanReadableString(amount, inCurrency));
+                tokenCurrency = outCurrency;
+                quoteCurrency = exactIn ? inCurrency : outCurrency;
+                promise = props.swapper.createFromBTCLNSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn);
             }
             if(outCurrency?.ticker==="BTC") {
-                promise = props.swapper.createToBTCSwap(inCurrency.address, address, fromHumanReadableString(amount, outCurrency));
+                tokenCurrency = inCurrency;
+                quoteCurrency = exactIn ? inCurrency : outCurrency;
+                promise = props.swapper.createToBTCSwap(inCurrency.address, address, fromHumanReadableString(amount, quoteCurrency), null, null, exactIn);
             }
             if(outCurrency?.ticker==="BTC-LN") {
+                tokenCurrency = inCurrency;
+                quoteCurrency = outCurrency;
                 promise = props.swapper.createToBTCLNSwap(inCurrency.address, address, 5*24*60*60);
             }
             currentQuotation.current = promise.then((swap) => {
@@ -198,11 +242,28 @@ export function SwapTab(props: {
                 setQuoteLoading(false);
                 setQuote(swap);
             }).catch(e => {
+                let doSetError = true;
+                if(e.min!=null && e.max!=null) {
+                    if(tokenCurrency===quoteCurrency) {
+                        setTokenConstraints(val => {
+                            if(val==null) val = {};
+                            if(val[tokenCurrency.address.toString()]==null) val[tokenCurrency.address.toString()] = {};
+                            val[tokenCurrency.address.toString()][swapType] = {
+                                min: toHumanReadable(e.min, tokenCurrency),
+                                max: toHumanReadable(e.max, tokenCurrency)
+                            };
+                            console.log(val);
+                            return val;
+                        });
+                        doSetError = false;
+                    }
+                }
                 if(quoteUpdates.current!==updateNum) {
                     return;
                 }
+                setDoValidate(true);
                 setQuoteLoading(false);
-                setQuoteError(e.toString());
+                if(doSetError) setQuoteError(e.toString());
             });
         };
 
@@ -239,26 +300,25 @@ export function SwapTab(props: {
 
                     <Card className="d-flex flex-row bg-dark bg-opacity-10 border-0 p-3">
                         <ValidatedInput
-                            disabled={locked || (exactIn && disabled)}
+                            disabled={locked || disabled}
                             inputRef={inAmountRef}
                             className="flex-fill strip-group-text"
                             type="number"
-                            value={kind==="tobtc" ? (quote==null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount }
+                            value={!exactIn ? (quote==null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount }
                             size={"lg"}
-                            textStart={kind==="tobtc" && quoteLoading ? (
+                            textStart={!exactIn && quoteLoading ? (
                                 <Spinner size="sm"/>
                             ) : null}
                             onChange={val => {
-                                if(kind==="tobtc") return;
                                 setAmount(val);
                                 setExactIn(true);
                             }}
                             step={inCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals))}
-                            min={kind==="frombtc" ? btcAmountConstraints.min : new BigNumber(0)}
-                            max={kind==="frombtc" ? btcAmountConstraints.max : null}
-                            onValidate={exactIn ? (val: any) => {
-                                return val==="" ? "Amount cannot be empty" : null;
-                            } : null}
+                            min={inConstraints.min}
+                            max={inConstraints.max}
+                            onValidate={(val: any) => {
+                                return exactIn && val==="" ? "Amount cannot be empty" : null;
+                            }}
                         />
                         <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
                             if(locked) return;
@@ -273,26 +333,25 @@ export function SwapTab(props: {
                     <Card className="bg-dark bg-opacity-10 border-0 p-3">
                         <div className="d-flex flex-row">
                             <ValidatedInput
-                                disabled={locked || (!exactIn && disabled)}
+                                disabled={locked || disabled}
                                 inputRef={outAmountRef}
                                 className="flex-fill strip-group-text"
                                 type="number"
-                                value={kind==="frombtc" ? (quote==null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount }
+                                value={exactIn ? (quote==null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount }
                                 size={"lg"}
-                                textStart={kind==="frombtc" && quoteLoading ? (
+                                textStart={exactIn && quoteLoading ? (
                                     <Spinner size="sm"/>
                                 ) : null}
                                 onChange={val => {
-                                    if(kind==="frombtc") return;
                                     setAmount(val);
                                     setExactIn(false);
                                 }}
                                 step={outCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals))}
-                                min={kind==="tobtc" ? btcAmountConstraints.min : new BigNumber(0)}
-                                max={kind==="tobtc" ? btcAmountConstraints.max : null}
-                                onValidate={!exactIn ? (val: any) => {
-                                    return val==="" ? "Amount cannot be empty" : null;
-                                } : null}
+                                min={outConstraints.min}
+                                max={outConstraints.max}
+                                onValidate={(val: any) => {
+                                    return !exactIn && val==="" ? "Amount cannot be empty" : null;
+                                }}
                             />
                             <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={(val) => {
                                 if(locked) return;
@@ -311,25 +370,31 @@ export function SwapTab(props: {
                                     value={address}
                                     onChange={(val) => {
                                         setAddress(val);
+                                        if(props.swapper.isValidLNURL(val)) {
+                                            props.swapper.getLNURLTypeAndData(val).then(() => {
+                                                navigate("/scan/2?address="+encodeURIComponent(val));
+                                            }).catch(e => {});
+                                        }
                                         if(props.swapper.isValidBitcoinAddress(val)) {
                                             setOutCurrency(bitcoinCurrencies[0]);
                                             setDisabled(false);
-                                            if(outAmountRef.current.validate()) {
-                                                const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
-                                                const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                                                const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                                                if(currentAmt.lt(min)) {
-                                                    setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
-                                                }
-                                                if(currentAmt.gt(max)) {
-                                                    setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
-                                                }
-                                            }
+                                            // if(outAmountRef.current.validate()) {
+                                            //     const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
+                                            //     const min = props.swapper.getMinimum(SwapType.TO_BTC);
+                                            //     const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                                            //     if(currentAmt.lt(min)) {
+                                            //         setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
+                                            //     }
+                                            //     if(currentAmt.gt(max)) {
+                                            //         setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
+                                            //     }
+                                            // }
                                         }
                                         if(props.swapper.isValidLightningInvoice(val)) {
                                             setOutCurrency(bitcoinCurrencies[1]);
                                             const outAmt = props.swapper.getLightningInvoiceValue(val);
                                             setAmount(toHumanReadableString(outAmt, btcCurrency));
+                                            setExactIn(false);
                                             setDisabled(true);
                                             return;
                                         }
@@ -338,7 +403,7 @@ export function SwapTab(props: {
                                     inputRef={addressRef}
                                     placeholder={"Paste Bitcoin/Lightning address"}
                                     onValidate={(val) => {
-                                        return props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
+                                        return props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
                                             : "Invalid bitcoin address/lightning network invoice";
                                     }}
                                 />

@@ -51,6 +51,8 @@ function WrappedApp() {
 
                 await swapper.init();
 
+                console.log(swapper);
+
                 console.log("Swapper initialized, getting claimable swaps...");
 
                 const actionableSwaps = (await swapper.getActionableSwaps());

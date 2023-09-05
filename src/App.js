@@ -38,6 +38,7 @@ function WrappedApp() {
                 console.log("init start");
                 const swapper = new SolanaSwapper(_provider, createSwapperOptions(FEConstants.chain));
                 await swapper.init();
+                console.log(swapper);
                 console.log("Swapper initialized, getting claimable swaps...");
                 const actionableSwaps = (await swapper.getActionableSwaps());
                 console.log("actionable swaps: ", actionableSwaps);
