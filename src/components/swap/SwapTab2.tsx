@@ -290,24 +290,24 @@ export function SwapTab(props: {
         <>
             <Topbar selected={0} enabled={!locked}/>
 
-            <div className="d-flex flex-column flex-fill align-items-center bg-dark text-white">
-                <Card className="p-3 swap-panel border-0 mx-3">
+            <div className="d-flex flex-column flex-fill align-items-center text-white">
+                <Card className="p-3 swap-panel tab-bg mx-3 border-0">
 
                     <Alert show={quoteError!=null} variant="danger" onClose={() => setQuoteError(null)} dismissible closeVariant="white">
                         <strong>Quoting error</strong>
                         <label>{quoteError}</label>
                     </Alert>
 
-                    <Card className="d-flex flex-row bg-dark bg-opacity-10 border-0 p-3">
+                    <Card className="d-flex flex-row tab-accent-p3">
                         <ValidatedInput
                             disabled={locked || disabled}
                             inputRef={inAmountRef}
-                            className="flex-fill strip-group-text"
+                            className="flex-fill"
                             type="number"
                             value={!exactIn ? (quote==null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount }
                             size={"lg"}
                             textStart={!exactIn && quoteLoading ? (
-                                <Spinner size="sm"/>
+                                <Spinner size="sm" className="text-white"/>
                             ) : null}
                             onChange={val => {
                                 setAmount(val);
@@ -319,18 +319,20 @@ export function SwapTab(props: {
                             onValidate={(val: any) => {
                                 return exactIn && val==="" ? "Amount cannot be empty" : null;
                             }}
+                            elementEnd={(
+                                <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
+                                    if(locked) return;
+                                    setInCurrency(val);
+                                }} value={inCurrency} className="round-right bg-transparent text-white"/>
+                            )}
                         />
-                        <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
-                            if(locked) return;
-                            setInCurrency(val);
-                        }} value={inCurrency} />
                     </Card>
                     <div className="d-flex justify-content-center swap-direction-wrapper">
                         <Button onClick={changeDirection} size="lg" className="px-0 swap-direction-btn">
                             ↓
                         </Button>
                     </div>
-                    <Card className="bg-dark bg-opacity-10 border-0 p-3">
+                    <Card className="tab-accent-p3">
                         <div className="d-flex flex-row">
                             <ValidatedInput
                                 disabled={locked || disabled}
@@ -340,7 +342,7 @@ export function SwapTab(props: {
                                 value={exactIn ? (quote==null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount }
                                 size={"lg"}
                                 textStart={exactIn && quoteLoading ? (
-                                    <Spinner size="sm"/>
+                                    <Spinner size="sm" className="text-white"/>
                                 ) : null}
                                 onChange={val => {
                                     setAmount(val);
@@ -352,15 +354,17 @@ export function SwapTab(props: {
                                 onValidate={(val: any) => {
                                     return !exactIn && val==="" ? "Amount cannot be empty" : null;
                                 }}
+                                elementEnd={(
+                                    <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={(val) => {
+                                        if(locked) return;
+                                        setOutCurrency(val);
+                                        if(kind==="tobtc" && val!==outCurrency) {
+                                            setDisabled(false);
+                                            setAddress("");
+                                        }
+                                    }} value={outCurrency} className="round-right bg-transparent text-white"/>
+                                )}
                             />
-                            <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={(val) => {
-                                if(locked) return;
-                                setOutCurrency(val);
-                                if(kind==="tobtc" && val!==outCurrency) {
-                                    setDisabled(false);
-                                    setAddress("");
-                                }
-                            }} value={outCurrency} />
                         </div>
                         {kind==="tobtc" ? (
                             <>
@@ -420,7 +424,7 @@ export function SwapTab(props: {
                             <div className="mt-3">
                                 <SimpleFeeSummaryScreen swap={quote}/>
                             </div>
-                            <div className="mt-3 d-flex flex-column">
+                            <div className="mt-3 d-flex flex-column text-white">
                                 <QuoteSummary quote={quote} refreshQuote={getQuote} setAmountLock={setLocked} abortSwap={() => {
                                     setLocked(false);
                                     setQuote(null);

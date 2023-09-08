@@ -123,7 +123,7 @@ export function FromBTCLNQuoteSummary(props: {
 
             {state===FromBTCLNSwapState.PR_CREATED ? (!isStarted ? (
                 <>
-                    <div className={success===null && !loading ? "d-flex flex-column mb-3" : "d-none"}>
+                    <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                         {quoteTimeRemaining===0 ? (
                             <label>Quote expired!</label>
                         ) : (
@@ -145,7 +145,7 @@ export function FromBTCLNQuoteSummary(props: {
             ) : (
                 <>
                     {quoteTimeRemaining===0 ? "" : (
-                        <>
+                        <div className="tab-accent mb-3">
                             <div>
                                 <QRCodeSVG
                                     value={props.quote.getQrData()}
@@ -157,12 +157,11 @@ export function FromBTCLNQuoteSummary(props: {
                             <ValidatedInput
                                 type={"text"}
                                 value={props.quote.getAddress()}
-                                className="mb-3"
                             />
-                        </>
+                        </div>
                     )}
 
-                    <div className="d-flex flex-column mb-3">
+                    <div className="d-flex flex-column mb-3 tab-accent">
                         {quoteTimeRemaining===0 ? (
                             <label>Quote expired!</label>
                         ) : (
@@ -185,13 +184,13 @@ export function FromBTCLNQuoteSummary(props: {
             {state===FromBTCLNSwapState.PR_PAID || state===FromBTCLNSwapState.CLAIM_COMMITED ? (
                 <>
                     {quoteTimeRemaining!==0 ? (
-                        <div className="mb-3">
+                        <div className="mb-3 tab-accent">
                             <label>Lightning network payment received</label>
                             <label>Claim it below to finish the swap!</label>
                         </div>
                     ) : ""}
                     {state===FromBTCLNSwapState.PR_PAID ? (
-                        <div className={success===null && !loading ? "d-flex flex-column mb-3" : "d-none"}>
+                        <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                             {quoteTimeRemaining===0 ? (
                                 <label>Swap expired! Your lightning payment should refund shortly.</label>
                             ) : (
@@ -215,7 +214,7 @@ export function FromBTCLNQuoteSummary(props: {
             ) : ""}
 
             {state===FromBTCLNSwapState.CLAIM_CLAIMED ? (
-                <Alert variant="success">
+                <Alert variant="success" className="mb-0">
                     <strong>Swap successful</strong>
                     <label>Swap was concluded successfully</label>
                 </Alert>

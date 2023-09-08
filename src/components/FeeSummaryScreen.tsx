@@ -7,9 +7,11 @@ export function FeeSummaryScreen(props: {
     className?: string
 }) {
 
+    let className: string = props.className;
+
     if(props.swap instanceof IToBTCSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
-        return (<div className={props.className}>
+        return (<div className={className}>
             <div className="d-flex my-2">
                 <span>Amount:</span>
                 <span className="ms-auto">{toHumanReadableString(props.swap.getInAmountWithoutFee(), currency)} {currency.ticker}</span>
@@ -34,7 +36,7 @@ export function FeeSummaryScreen(props: {
     }
     if(props.swap instanceof FromBTCSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
-        return (<div className={props.className}>
+        return (<div className={className}>
             <div className="d-flex my-2">
                 <span>Amount:</span>
                 <span className="ms-auto">{toHumanReadableString(props.swap.getOutAmountWithoutFee(), currency)} {currency.ticker}</span>
@@ -60,7 +62,7 @@ export function FeeSummaryScreen(props: {
     if(props.swap instanceof FromBTCLNSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
         const isApproximate = props.swap.data.getAmount()==null;
-        return (<div className={props.className}>
+        return (<div className={className}>
             <div className="d-flex my-2">
                 <span>Amount:</span>
                 <span className="ms-auto">{isApproximate? "~" : ""}{toHumanReadableString(props.swap.getOutAmountWithoutFee(), currency)} {currency.ticker}</span>

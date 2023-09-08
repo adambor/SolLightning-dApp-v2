@@ -1,4 +1,5 @@
-$primary: #FF9300;
+//$primary: #FF9300;
+$primary: #a679ff;
 $secondary: #F2F5F9;
 $danger: #F25151;
 $success: #2BDD72;
@@ -7,6 +8,12 @@ $dark: #272D33;
 $btn-border-radius-lg: 0.25rem;
 $body-color: #272D33;
 $info: #006CFF;
+
+//$form-invalid-border-color: #ffdb00;
+//$form-invalid-color: #ffdb00;
+
+$form-invalid-border-color: #F25151;
+$form-invalid-color: #ff7979;
 
 body {
   margin: 0;
@@ -139,29 +146,65 @@ code {
   margin-bottom: -0.25rem !important;
 }
 
-.strip-group-text .input-group-text {
-  border-width: 1px 0px 1px 1px;
-  background: initial;
-}
-
-.strip-group-text .form-control {
-  border-width: 1px 1px 1px 0px;
-}
-
-.strip-group-all .input-group-text {
-  border-width: 0px;
-  background: initial;
-}
-
-.strip-group-all .form-control {
-  border-width: 0px;
-}
-
-.form-align-end .form-control {
-  direction: rtl;
-}
 
 .text-overflow-ellipsis {
   -ms-text-overflow: ellipsis;
   text-overflow: ellipsis;
+}
+
+.tab-bg {
+  background: rgba(255,255,255,0.2);
+}
+
+.background-gradient {
+  background: rgb(20,241,149);
+  background: linear-gradient(126deg, rgba(20,241,149,1) 0%, rgba(153,69,255,1) 50%, rgba(255,153,0,1) 100%);
+}
+
+.card {
+  color: #fff;
+}
+
+.tab-accent {
+  @extend .card;
+  @extend .p-2;
+  @extend .border-0;
+  @extend .bg-black;
+  @extend .bg-opacity-10;
+}
+
+.tab-accent-p3 {
+  @extend .card;
+  @extend .p-3;
+  @extend .border-0;
+  @extend .bg-black;
+  @extend .bg-opacity-10;
+  @extend .text-start;
+}
+
+.form-control {
+  background: rgba(0,0,0,0.1);
+  color: #fff;
+}
+
+.form-control:focus {
+  background: rgba(0,0,0,0.1);
+  color: #fff;
+}
+
+.form-control:disabled {
+  background: rgb(255 255 255 / 20%);
+}
+
+.input-group-text {
+  @extend .bg-transparent;
+}
+
+.round-right {
+  border-top-right-radius: var(--bs-btn-border-radius) !important;
+  border-bottom-right-radius: var(--bs-btn-border-radius) !important;
+}
+
+.bg-transparent {
+  background: rgba(0,0,0,0)
 }

@@ -39,6 +39,14 @@ export function SimpleFeeSummaryScreen(props: {
     className?: string
 }) {
 
+    let className: string;
+
+    if(props.className==null) {
+        className = "tab-accent";
+    } else {
+        className = props.className+" tab-accent";
+    }
+
     if(props.swap instanceof IToBTCSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
         const btcCurrency = bitcoinCurrencies[props.swap instanceof ToBTCSwap ? 0 : 1];
@@ -52,7 +60,7 @@ export function SimpleFeeSummaryScreen(props: {
         const fee = props.swap.getFee();
         const btcFee = swapBtcFee.add(networkBtcFee);
 
-        return (<div className={props.className}>
+        return (<div className={className}>
             <FeePart className="border-bottom border-dark" bold text={"Total fee:"} currency1={currency} amount1={fee} currency2={btcCurrency} amount2={btcFee}/>
             <FeePart text={"Swap fee:"} currency1={currency} amount1={swapFee} currency2={btcCurrency} amount2={swapBtcFee}/>
             <FeePart text={"Network fee:"} currency1={currency} amount1={networkFee} currency2={btcCurrency} amount2={networkBtcFee}/>
@@ -63,7 +71,7 @@ export function SimpleFeeSummaryScreen(props: {
         const fee = props.swap.getFee();
         const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
 
-        return (<div className={props.className}>
+        return (<div className={className}>
             <FeePart className="border-bottom border-secondary pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
             <div className="d-flex font-medium py-2 mt-2">
                 <span>Watchtower fee:</span>
@@ -79,7 +87,7 @@ export function SimpleFeeSummaryScreen(props: {
         const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
 
         const currency = getCurrencySpec(props.swap.getToken());
-        return (<div className={props.className}>
+        return (<div className={className}>
             <FeePart text={"Swap fee:"} currency1={bitcoinCurrencies[1]} amount1={btcFee} currency2={currency} amount2={fee}/>
         </div>);
     }

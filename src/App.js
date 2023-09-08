@@ -51,7 +51,7 @@ function WrappedApp() {
             }
         })();
     }, [wallet]);
-    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ bg: "dark", variant: "dark" }, { children: _jsxs(Container, { children: [_jsx(Navbar.Brand, Object.assign({ href: "#home", className: "fw-semibold" }, { children: "SolLightning" })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-auto" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] }) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
+    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ bg: "dark", variant: "dark", className: "bg-dark bg-opacity-25" }, { children: _jsxs(Container, { children: [_jsx(Navbar.Brand, Object.assign({ href: "#home", className: "fw-semibold" }, { children: "SolLightning" })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-auto" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] }) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
                     actionableSwaps,
                     removeSwap: (swap) => {
                         setActionableSwaps((val) => {

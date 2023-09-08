@@ -71,7 +71,7 @@ function WrappedApp() {
 
     return (
         <>
-            <Navbar bg="dark" variant="dark">
+            <Navbar bg="dark" variant="dark" className="bg-dark bg-opacity-25">
                 <Container>
                     <Navbar.Brand href="#home" className="fw-semibold">
                         SolLightning

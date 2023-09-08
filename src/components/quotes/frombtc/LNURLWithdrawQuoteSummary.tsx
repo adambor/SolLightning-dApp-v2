@@ -65,7 +65,7 @@ export function LNURLWithdrawQuoteSummary(props: {
 
     return (
         <>
-            <div className={success===null && !loading ? "d-flex flex-column mb-3" : "d-none"}>
+            <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                 {quoteTimeRemaining===0 ? (
                     <label>Quote expired!</label>
                 ) : (
@@ -87,7 +87,7 @@ export function LNURLWithdrawQuoteSummary(props: {
                 )
             ) : (
                 success ? (
-                    <Alert variant="success">
+                    <Alert variant="success" className="mb-0">
                         <strong>Swap successful</strong>
                         <label>Swap was concluded successfully</label>
                     </Alert>

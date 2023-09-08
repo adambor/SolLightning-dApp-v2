@@ -265,7 +265,7 @@ export function Step2Screen(props: {
         <>
             <Topbar selected={1} enabled={!isLocked}/>
 
-            <div className="d-flex flex-column flex-fill justify-content-center align-items-center bg-dark text-white">
+            <div className="d-flex flex-column flex-fill justify-content-center align-items-center text-white">
                 <div className="p-3 quickscan-summary-panel flex-fill d-flex flex-column">
 
                     <ValidatedInput

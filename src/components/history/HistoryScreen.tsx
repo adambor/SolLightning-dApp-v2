@@ -1,6 +1,6 @@
 import {Topbar} from "../Topbar";
 import {FromBTCSwapState, SolanaSwapper} from "sollightning-sdk/dist";
-import {Alert, Badge, Button, Col, ListGroup, Spinner} from "react-bootstrap";
+import {Alert, Badge, Button, Card, Col, ListGroup, Spinner} from "react-bootstrap";
 import {FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, ToBTCSwap} from "sollightning-sdk";
 import {bitcoinCurrencies, getCurrencySpec, toHumanReadableString} from "../../utils/Currencies";
 import {useContext, useState} from "react";
@@ -82,7 +82,7 @@ function HistoryEntry(props: {
         };
 
         return (
-            <ListGroup.Item as="li" className="text-start d-flex flex-row">
+            <Card className="text-start d-flex flex-row tab-bg text-white border-0 p-3 my-2">
                 <Col>
                     <div>
                         <b>Swap</b>
@@ -97,12 +97,12 @@ function HistoryEntry(props: {
                     </small>
                 </Col>
                 <Col xs={3} className="d-flex">
-                    <Button disabled={loading} onClick={shouldContinue ? cont : claim} variant="outline-primary" className="px-1 flex-fill">
+                    <Button disabled={loading} onClick={shouldContinue ? cont : claim} variant="light" className="px-1 flex-fill">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                         {shouldContinue ? "Continue" : "Claim"}
                     </Button>
                 </Col>
-            </ListGroup.Item>
+            </Card>
         );
     }
 }
@@ -119,7 +119,7 @@ export function HistoryScreen(props: {
         <>
             <Topbar selected={2} enabled={true}/>
 
-            <div className="d-flex flex-column flex-fill align-items-center bg-dark text-white">
+            <div className="d-flex flex-column flex-fill align-items-center text-white mt-n2">
 
                 {error==null ? "" : (
                     <Alert variant={"danger"} className="mb-2">
@@ -130,13 +130,13 @@ export function HistoryScreen(props: {
                     </Alert>
                 )}
 
-                <ListGroup as="ul" className="swap-panel">
+                <div className="swap-panel">
                     {actionableSwaps.map(e => {
                         return (
                             <HistoryEntry swap={e} onError={setError}/>
                         );
                     })}
-                </ListGroup>
+                </div>
             </div>
         </>
     )

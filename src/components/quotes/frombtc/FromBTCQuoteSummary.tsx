@@ -154,7 +154,7 @@ export function FromBTCQuoteSummary(props: {
 
             {state===FromBTCSwapState.PR_CREATED ? (
                 <>
-                    <div className={success===null && !loading ? "d-flex flex-column mb-3" : "d-none"}>
+                    <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                         {quoteTimeRemaining===0 ? (
                             <label>Quote expired!</label>
                         ) : (
@@ -178,7 +178,7 @@ export function FromBTCQuoteSummary(props: {
             {state===FromBTCSwapState.CLAIM_COMMITED ? (txData==null ? (
                 <>
                     {quoteTimeRemaining===0 ? "" : (
-                        <>
+                        <div className="mb-3 tab-accent">
                             <div>
                                 <QRCodeSVG
                                     value={props.quote.getQrData()}
@@ -190,11 +190,10 @@ export function FromBTCQuoteSummary(props: {
                             <ValidatedInput
                                 type={"text"}
                                 value={props.quote.getAddress()}
-                                className="mb-3"
                             />
-                        </>
+                        </div>
                     )}
-                    <div className="d-flex flex-column mb-3">
+                    <div className="d-flex flex-column mb-3 tab-accent">
                         {quoteTimeRemaining===0 ? (
                             <label>Swap address expired, please do not send any funds!</label>
                         ) : (
@@ -213,7 +212,7 @@ export function FromBTCQuoteSummary(props: {
                     )}
                 </>
             ) : (
-                <div className="d-flex flex-column align-items-center">
+                <div className="d-flex flex-column align-items-center tab-accent">
                     <label>Transaction successfully received, waiting for confirmations...</label>
 
                     <Spinner/>
@@ -224,7 +223,9 @@ export function FromBTCQuoteSummary(props: {
 
             {state===FromBTCSwapState.BTC_TX_CONFIRMED ? (
                 <>
-                    <label>Transaction received & confirmed</label>
+                    <div className="d-flex flex-column align-items-center tab-accent">
+                        <label>Transaction received & confirmed</label>
+                    </div>
 
                     <Button onClick={onClaim} disabled={loading} size="lg">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
@@ -234,7 +235,7 @@ export function FromBTCQuoteSummary(props: {
             ) : ""}
 
             {state===FromBTCSwapState.CLAIM_CLAIMED ? (
-                <Alert variant="success">
+                <Alert variant="success" className="mb-0">
                     <strong>Swap successful</strong>
                     <label>Swap was concluded successfully</label>
                 </Alert>

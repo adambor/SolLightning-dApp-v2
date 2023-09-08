@@ -103,7 +103,7 @@ function ToBTCQuoteSummary(props: {
 
     return (
         <>
-            <div className={success===null && !loading ? "d-flex flex-column mb-3" : "d-none"}>
+            <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                 {quoteTimeRemaining===0 ? (
                     <label>Quote expired!</label>
                 ) : (

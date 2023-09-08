@@ -28,8 +28,8 @@ export function Topbar(props: {
     const context = useContext(SwapsContext);
 
     return (
-        <div className="bg-dark pb-2">
-            <ButtonGroup className="bg-light">
+        <div className="mt-3 pb-2">
+            <ButtonGroup className="bg-dark bg-opacity-25">
                 {tabs.map((val, index) => {
                     if(index===2 && context.actionableSwaps.length===0) return;
                     return (
@@ -37,7 +37,7 @@ export function Topbar(props: {
                             onClick={() => {
                                 if(props.selected!==index && props.enabled) navigate(val.path)
                             }}
-                            variant={index===props.selected ? "primary" : "outline-primary"}
+                            variant={index===props.selected ? "light" : "outline-light"}
                             disabled={!props.enabled}
                         >
                             {val.name}
