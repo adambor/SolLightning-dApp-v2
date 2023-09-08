@@ -126,14 +126,14 @@ function ToBTCQuoteSummary(props: {
             ) : (
                 success ? (
                     <Alert variant="success" className="mb-0">
-                        <p><strong>Swap successful</strong></p>
-                        Swap was concluded successfully
+                        <strong>Swap successful</strong>
+                        <label>Swap was concluded successfully</label>
                     </Alert>
                 ) : (
                     <>
                         <Alert variant="danger" className="mb-3">
-                            <p><strong>Swap failed</strong></p>
-                            {error}
+                            <strong>Swap failed</strong>
+                            <label>{error}</label>
                         </Alert>
                         {refund ? (
                             <Button onClick={onRefund} className={refunded ? "d-none" : ""} disabled={refunding} variant="secondary">

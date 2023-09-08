@@ -16,7 +16,6 @@ import {SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
-import {exact} from "prop-types";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -241,6 +240,7 @@ export function SwapTab(props: {
                 }
                 setQuoteLoading(false);
                 setQuote(swap);
+                //TODO: Check if the user has enough lamports to cover solana transaction fees
             }).catch(e => {
                 let doSetError = true;
                 if(e.min!=null && e.max!=null) {

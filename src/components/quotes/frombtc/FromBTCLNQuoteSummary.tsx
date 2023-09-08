@@ -216,8 +216,8 @@ export function FromBTCLNQuoteSummary(props: {
 
             {state===FromBTCLNSwapState.CLAIM_CLAIMED ? (
                 <Alert variant="success">
-                    <p><strong>Swap successful</strong></p>
-                    Swap was concluded successfully
+                    <strong>Swap successful</strong>
+                    <label>Swap was concluded successfully</label>
                 </Alert>
             ) : ""}
 
