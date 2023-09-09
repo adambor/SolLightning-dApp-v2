@@ -20,7 +20,7 @@ const tabs = [
 export function Topbar(props) {
     const navigate = useNavigate();
     const context = useContext(SwapsContext);
-    return (_jsx("div", Object.assign({ className: "mt-3 pb-2" }, { children: _jsx(ButtonGroup, Object.assign({ className: "bg-dark bg-opacity-25" }, { children: tabs.map((val, index) => {
+    return (_jsx("div", Object.assign({ className: "mt-3 pb-2 z-1" }, { children: _jsx(ButtonGroup, Object.assign({ className: "bg-dark bg-opacity-25" }, { children: tabs.map((val, index) => {
                 if (index === 2 && context.actionableSwaps.length === 0)
                     return;
                 return (_jsxs(Button, Object.assign({ onClick: () => {

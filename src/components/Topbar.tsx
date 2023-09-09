@@ -28,7 +28,7 @@ export function Topbar(props: {
     const context = useContext(SwapsContext);
 
     return (
-        <div className="mt-3 pb-2">
+        <div className="mt-3 pb-2 z-1">
             <ButtonGroup className="bg-dark bg-opacity-25">
                 {tabs.map((val, index) => {
                     if(index===2 && context.actionableSwaps.length===0) return;

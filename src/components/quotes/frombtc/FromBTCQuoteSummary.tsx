@@ -143,6 +143,13 @@ export function FromBTCQuoteSummary(props: {
         }
     };
 
+    useEffect(() => {
+        if(state===FromBTCSwapState.CLAIM_COMMITED) {
+            // @ts-ignore
+            window.scrollBy(0,99999);
+        }
+    }, [state]);
+
     return (
         <>
             {error!=null ? (

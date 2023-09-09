@@ -1,4 +1,5 @@
 //$primary: #FF9300;
+//$primary: #a679ff;
 $primary: #a679ff;
 $secondary: #F2F5F9;
 $danger: #F25151;
@@ -14,6 +15,14 @@ $info: #006CFF;
 
 $form-invalid-border-color: #F25151;
 $form-invalid-color: #ff7979;
+
+$success-border-subtle: #00ff68;
+$success-bg-subtle: rgba(0, 255, 96, 0.25);
+$success-text-emphasis: #e0ffec;
+
+$danger-border-subtle: #f00;
+$danger-bg-subtle: #ff00003d;
+$danger-text-emphasis: #fdd3d3;
 
 body {
   margin: 0;
@@ -83,11 +92,11 @@ code {
   padding-right: 32px;
 }
 
-.alert-danger {
-  color: #fff;
-  background: #F25151;
-  border: #F25151
-}
+//.alert-danger {
+//  color: #fff;
+//  background: #F25151;
+//  border: #F25151
+//}
 
 .alert-info {
   color: #fff;
@@ -96,11 +105,11 @@ code {
   border-color: $primary;
 }
 
-.alert-success {
-  color: #fff;
-  background: #28c563;
-  border: #28c563;
-}
+//.alert-success {
+//  color: #fff;
+//  background: #28c563;
+//  border: #28c563;
+//}
 
 .grayed-out {
   color: #B2B2B2;
@@ -192,6 +201,10 @@ code {
   color: #fff;
 }
 
+.form-control::placeholder {
+  color: rgba(255,255,255,0.6);
+}
+
 .form-control:disabled {
   background: rgb(255 255 255 / 20%);
 }
@@ -207,4 +220,8 @@ code {
 
 .bg-transparent {
   background: rgba(0,0,0,0)
+}
+
+.alert strong {
+  display: block;
 }

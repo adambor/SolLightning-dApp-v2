@@ -1,5 +1,5 @@
-import {FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, OutOfBoundsError, SolanaSwapper, SwapType, ToBTCSwap} from "sollightning-sdk";
-import {Alert, Button, Card, Spinner} from "react-bootstrap";
+import {FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap} from "sollightning-sdk";
+import {Accordion, Alert, Button, Card, Spinner} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -12,10 +12,11 @@ import {
     toHumanReadable, toHumanReadableString
 } from "../../utils/Currencies";
 import {CurrencyDropdown} from "../CurrencyDropdown";
-import {SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
+import {FeePart, SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
+import { BN } from "@coral-xyz/anchor";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -291,9 +292,9 @@ export function SwapTab(props: {
             <Topbar selected={0} enabled={!locked}/>
 
             <div className="d-flex flex-column flex-fill align-items-center text-white">
-                <Card className="p-3 swap-panel tab-bg mx-3 border-0">
+                <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
-                    <Alert show={quoteError!=null} variant="danger" onClose={() => setQuoteError(null)} dismissible closeVariant="white">
+                    <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => setQuoteError(null)} dismissible closeVariant="white">
                         <strong>Quoting error</strong>
                         <label>{quoteError}</label>
                     </Alert>
@@ -382,17 +383,6 @@ export function SwapTab(props: {
                                         if(props.swapper.isValidBitcoinAddress(val)) {
                                             setOutCurrency(bitcoinCurrencies[0]);
                                             setDisabled(false);
-                                            // if(outAmountRef.current.validate()) {
-                                            //     const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
-                                            //     const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                                            //     const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                                            //     if(currentAmt.lt(min)) {
-                                            //         setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
-                                            //     }
-                                            //     if(currentAmt.gt(max)) {
-                                            //         setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
-                                            //     }
-                                            // }
                                         }
                                         if(props.swapper.isValidLightningInvoice(val)) {
                                             setOutCurrency(bitcoinCurrencies[1]);
@@ -411,14 +401,27 @@ export function SwapTab(props: {
                                             : "Invalid bitcoin address/lightning network invoice";
                                     }}
                                 />
-                                {outCurrency===bitcoinCurrencies[1] ? (
-                                    <Alert variant={"success"} className="mt-3 mb-0">
+                                {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (
+                                    <Alert variant={"success"} className="mt-3 mb-0 text-center">
                                         <label>We only support lightning network invoices with pre-set amount!</label>
                                     </Alert>
                                 ) : ""}
                             </>
                         ) : ""}
                     </Card>
+
+                    {/*<Accordion defaultActiveKey="0">*/}
+                    {/*    <Accordion.Item eventKey="0">*/}
+                    {/*        <Accordion.Header>*/}
+                    {/*            <FeePart text="Total fee" bold currency1={bitcoinCurrencies[0]} amount1={new BN(12421)} currency2={smartChainCurrencies[0]} amount2={new BN(48128321)}/>*/}
+                    {/*        </Accordion.Header>*/}
+                    {/*        <Accordion.Body>*/}
+                    {/*            <FeePart text="Swap fee" currency1={bitcoinCurrencies[0]} amount1={new BN(7512)} currency2={smartChainCurrencies[0]} amount2={new BN(35921232)}/>*/}
+                    {/*            <FeePart text="Network fee" currency1={bitcoinCurrencies[0]} amount1={new BN(4281)} currency2={smartChainCurrencies[0]} amount2={new BN(17120123)}/>*/}
+                    {/*        </Accordion.Body>*/}
+                    {/*    </Accordion.Item>*/}
+                    {/*</Accordion>*/}
+
                     {quote!=null ? (
                         <>
                             <div className="mt-3">

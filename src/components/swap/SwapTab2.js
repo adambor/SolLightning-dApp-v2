@@ -245,7 +245,7 @@ export function SwapTab(props) {
             return;
         getQuote();
     }, [address, amount, inCurrency, outCurrency, exactIn, props.swapper]);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                     setAmount(val);
                                     setExactIn(true);
                                 }, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: inConstraints.max, onValidate: (val) => {
@@ -277,17 +277,6 @@ export function SwapTab(props) {
                                                 if (props.swapper.isValidBitcoinAddress(val)) {
                                                     setOutCurrency(bitcoinCurrencies[0]);
                                                     setDisabled(false);
-                                                    // if(outAmountRef.current.validate()) {
-                                                    //     const currentAmt = fromHumanReadableString(amount, bitcoinCurrencies[0]);
-                                                    //     const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                                                    //     const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                                                    //     if(currentAmt.lt(min)) {
-                                                    //         setAmount(toHumanReadableString(min, bitcoinCurrencies[0]));
-                                                    //     }
-                                                    //     if(currentAmt.gt(max)) {
-                                                    //         setAmount(toHumanReadableString(max, bitcoinCurrencies[0]));
-                                                    //     }
-                                                    // }
                                                 }
                                                 if (props.swapper.isValidLightningInvoice(val)) {
                                                     setOutCurrency(bitcoinCurrencies[1]);
@@ -301,7 +290,7 @@ export function SwapTab(props) {
                                             }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
                                                 return props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
                                                     : "Invalid bitcoin address/lightning network invoice";
-                                            } }), outCurrency === bitcoinCurrencies[1] ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
+                                            } }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
                                             setAmount("");

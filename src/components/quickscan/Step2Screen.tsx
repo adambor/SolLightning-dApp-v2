@@ -254,6 +254,13 @@ export function Step2Screen(props: {
     };
 
     useEffect(() => {
+        if(quote!=null) {
+            // @ts-ignore
+            window.scrollBy(0,99999);
+        }
+    }, [quote]);
+
+    useEffect(() => {
         getQuote();
     }, [amount, selectedCurrency]);
 
@@ -266,98 +273,96 @@ export function Step2Screen(props: {
             <Topbar selected={1} enabled={!isLocked}/>
 
             <div className="d-flex flex-column flex-fill justify-content-center align-items-center text-white">
-                <div className="p-3 quickscan-summary-panel flex-fill d-flex flex-column">
+                <div className="quickscan-summary-panel d-flex flex-column flex-fill">
+                    <div className="p-3 d-flex flex-column tab-bg border-0 card">
+                        <ValidatedInput
+                            type={"text"}
+                            className=""
+                            disabled={true}
+                            value={address || propAddress}
+                        />
 
-                    <ValidatedInput
-                        type={"text"}
-                        className="mb-3"
-                        disabled={true}
-                        value={address}
-                    />
+                        {addressError ? (
+                            <Alert variant={"danger"} className="mt-3">
+                                <p><strong>Destination parsing error</strong></p>
+                                {addressError}
+                            </Alert>
+                        ) : ""}
 
-                    {addressError ? (
-                        <Alert variant={"danger"}>
-                            <p><strong>Destination parsing error</strong></p>
-                            {addressError}
-                        </Alert>
-                    ) : ""}
+                        {lnurlLoading ? (
+                            <div className="d-flex flex-column align-items-center justify-content-center tab-accent mt-3">
+                                <Spinner animation="border" />
+                                Loading data...
+                            </div>
+                        ) : ""}
 
-                    {lnurlLoading ? (
-                        <div className="d-flex flex-column align-items-center justify-content-center">
-                            <Spinner animation="border" />
-                            Loading data...
-                        </div>
-                    ) : ""}
+                        {addressError==null && props.swapper!=null && !lnurlLoading ? (
+                            <div className="mt-3 tab-accent-p3 text-center">
+                                <label className="fw-bold mb-1">{type==="send" ? "Pay" : "Withdraw"}</label>
 
-                    {addressError==null && props.swapper!=null && !lnurlLoading ? (
-                        <div className="mb-4">
-                            <label className="fw-bold mb-1">{type==="send" ? "Pay" : "Withdraw"}</label>
+                                <ValidatedInput
+                                    type={"number"}
+                                    textEnd={(
+                                        <span className="text-white">
+                                            <img src={btcCurrency.icon} className="currency-icon"/>
+                                            BTC
+                                        </span>
+                                    )}
+                                    step={new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals))}
+                                    min={amountConstraints==null ? new BigNumber(0) : amountConstraints.min}
+                                    max={amountConstraints?.max}
+                                    disabled={
+                                        (amountConstraints!=null && amountConstraints.min.eq(amountConstraints.max)) ||
+                                        isLocked
+                                    }
+                                    size={"lg"}
+                                    inputRef={amountRef}
+                                    value={amount}
+                                    onChange={setAmount}
+                                    placeholder={"Input amount"}
+                                />
 
-                            <ValidatedInput
-                                type={"number"}
-                                textEnd={(
-                                    <>
-                                        <img src={btcCurrency.icon} className="currency-icon"/>
-                                        BTC
-                                    </>
-                                )}
-                                step={new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals))}
-                                min={amountConstraints==null ? new BigNumber(0) : amountConstraints.min}
-                                max={amountConstraints?.max}
-                                disabled={
-                                    (amountConstraints!=null && amountConstraints.min.eq(amountConstraints.max)) ||
-                                    isLocked
-                                }
-                                size={"lg"}
-                                inputRef={amountRef}
-                                value={amount}
-                                onChange={setAmount}
-                                placeholder={"Input amount"}
-                            />
+                                <label className="fw-bold mb-1">{type==="send" ? "with" : "to"}</label>
 
-                            <label className="fw-bold mb-1">{type==="send" ? "with" : "to"}</label>
+                                <CurrencyDropdown currencyList={smartChainCurrencies} onSelect={val => {
+                                    if(isLocked) return;
+                                    setSelectedCurrency(val);
+                                }} value={selectedCurrency} className="bg-transparent text-white"/>
+                            </div>
+                        ) : ""}
 
-                            <CurrencyDropdown currencyList={smartChainCurrencies} onSelect={val => {
-                                if(isLocked) return;
-                                setSelectedCurrency(val);
-                            }} value={selectedCurrency}/>
-                        </div>
-                    ) : ""}
+                        {quoteLoading? (
+                            <div className="d-flex flex-column align-items-center justify-content-center tab-accent mt-3">
+                                <Spinner animation="border" />
+                                Fetching quote...
+                            </div>
+                        ) : ""}
 
-                    {quoteLoading? (
-                        <div className="d-flex flex-column align-items-center justify-content-center">
-                            <Spinner animation="border" />
-                            Fetching quote...
-                        </div>
-                    ) : ""}
+                        {quoteError ? (
+                            <Alert variant={"danger"} className="mt-3">
+                                <p><strong>Quoting error</strong></p>
+                                {quoteError}
+                            </Alert>
+                        ) : ""}
 
-                    {quoteError ? (
-                        <Alert variant={"danger"}>
-                            <p><strong>Quoting error</strong></p>
-                            {quoteError}
-                        </Alert>
-                    ) : ""}
+                        {quoteError || addressError ? (
+                            <Button variant="secondary" onClick={goBack} className="mt-3">
+                                Back
+                            </Button>
+                        ) : ""}
 
-                    {quoteError || addressError ? (
-                        <Button variant="secondary" onClick={goBack}>
-                            Back
-                        </Button>
-                    ) : ""}
-
-                    {quote!=null ? (
-                        <>
-                            <FeeSummaryScreen swap={quote} className="mb-3"/>
-                            <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote} refreshQuote={getQuote}/>
-                        </>
-                    ) : ""}
-
-                    <div className="d-flex mt-auto pt-4">
+                        {quote!=null ? (
+                            <>
+                                <FeeSummaryScreen swap={quote} className="mt-3 mb-3 tab-accent"/>
+                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote} refreshQuote={getQuote}/>
+                            </>
+                        ) : ""}
+                    </div>
+                    <div className="d-flex mt-auto py-4">
                         <Button variant="secondary flex-fill" disabled={isLocked} onClick={goBack}>
                             &lt; Back
                         </Button>
                     </div>
-
-
                 </div>
             </div>
         </>

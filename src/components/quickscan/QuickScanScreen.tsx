@@ -15,11 +15,11 @@ export function QuickScanScreen(props: {
             <div className="d-flex flex-column flex-grow-1">
                 <div className="d-flex align-content-center justify-content-center flex-fill" style={{
                     position: "absolute",
-                    top: "0px",
-                    bottom: "0px",
+                    top: "4rem",
+                    bottom: "4rem",
                     right: "0px",
                     left: "0px",
-                    zIndex: -1
+                    zIndex: 0
                 }}>
                     <QRScanner onResult={(result, err) => {
                         if(result!=null) {
@@ -32,7 +32,7 @@ export function QuickScanScreen(props: {
                     }} camera={"environment"}/>
                 </div>
 
-                <div className="bg-dark p-4 mt-auto">
+                <div className="bg-dark bg-opacity-25 p-5 mt-auto">
                     {/*<Button>Paste from clipboard</Button>*/}
                 </div>
             </div>

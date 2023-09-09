@@ -6,11 +6,11 @@ export function QuickScanScreen(props) {
     const navigate = useNavigate();
     return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: true }), _jsxs("div", Object.assign({ className: "d-flex flex-column flex-grow-1" }, { children: [_jsx("div", Object.assign({ className: "d-flex align-content-center justify-content-center flex-fill", style: {
                             position: "absolute",
-                            top: "0px",
-                            bottom: "0px",
+                            top: "4rem",
+                            bottom: "4rem",
                             right: "0px",
                             left: "0px",
-                            zIndex: -1
+                            zIndex: 0
                         } }, { children: _jsx(QRScanner, { onResult: (result, err) => {
                                 if (result != null) {
                                     if (props.onScanned != null) {
@@ -20,5 +20,5 @@ export function QuickScanScreen(props) {
                                         navigate("/scan/2?address=" + encodeURIComponent(result));
                                     }
                                 }
-                            }, camera: "environment" }) })), _jsx("div", { className: "bg-dark p-4 mt-auto" })] }))] }));
+                            }, camera: "environment" }) })), _jsx("div", { className: "bg-dark bg-opacity-25 p-5 mt-auto" })] }))] }));
 }

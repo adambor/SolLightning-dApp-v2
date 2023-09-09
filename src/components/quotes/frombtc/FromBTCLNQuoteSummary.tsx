@@ -3,6 +3,7 @@ import {Alert, Button, ProgressBar, Spinner} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput from "../../ValidatedInput";
 import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
+import {start} from "repl";
 
 export function FromBTCLNQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
@@ -111,6 +112,13 @@ export function FromBTCLNQuoteSummary(props: {
         }
         setLoading(false);
     };
+
+    useEffect(() => {
+        if(isStarted) {
+            // @ts-ignore
+            window.scrollBy(0,99999);
+        }
+    }, [isStarted]);
 
     return (
         <>

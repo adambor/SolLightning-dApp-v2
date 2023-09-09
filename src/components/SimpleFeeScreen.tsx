@@ -8,7 +8,7 @@ import {
 } from "../utils/Currencies";
 import * as BN from "bn.js";
 
-function FeePart(props: {
+export function FeePart(props: {
     bold?: boolean,
     text: string,
     currency1: CurrencySpec,
@@ -61,7 +61,7 @@ export function SimpleFeeSummaryScreen(props: {
         const btcFee = swapBtcFee.add(networkBtcFee);
 
         return (<div className={className}>
-            <FeePart className="border-bottom border-dark" bold text={"Total fee:"} currency1={currency} amount1={fee} currency2={btcCurrency} amount2={btcFee}/>
+            <FeePart className="border-bottom border-light" bold text={"Total fee:"} currency1={currency} amount1={fee} currency2={btcCurrency} amount2={btcFee}/>
             <FeePart text={"Swap fee:"} currency1={currency} amount1={swapFee} currency2={btcCurrency} amount2={swapBtcFee}/>
             <FeePart text={"Network fee:"} currency1={currency} amount1={networkFee} currency2={btcCurrency} amount2={networkBtcFee}/>
         </div>);
@@ -72,7 +72,7 @@ export function SimpleFeeSummaryScreen(props: {
         const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
 
         return (<div className={className}>
-            <FeePart className="border-bottom border-secondary pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
+            <FeePart className="border-bottom border-light pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
             <div className="d-flex font-medium py-2 mt-2">
                 <span>Watchtower fee:</span>
                 <span className="ms-auto fw-bold">
