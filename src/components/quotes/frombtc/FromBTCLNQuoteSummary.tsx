@@ -1,9 +1,10 @@
 import {useEffect, useRef, useState} from "react";
-import {Alert, Button, ProgressBar, Spinner} from "react-bootstrap";
+import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput from "../../ValidatedInput";
 import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
-import {start} from "repl";
+import {clipboard} from 'react-icons-kit/fa/clipboard'
+import Icon from "react-icons-kit";
 
 export function FromBTCLNQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
@@ -25,6 +26,25 @@ export function FromBTCLNQuoteSummary(props: {
     const [error, setError] = useState<string>();
 
     const abortControllerRef = useRef<AbortController>(new AbortController());
+
+    const qrCodeRef = useRef();
+    const textFieldRef = useRef();
+    const [showCopyOverlay, setShowCopyOverlay] = useState<number>(0);
+
+    useEffect(() => {
+        if(showCopyOverlay>0) {
+            // @ts-ignore
+            navigator.clipboard.writeText(props.quote.getAddress());
+        }
+
+        const timeout = setTimeout(() => {
+            setShowCopyOverlay(0);
+        }, 2000);
+
+        return () => {
+            clearTimeout(timeout);
+        }
+    }, [showCopyOverlay]);
 
     useEffect(() => {
 
@@ -120,6 +140,7 @@ export function FromBTCLNQuoteSummary(props: {
         }
     }, [isStarted]);
 
+
     return (
         <>
             {error!=null ? (
@@ -154,17 +175,36 @@ export function FromBTCLNQuoteSummary(props: {
                 <>
                     {quoteTimeRemaining===0 ? "" : (
                         <div className="tab-accent mb-3">
-                            <div>
+                            <Overlay target={showCopyOverlay===1 ? textFieldRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                {(props) => (
+                                    <Tooltip id="overlay-example" {...props}>
+                                        Address copied to clipboard!
+                                    </Tooltip>
+                                )}
+                            </Overlay>
+
+                            <div ref={qrCodeRef}>
                                 <QRCodeSVG
                                     value={props.quote.getQrData()}
                                     size={300}
                                     includeMargin={true}
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setShowCopyOverlay(2);
+                                    }}
                                 />
                             </div>
                             <label>Please initiate a payment to this lightning network invoice</label>
                             <ValidatedInput
                                 type={"text"}
                                 value={props.quote.getAddress()}
+                                textEnd={(
+                                    <a href="javascript:void(0);" ref={textFieldRef} onClick={() => {
+                                        setShowCopyOverlay(1);
+                                    }}>
+                                        <Icon icon={clipboard}/>
+                                    </a>
+                                )}
                             />
                         </div>
                     )}

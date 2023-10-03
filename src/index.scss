@@ -116,7 +116,7 @@ code {
 }
 
 a {
-  color: #006CFF;
+  color: $primary;
 }
 
 body {
@@ -224,4 +224,8 @@ code {
 
 .alert strong {
   display: block;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }

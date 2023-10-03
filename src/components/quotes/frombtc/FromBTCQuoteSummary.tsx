@@ -1,9 +1,11 @@
 import {useEffect, useRef, useState} from "react";
-import {Alert, Button, ProgressBar, Spinner} from "react-bootstrap";
+import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import {btcCurrency, toHumanReadableString} from "../../../utils/Currencies";
 import ValidatedInput from "../../ValidatedInput";
 import {FromBTCSwap, FromBTCSwapState} from "sollightning-sdk";
+import Icon from "react-icons-kit";
+import {clipboard} from "react-icons-kit/fa/clipboard";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -22,6 +24,25 @@ export function FromBTCQuoteSummary(props: {
     const [loading, setLoading] = useState<boolean>();
     const [success, setSuccess] = useState<boolean>();
     const [error, setError] = useState<string>();
+
+    const qrCodeRef = useRef();
+    const textFieldRef = useRef();
+    const [showCopyOverlay, setShowCopyOverlay] = useState<number>(0);
+
+    useEffect(() => {
+        if(showCopyOverlay>0) {
+            // @ts-ignore
+            navigator.clipboard.writeText(props.quote.getAddress());
+        }
+
+        const timeout = setTimeout(() => {
+            setShowCopyOverlay(0);
+        }, 2000);
+
+        return () => {
+            clearTimeout(timeout);
+        }
+    }, [showCopyOverlay]);
 
     const [txData, setTxData] = useState<{
         txId: string,
@@ -186,17 +207,35 @@ export function FromBTCQuoteSummary(props: {
                 <>
                     {quoteTimeRemaining===0 ? "" : (
                         <div className="mb-3 tab-accent">
-                            <div>
+                            <Overlay target={showCopyOverlay===1 ? textFieldRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                {(props) => (
+                                    <Tooltip id="overlay-example" {...props}>
+                                        Address copied to clipboard!
+                                    </Tooltip>
+                                )}
+                            </Overlay>
+                            <div ref={qrCodeRef}>
                                 <QRCodeSVG
                                     value={props.quote.getQrData()}
                                     size={300}
                                     includeMargin={true}
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                        setShowCopyOverlay(2);
+                                    }}
                                 />
                             </div>
                             <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
                             <ValidatedInput
                                 type={"text"}
                                 value={props.quote.getAddress()}
+                                textEnd={(
+                                    <a href="javascript:void(0);" ref={textFieldRef} onClick={() => {
+                                        setShowCopyOverlay(1);
+                                    }}>
+                                        <Icon icon={clipboard}/>
+                                    </a>
+                                )}
                             />
                         </div>
                     )}
