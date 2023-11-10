@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState} from "react";
 import {Alert, Button, ProgressBar, Spinner} from "react-bootstrap";
-import {IToBTCSwap} from "sollightning-sdk";
+import {IToBTCSwap, ToBTCSwapState} from "sollightning-sdk";
+import {getCurrencySpec, toHumanReadableString} from "../../../utils/Currencies";
 
 export
 function ToBTCQuoteSummary(props: {
@@ -26,6 +27,26 @@ function ToBTCQuoteSummary(props: {
 
         if(props.quote==null) return () => {};
 
+        let cancelled = false;
+
+        if(props.quote.getState()===ToBTCSwapState.CREATED) {
+            //Check that we have enough funds!
+            const neededToPay = props.quote.getInAmount();
+
+            props.quote.getWrapper().getBalance(props.quote.data.getToken()).then(balance => {
+                if(cancelled) return;
+                const hasEnoughBalance = balance.gte(neededToPay);
+
+                if(!hasEnoughBalance) {
+                    const currency = getCurrencySpec(props.quote.getToken());
+                    setSuccess(false);
+                    setError("You don't have enough funds to initiate the swap, balance: "+toHumanReadableString(balance, currency)+" "+currency.ticker);
+                    setLoading(false);
+                    return;
+                }
+            });
+        }
+
         setSuccess(null);
         setRefund(false);
         setError(null);
@@ -50,6 +71,7 @@ function ToBTCQuoteSummary(props: {
 
         return () => {
             clearInterval(interval);
+            cancelled = true;
         };
 
     }, [props.quote]);
@@ -57,18 +79,6 @@ function ToBTCQuoteSummary(props: {
     const onContinue = async () => {
         setLoading(true);
         try {
-            const neededToPay = props.quote.getInAmount();
-
-            const balance = await props.quote.getWrapper().getBalance(props.quote.data.getToken());
-            const hasEnoughBalance = balance.gte(neededToPay);
-
-            if(!hasEnoughBalance) {
-                setSuccess(false);
-                setError("Not enough funds to initiate the swap");
-                setLoading(false);
-                return;
-            }
-
             if(props.setAmountLock) props.setAmountLock(true);
             await props.quote.commit();
             const success = await props.quote.waitForPayment();
