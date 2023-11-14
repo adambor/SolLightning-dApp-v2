@@ -24,6 +24,10 @@ $danger-border-subtle: #f00;
 $danger-bg-subtle: #ff00003d;
 $danger-text-emphasis: #fdd3d3;
 
+$warning-border-subtle: #ff8800;
+$warning-bg-subtle: rgba(255, 140, 0, 0.24);
+$warning-text-emphasis: #fde8cc;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
