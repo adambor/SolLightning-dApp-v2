@@ -36,7 +36,7 @@
     "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "sass": "^1.57.1",
-    "sollightning-sdk": "^8.1.1",
+    "sollightning-sdk": "^9.0.2",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "typescript": "^4.9.4",

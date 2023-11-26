@@ -16,9 +16,9 @@ export function SimpleFeeSummaryScreen(props) {
         const currency = getCurrencySpec(props.swap.getToken());
         const btcCurrency = bitcoinCurrencies[props.swap instanceof ToBTCSwap ? 0 : 1];
         const swapFee = props.swap.getSwapFee();
-        const swapBtcFee = swapFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmount());
+        const swapBtcFee = swapFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmountWithoutFee());
         const networkFee = props.swap.getNetworkFee();
-        const networkBtcFee = networkFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmount());
+        const networkBtcFee = networkFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmountWithoutFee());
         const fee = props.swap.getFee();
         const btcFee = swapBtcFee.add(networkBtcFee);
         return (_jsxs("div", Object.assign({ className: className }, { children: [_jsx(FeePart, { className: "border-bottom border-light", bold: true, text: "Total fee:", currency1: currency, amount1: fee, currency2: btcCurrency, amount2: btcFee }), _jsx(FeePart, { text: "Swap fee:", currency1: currency, amount1: swapFee, currency2: btcCurrency, amount2: swapBtcFee }), _jsx(FeePart, { text: "Network fee:", currency1: currency, amount1: networkFee, currency2: btcCurrency, amount2: networkBtcFee })] })));
@@ -26,12 +26,12 @@ export function SimpleFeeSummaryScreen(props) {
     if (props.swap instanceof FromBTCSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
         const fee = props.swap.getFee();
-        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
+        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmountWithoutFee());
         return (_jsxs("div", Object.assign({ className: className }, { children: [_jsx(FeePart, { className: "border-bottom border-light pb-2", text: "Swap fee:", currency1: bitcoinCurrencies[0], amount1: btcFee, currency2: currency, amount2: fee }), _jsxs("div", Object.assign({ className: "d-flex font-medium py-2 mt-2" }, { children: [_jsx("span", { children: "Watchtower fee:" }), _jsxs("span", Object.assign({ className: "ms-auto fw-bold" }, { children: [_jsx("img", { src: getNativeCurrency().icon, className: "currency-icon-small" }), toHumanReadableString(props.swap.getClaimerBounty(), getNativeCurrency())] }))] }))] })));
     }
     if (props.swap instanceof FromBTCLNSwap) {
         const fee = props.swap.getFee();
-        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
+        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmountWithoutFee());
         const currency = getCurrencySpec(props.swap.getToken());
         return (_jsx("div", Object.assign({ className: className }, { children: _jsx(FeePart, { text: "Swap fee:", currency1: bitcoinCurrencies[1], amount1: btcFee, currency2: currency, amount2: fee }) })));
     }

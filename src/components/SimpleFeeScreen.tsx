@@ -52,10 +52,10 @@ export function SimpleFeeSummaryScreen(props: {
         const btcCurrency = bitcoinCurrencies[props.swap instanceof ToBTCSwap ? 0 : 1];
 
         const swapFee = props.swap.getSwapFee();
-        const swapBtcFee = swapFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmount());
+        const swapBtcFee = swapFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmountWithoutFee());
 
         const networkFee = props.swap.getNetworkFee();
-        const networkBtcFee = networkFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmount());
+        const networkBtcFee = networkFee.mul(props.swap.getOutAmount()).div(props.swap.getInAmountWithoutFee());
 
         const fee = props.swap.getFee();
         const btcFee = swapBtcFee.add(networkBtcFee);
@@ -69,7 +69,7 @@ export function SimpleFeeSummaryScreen(props: {
     if(props.swap instanceof FromBTCSwap) {
         const currency = getCurrencySpec(props.swap.getToken());
         const fee = props.swap.getFee();
-        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
+        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmountWithoutFee());
 
         return (<div className={className}>
             <FeePart className="border-bottom border-light pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
@@ -84,7 +84,7 @@ export function SimpleFeeSummaryScreen(props: {
     }
     if(props.swap instanceof FromBTCLNSwap) {
         const fee = props.swap.getFee();
-        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmount());
+        const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmountWithoutFee());
 
         const currency = getCurrencySpec(props.swap.getToken());
         return (<div className={className}>
