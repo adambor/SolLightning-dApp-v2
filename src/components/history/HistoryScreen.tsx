@@ -6,6 +6,7 @@ import {bitcoinCurrencies, getCurrencySpec, toHumanReadableString} from "../../u
 import {useContext, useState} from "react";
 import {SwapsContext} from "../context/SwapsContext";
 import {useNavigate} from "react-router-dom";
+import * as React from "react";
 
 function HistoryEntry(props: {
     swap: ISwap,

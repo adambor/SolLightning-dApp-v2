@@ -28,6 +28,14 @@ $warning-border-subtle: #ff8800;
 $warning-bg-subtle: rgba(255, 140, 0, 0.24);
 $warning-text-emphasis: #fde8cc;
 
+$accordion-button-active-bg: #00000000;
+$accordion-button-bg: #00000000;
+$accordion-button-active-color: #fff;
+$accordion-button-color: #fff;
+$accordion-border-width: 0;
+$accordion-bg: rgba(var(--bs-dark-rgb), 0.25);
+$accordion-color: #fff;
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -232,4 +240,43 @@ code {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.social-icon {
+  height: 20px;
+  width: 20px;
+  margin-top: -4px;
+}
+
+.accordion-button {
+  font-size: 1.5rem;
+}
+
+.faq-number {
+  font-size: 3rem;
+  width: 3rem;
+}
+
+.section-title {
+  font-size: 4rem;
+  font-weight: bold;
+}
+
+.accordion-button::after {
+  mask-image: var(--bs-accordion-btn-icon);
+  background: #fff;
+}
+.accordion-button:not(.collapsed)::after {
+  mask-image: var(--bs-accordion-btn-icon);
+  background: #fff;
+}
+
+.height-100 {
+  height: 100%;
+}
+
+.logo-img {
+  margin-top: -4px;
+  width: 32px;
+  height: 32px;
 }

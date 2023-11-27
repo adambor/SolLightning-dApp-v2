@@ -15,7 +15,9 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SwapsContext } from "./components/context/SwapsContext";
 import { HistoryScreen } from "./components/history/HistoryScreen";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Container, Navbar, Spinner } from "react-bootstrap";
+import { Container, Nav, Navbar, NavDropdown, Spinner } from "react-bootstrap";
+import { FAQ } from "./info/FAQ";
+import { About } from "./info/About";
 require('@solana/wallet-adapter-react-ui/styles.css');
 function WrappedApp() {
     const wallet = useAnchorWallet();
@@ -23,7 +25,11 @@ function WrappedApp() {
     const [provider, setProvider] = React.useState();
     const [swapper, setSwapper] = React.useState();
     const [actionableSwaps, setActionableSwaps] = React.useState([]);
+    // @ts-ignore
+    const pathName = window.location.pathname;
     React.useEffect(() => {
+        if (pathName === "/about" || pathName === "/faq")
+            return;
         if (wallet == null) {
             setSwapper(null);
             setProvider(null);
@@ -51,7 +57,7 @@ function WrappedApp() {
             }
         })();
     }, [wallet]);
-    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ bg: "dark", variant: "dark", className: "bg-dark bg-opacity-25" }, { children: _jsxs(Container, { children: [_jsx(Navbar.Brand, Object.assign({ href: "#home", className: "fw-semibold" }, { children: "SolLightning" })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-auto" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] }) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
+    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ collapseOnSelect: true, expand: "md", bg: "dark", variant: "dark", className: "bg-dark bg-opacity-50", style: { zIndex: 1000 } }, { children: _jsxs(Container, { children: [_jsxs(Navbar.Brand, Object.assign({ href: "/", className: "fw-semibold" }, { children: [_jsx("img", { src: "./favicon.ico", className: "logo-img" }), "SolLightning"] })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-auto d-md-none" }, { children: _jsx(WalletMultiButton, {}) }))) : "", _jsx(Navbar.Toggle, { "aria-controls": "basic-navbar-nav", className: "ms-3" }), _jsxs(Navbar.Collapse, Object.assign({ role: "", id: "basic-navbar-nav" }, { children: [_jsxs(Nav, Object.assign({ className: "me-auto" }, { children: [_jsx(Nav.Link, Object.assign({ href: "/about" }, { children: "About" })), _jsx(Nav.Link, Object.assign({ href: "/faq" }, { children: "FAQ" })), _jsx(NavDropdown, Object.assign({ title: "Integrate", id: "basic-nav-dropdown" }, { children: _jsx(NavDropdown.Item, Object.assign({ href: "https://github.com/adambor/SolLightning-sdk", target: "_blank" }, { children: "Use SolLightning SDK" })) }))] })), _jsxs(Nav, Object.assign({ className: "ms-auto" }, { children: [_jsx(Nav.Link, Object.assign({ href: "https://twitter.com/SolLightning", target: "_blank", onClick: () => console.log("Home clicked") }, { children: _jsx("img", { className: "social-icon", src: "./icons/socials/twitter.png" }) })), _jsx(Nav.Link, Object.assign({ href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", onClick: () => console.log("Home clicked") }, { children: _jsx("img", { className: "social-icon", src: "./icons/socials/telegram.png" }) })), _jsx(Nav.Link, Object.assign({ href: "https://github.com/adambor/SolLightning-readme", target: "_blank", onClick: () => console.log("Home clicked") }, { children: _jsx("img", { className: "social-icon", src: "./icons/socials/github.png" }) }))] }))] })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-3 d-none d-md-block" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] }) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
                     actionableSwaps,
                     removeSwap: (swap) => {
                         setActionableSwaps((val) => {
@@ -62,7 +68,7 @@ function WrappedApp() {
                             return cpy;
                         });
                     }
-                } }, { children: _jsxs("div", Object.assign({ className: "d-flex flex-grow-1 flex-column" }, { children: [swapper == null ? (_jsx("div", Object.assign({ className: "no-wallet-overlay d-flex align-items-center" }, { children: _jsx("div", Object.assign({ className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill" }, { children: _jsx("div", Object.assign({ className: "text-white text-center" }, { children: provider != null && swapper == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to SolLightning network..." })] })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", Object.assign({ className: "mt-3" }, { children: "Connect your wallet to start" }))] })) })) })) }))) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, Object.assign({ path: "/" }, { children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, Object.assign({ path: "scan" }, { children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] })), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) })] })) }) })] })) }))] }));
+                } }, { children: _jsxs("div", Object.assign({ className: "d-flex flex-grow-1 flex-column" }, { children: [swapper == null && pathName !== "/about" && pathName !== "/faq" ? (_jsx("div", Object.assign({ className: "no-wallet-overlay d-flex align-items-center" }, { children: _jsx("div", Object.assign({ className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill" }, { children: _jsx("div", Object.assign({ className: "text-white text-center" }, { children: provider != null && swapper == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to SolLightning network..." })] })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", Object.assign({ className: "mt-3" }, { children: "Connect your wallet to start" }))] })) })) })) }))) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, Object.assign({ path: "/" }, { children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, Object.assign({ path: "scan" }, { children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] })), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) })] })) }) })] })) }))] }));
 }
 function App() {
     return (_jsx("div", Object.assign({ className: "App d-flex flex-column" }, { children: _jsx(WalletTab, { children: _jsx(WrappedApp, {}) }) })));
