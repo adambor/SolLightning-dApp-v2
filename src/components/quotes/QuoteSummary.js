@@ -6,11 +6,11 @@ import { FromBTCLNQuoteSummary } from "./frombtc/FromBTCLNQuoteSummary";
 import { FromBTCQuoteSummary } from "./frombtc/FromBTCQuoteSummary";
 export function QuoteSummary(props) {
     if (props.quote instanceof IToBTCSwap)
-        return _jsx(ToBTCQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+        return _jsx(ToBTCQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote, balance: props.balance, autoContinue: props.autoContinue });
     if (props.quote instanceof IFromBTCSwap) {
         if (props.quote instanceof FromBTCLNSwap) {
             if (props.quote.lnurl != null) {
-                return _jsx(LNURLWithdrawQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote });
+                return _jsx(LNURLWithdrawQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote, autoContinue: props.autoContinue });
             }
             else {
                 return _jsx(FromBTCLNQuoteSummary, { type: props.type, setAmountLock: props.setAmountLock, quote: props.quote, refreshQuote: props.refreshQuote, abortSwap: props.abortSwap });

@@ -3,7 +3,7 @@ import {CurrencyDropdown} from "../CurrencyDropdown";
 import {useEffect, useRef, useState} from "react";
 import {FeeSummaryScreen} from "../FeeSummaryScreen";
 import {Alert, Button, Spinner} from "react-bootstrap";
-import {ISwap, SolanaSwapper, SwapType} from "sollightning-sdk";
+import {ISwap, SolanaSwapper, SwapType, TokenAddress} from "sollightning-sdk";
 import BigNumber from "bignumber.js";
 import * as BN from "bn.js";
 import {
@@ -17,6 +17,8 @@ import {QuoteSummary} from "../quotes/QuoteSummary";
 import {useLocation, useNavigate} from "react-router-dom";
 import {Topbar} from "../Topbar";
 import * as React from "react";
+
+const balanceExpiryTime = 30000;
 
 export function Step2Screen(props: {
     swapper: SolanaSwapper
@@ -47,9 +49,26 @@ export function Step2Screen(props: {
 
     const [quoteLoading, setQuoteLoading] = useState<boolean>(null);
     const [quoteError, setQuoteError] = useState<string>(null);
-    const [quote, setQuote] = useState<ISwap>(null);
+    const [quote, setQuote] = useState<[ISwap, BN]>(null);
 
     const [isLocked, setLocked] = useState<boolean>(false);
+
+    const balanceCache = useRef<{
+        [tokenAddress: string]: {
+            balance: BN | void,
+            timestamp: number
+        }
+    }>({});
+
+    const getBalance: (tokenAddress: TokenAddress) => Promise<BN> = async (tokenAddress: TokenAddress) => {
+        if(balanceCache.current[tokenAddress.toString()]==null || balanceCache.current[tokenAddress.toString()].balance==null || Date.now()-balanceCache.current[tokenAddress.toString()].timestamp>balanceExpiryTime) {
+            balanceCache.current[tokenAddress.toString()] = {
+                balance: await props.swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
+                timestamp: Date.now()
+            };
+        }
+        return balanceCache.current[tokenAddress.toString()].balance as BN;
+    };
 
     useEffect(() => {
         console.log("Prop address: ", propAddress);
@@ -200,7 +219,12 @@ export function Step2Screen(props: {
                 });
                 return;
             }
-
+            try {
+                if(SolanaSwapper.getLightningInvoiceValue(resultText)==null) {
+                    setAddressError("Lightning invoice needs to contain a payment amount!");
+                    return;
+                }
+            } catch (e) {}
             setAddressError("Invalid address, lightning invoice or LNURL!");
         }
     }, [propAddress, props.swapper]);
@@ -220,27 +244,28 @@ export function Step2Screen(props: {
                     return;
                 }
                 setQuoteLoading(true);
-                let promise;
+                let swapPromise;
                 if(type==="send") {
                     if(network==="btc") {
-                        promise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency));
+                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency));
                     }
                     if(network==="ln") {
                         if(isLnurl) {
-                            promise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60);
+                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60);
                         } else {
-                            promise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60);
+                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60);
                         }
                     }
                 } else {
-                    promise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
                 }
-                currentQuotation.current = promise.then((swap) => {
+                const balancePromise = getBalance(selectedCurrency.address);
+                currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
                     if(quoteUpdates.current!==updateNum) {
                         return;
                     }
                     setQuoteLoading(false);
-                    setQuote(swap);
+                    setQuote(swapAndBalance);
                 }).catch(e => {
                     if(quoteUpdates.current!==updateNum) {
                         return;
@@ -353,8 +378,8 @@ export function Step2Screen(props: {
 
                         {quote!=null ? (
                             <>
-                                <FeeSummaryScreen swap={quote} className="mt-3 mb-3 tab-accent"/>
-                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote} refreshQuote={getQuote}/>
+                                <FeeSummaryScreen swap={quote[0]} className="mt-3 mb-3 tab-accent"/>
+                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={true}/>
                             </>
                         ) : ""}
                     </div>

@@ -4,6 +4,7 @@ import {IToBTCSwap, ToBTCLNSwap, ToBTCSwapState} from "sollightning-sdk";
 import {getCurrencySpec, toHumanReadableString} from "../../../utils/Currencies";
 import * as React from "react";
 import * as bolt11 from "bolt11";
+import * as BN from "bn.js";
 
 const SNOWFLAKE_LIST: Set<string> = new Set([
     "038f8f113c580048d847d6949371726653e02b928196bad310e3eda39ff61723f6",
@@ -14,14 +15,16 @@ export function ToBTCQuoteSummary(props: {
     quote: IToBTCSwap<any>,
     refreshQuote: () => void,
     setAmountLock: (isLocked: boolean) => void,
-    type?: "payment" | "swap"
+    type?: "payment" | "swap",
+    balance?: BN,
+    autoContinue?: boolean
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
     const [initialQuoteTimeout, setInitialQuoteTimeout] = useState<number>();
     const expiryTime = useRef<number>();
 
-    const [confidenceWarning, setConfidenceWarning] = useState<boolean>();
+    const [confidenceWarning, setConfidenceWarning] = useState<boolean>(false);
 
     const [loading, setLoading] = useState<boolean>();
     const [success, setSuccess] = useState<boolean>();
@@ -31,13 +34,48 @@ export function ToBTCQuoteSummary(props: {
     const [refunding, setRefunding] = useState<boolean>();
     const [refunded, setRefunded] = useState<boolean>();
 
+    const onContinue = async (skipChecks?: boolean) => {
+        setLoading(true);
+        try {
+            if(props.setAmountLock) props.setAmountLock(true);
+            await props.quote.commit(null, null, skipChecks);
+            const success = await props.quote.waitForPayment();
+            if(success) {
+                setSuccess(true);
+                if(props.setAmountLock) props.setAmountLock(false);
+            } else {
+                setSuccess(false);
+                setRefund(true);
+                setError("Swap failed, you can refund your prior deposit");
+            }
+        } catch (e) {
+            setSuccess(false);
+            setError(e.toString());
+            if(props.setAmountLock) props.setAmountLock(false);
+        }
+        setLoading(false);
+    };
+
+    const onRefund = async () => {
+        setRefunding(true);
+        try {
+            await props.quote.refund();
+            setRefunded(true);
+            setError("Deposit refunded successfully");
+            if(props.setAmountLock) props.setAmountLock(false);
+        } catch (e) {
+
+        }
+        setRefunding(false);
+    };
+
     useEffect(() => {
 
         if(props.quote==null) return () => {};
 
         let cancelled = false;
 
-        setConfidenceWarning(false);
+        if(confidenceWarning) setConfidenceWarning(false);
         if(props.quote.getState()===ToBTCSwapState.CREATED) {
             if(props.quote instanceof ToBTCLNSwap && props.quote.getConfidence()===0) {
                 let is_snowflake: boolean = false;
@@ -53,13 +91,20 @@ export function ToBTCQuoteSummary(props: {
                     }
                 }
 
-                setConfidenceWarning(!is_snowflake);
+                if(confidenceWarning===is_snowflake) setConfidenceWarning(!is_snowflake);
             }
 
             //Check that we have enough funds!
             const neededToPay = props.quote.getInAmount();
 
-            props.quote.getWrapper().getBalance(props.quote.data.getToken()).then(balance => {
+            let balancePromise: Promise<BN>;
+            if(props.balance!=null) {
+                balancePromise = Promise.resolve(props.balance);
+            } else {
+                balancePromise = props.quote.getWrapper().getBalance(props.quote.data.getToken());
+            }
+
+            balancePromise.then(balance => {
                 if(cancelled) return;
                 const hasEnoughBalance = balance.gte(neededToPay);
 
@@ -70,6 +115,8 @@ export function ToBTCQuoteSummary(props: {
                     setLoading(false);
                     return;
                 }
+
+                if(props.autoContinue) onContinue(true);
             });
         }
 
@@ -102,41 +149,6 @@ export function ToBTCQuoteSummary(props: {
 
     }, [props.quote]);
 
-    const onContinue = async () => {
-        setLoading(true);
-        try {
-            if(props.setAmountLock) props.setAmountLock(true);
-            await props.quote.commit();
-            const success = await props.quote.waitForPayment();
-            if(success) {
-                setSuccess(true);
-                if(props.setAmountLock) props.setAmountLock(false);
-            } else {
-                setSuccess(false);
-                setRefund(true);
-                setError("Swap failed, you can refund your prior deposit");
-            }
-        } catch (e) {
-            setSuccess(false);
-            setError(e.toString());
-            if(props.setAmountLock) props.setAmountLock(false);
-        }
-        setLoading(false);
-    };
-
-    const onRefund = async () => {
-        setRefunding(true);
-        try {
-            await props.quote.refund();
-            setRefunded(true);
-            setError("Deposit refunded successfully");
-            if(props.setAmountLock) props.setAmountLock(false);
-        } catch (e) {
-
-        }
-        setRefunding(false);
-    };
-
     return (
         <>
             <Alert className="text-center mb-3" show={confidenceWarning} variant="warning" onClose={() => setConfidenceWarning(false)} dismissible closeVariant="white">
@@ -159,7 +171,7 @@ export function ToBTCQuoteSummary(props: {
                         New quote
                     </Button>
                 ) : (
-                    <Button onClick={onContinue} disabled={loading} size="lg">
+                    <Button onClick={() => onContinue()} disabled={loading} size="lg">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                         {props.type==="payment" ? "Pay" : "Swap"}
                     </Button>

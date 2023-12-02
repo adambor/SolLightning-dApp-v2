@@ -4,13 +4,14 @@ import { CurrencyDropdown } from "../CurrencyDropdown";
 import { useEffect, useRef, useState } from "react";
 import { FeeSummaryScreen } from "../FeeSummaryScreen";
 import { Alert, Button, Spinner } from "react-bootstrap";
-import { SwapType } from "sollightning-sdk";
+import { SolanaSwapper, SwapType } from "sollightning-sdk";
 import BigNumber from "bignumber.js";
 import * as BN from "bn.js";
 import { btcCurrency, fromHumanReadable, smartChainCurrencies, toHumanReadable } from "../../utils/Currencies";
 import { QuoteSummary } from "../quotes/QuoteSummary";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Topbar } from "../Topbar";
+const balanceExpiryTime = 30000;
 export function Step2Screen(props) {
     const navigate = useNavigate();
     const { search } = useLocation();
@@ -30,6 +31,16 @@ export function Step2Screen(props) {
     const [quoteError, setQuoteError] = useState(null);
     const [quote, setQuote] = useState(null);
     const [isLocked, setLocked] = useState(false);
+    const balanceCache = useRef({});
+    const getBalance = async (tokenAddress) => {
+        if (balanceCache.current[tokenAddress.toString()] == null || balanceCache.current[tokenAddress.toString()].balance == null || Date.now() - balanceCache.current[tokenAddress.toString()].timestamp > balanceExpiryTime) {
+            balanceCache.current[tokenAddress.toString()] = {
+                balance: await props.swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
+                timestamp: Date.now()
+            };
+        }
+        return balanceCache.current[tokenAddress.toString()].balance;
+    };
     useEffect(() => {
         console.log("Prop address: ", propAddress);
         if (propAddress == null) {
@@ -173,6 +184,13 @@ export function Step2Screen(props) {
                 });
                 return;
             }
+            try {
+                if (SolanaSwapper.getLightningInvoiceValue(resultText) == null) {
+                    setAddressError("Lightning invoice needs to contain a payment amount!");
+                    return;
+                }
+            }
+            catch (e) { }
             setAddressError("Invalid address, lightning invoice or LNURL!");
         }
     }, [propAddress, props.swapper]);
@@ -191,29 +209,30 @@ export function Step2Screen(props) {
                     return;
                 }
                 setQuoteLoading(true);
-                let promise;
+                let swapPromise;
                 if (type === "send") {
                     if (network === "btc") {
-                        promise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency));
+                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency));
                     }
                     if (network === "ln") {
                         if (isLnurl) {
-                            promise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60);
+                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60);
                         }
                         else {
-                            promise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5 * 24 * 60 * 60);
+                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5 * 24 * 60 * 60);
                         }
                     }
                 }
                 else {
-                    promise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
                 }
-                currentQuotation.current = promise.then((swap) => {
+                const balancePromise = getBalance(selectedCurrency.address);
+                currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
                     if (quoteUpdates.current !== updateNum) {
                         return;
                     }
                     setQuoteLoading(false);
-                    setQuote(swap);
+                    setQuote(swapAndBalance);
                 }).catch(e => {
                     if (quoteUpdates.current !== updateNum) {
                         return;
@@ -242,5 +261,5 @@ export function Step2Screen(props) {
                                                 if (isLocked)
                                                     return;
                                                 setSelectedCurrency(val);
-                                            }, value: selectedCurrency, className: "bg-transparent text-white" })] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mt-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quoteError || addressError ? (_jsx(Button, Object.assign({ variant: "secondary", onClick: goBack, className: "mt-3" }, { children: "Back" }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote, className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { setAmountLock: setLocked, type: "payment", quote: quote, refreshQuote: getQuote })] })) : ""] })), _jsx("div", Object.assign({ className: "d-flex mt-auto py-4" }, { children: _jsx(Button, Object.assign({ variant: "secondary flex-fill", disabled: isLocked, onClick: goBack }, { children: "< Back" })) }))] })) }))] }));
+                                            }, value: selectedCurrency, className: "bg-transparent text-white" })] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mt-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quoteError || addressError ? (_jsx(Button, Object.assign({ variant: "secondary", onClick: goBack, className: "mt-3" }, { children: "Back" }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote[0], className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { setAmountLock: setLocked, type: "payment", quote: quote[0], balance: quote[1], refreshQuote: getQuote, autoContinue: true })] })) : ""] })), _jsx("div", Object.assign({ className: "d-flex mt-auto py-4" }, { children: _jsx(Button, Object.assign({ variant: "secondary flex-fill", disabled: isLocked, onClick: goBack }, { children: "< Back" })) }))] })) }))] }));
 }

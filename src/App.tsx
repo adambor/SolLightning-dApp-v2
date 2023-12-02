@@ -5,7 +5,7 @@ import WalletTab from "./components/WalletTab";
 import {QuickScanScreen} from "./components/quickscan/QuickScanScreen";
 import {Step2Screen} from "./components/quickscan/Step2Screen";
 import {useAnchorWallet, useConnection} from '@solana/wallet-adapter-react';
-import {createSwapperOptions, SolanaSwapper} from "sollightning-sdk/dist";
+import {createSwapperOptions, NetworkError, SolanaSwapper} from "sollightning-sdk/dist";
 import {AnchorProvider} from "@coral-xyz/anchor";
 import {FEConstants} from "./FEConstants";
 import {SwapTab} from "./components/swap/SwapTab2";
@@ -15,7 +15,7 @@ import {SwapsContext} from "./components/context/SwapsContext";
 import {FromBTCSwap, ISwap} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
-import {Container, Nav, Navbar, NavDropdown, Spinner} from "react-bootstrap";
+import {Alert, Button, Card, Container, Nav, Navbar, NavDropdown, Spinner} from "react-bootstrap";
 import {FAQ} from "./info/FAQ";
 import {About} from "./info/About";
 
@@ -27,10 +27,40 @@ function WrappedApp() {
     const {connection} = useConnection();
     const [provider, setProvider] = React.useState<AnchorProvider>();
     const [swapper, setSwapper] = React.useState<SolanaSwapper>();
+    const [swapperLoadingError, setSwapperLoadingError] = React.useState<string>();
     const [actionableSwaps, setActionableSwaps] = React.useState<ISwap[]>([]);
 
     // @ts-ignore
     const pathName = window.location.pathname;
+
+    const loadSwapper = async(_provider: AnchorProvider) => {
+        setSwapperLoadingError(null);
+        try {
+            console.log("init start");
+
+            const swapper = new SolanaSwapper(_provider, createSwapperOptions(FEConstants.chain, null, null, null, {
+                getTimeout: 15000,
+                postTimeout: 30000
+            }));
+
+            await swapper.init();
+
+            console.log(swapper);
+
+            console.log("Swapper initialized, getting claimable swaps...");
+
+            setSwapper(swapper);
+
+            const actionableSwaps = (await swapper.getActionableSwaps());
+            console.log("actionable swaps: ", actionableSwaps);
+            setActionableSwaps(actionableSwaps);
+
+            console.log("Initialized");
+        } catch (e) {
+            setSwapperLoadingError(e.toString());
+            console.error(e)
+        }
+    };
 
     React.useEffect(() => {
 
@@ -49,31 +79,7 @@ function WrappedApp() {
 
         setProvider(_provider);
 
-        (async () => {
-
-            try {
-                console.log("init start");
-
-                const swapper = new SolanaSwapper(_provider, createSwapperOptions(FEConstants.chain));
-
-                await swapper.init();
-
-                console.log(swapper);
-
-                console.log("Swapper initialized, getting claimable swaps...");
-
-                const actionableSwaps = (await swapper.getActionableSwaps());
-                console.log("actionable swaps: ", actionableSwaps);
-                setActionableSwaps(actionableSwaps);
-                setSwapper(swapper);
-
-                console.log("Initialized");
-            } catch (e) {
-                console.error(e)
-            }
-
-        })();
-
+        loadSwapper(_provider);
     }, [wallet]);
 
     return (
@@ -81,33 +87,40 @@ function WrappedApp() {
             <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000}}>
                 <Container>
                     <Navbar.Brand href="/" className="fw-semibold">
-                        <img src="./favicon.ico" className="logo-img"/>SolLightning
+                        <img src="/icons/logoicon.png" className="logo-img"/>SolLightning
                     </Navbar.Brand>
-
-                    {swapper!=null ? (<div className="ms-auto d-md-none">
-                        <WalletMultiButton />
-                    </div>) : ""}
 
                     <Navbar.Toggle aria-controls="basic-navbar-nav" className="ms-3" />
 
                     <Navbar.Collapse role="" id="basic-navbar-nav">
-                        <Nav className="me-auto">
+                        <Nav className="d-flex d-md-none me-auto text-start border-top border-bottom border-dark-subtle my-2" navbarScroll style={{ maxHeight: '100px' }}>
+                            {pathName==="/about" || pathName==="/faq" ? (
+                                <Nav.Link href="/">Swap</Nav.Link>
+                            ) : ""}
                             <Nav.Link href="/about">About</Nav.Link>
                             <Nav.Link href="/faq">FAQ</Nav.Link>
-                            <NavDropdown title="Integrate" id="basic-nav-dropdown">
-                                <NavDropdown.Item href="https://github.com/adambor/SolLightning-sdk" target="_blank">Use SolLightning SDK</NavDropdown.Item>
-                            </NavDropdown>
+                            <Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>
+                        </Nav>
+                        <Nav className="d-none d-md-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
+                            {pathName==="/about" || pathName==="/faq" ? (
+                                <Nav.Link href="/">Swap</Nav.Link>
+                            ) : ""}
+                            <Nav.Link href="/about">About</Nav.Link>
+                            <Nav.Link href="/faq">FAQ</Nav.Link>
+                            <Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>
                         </Nav>
                         <Nav className="ms-auto">
-                            <Nav.Link href="https://twitter.com/SolLightning" target="_blank" onClick={() => console.log("Home clicked")}><img className="social-icon" src="./icons/socials/twitter.png"/></Nav.Link>
-                            <Nav.Link href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" onClick={() => console.log("Home clicked")}><img className="social-icon" src="./icons/socials/telegram.png"/></Nav.Link>
-                            <Nav.Link href="https://github.com/adambor/SolLightning-readme" target="_blank" onClick={() => console.log("Home clicked")}><img className="social-icon" src="./icons/socials/github.png"/></Nav.Link>
+                            <div className="d-flex flex-row align-items-center" style={{height: "3rem"}}>
+                                <a href="https://twitter.com/SolLightning" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
+                                <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
+                                <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
+                                {swapper!=null ? (<div className="ms-auto">
+                                    <WalletMultiButton />
+                                </div>) : ""}
+                            </div>
                         </Nav>
                     </Navbar.Collapse>
 
-                    {swapper!=null ? (<div className="ms-3 d-none d-md-block">
-                        <WalletMultiButton />
-                    </div>) : ""}
                 </Container>
             </Navbar>
 
@@ -129,8 +142,22 @@ function WrappedApp() {
                                 <div className="text-white text-center">
                                     {provider!=null && swapper==null ? (
                                         <>
-                                            <Spinner/>
-                                            <h4>Connecting to SolLightning network...</h4>
+                                            {swapperLoadingError==null ? (
+                                                <>
+                                                    <Spinner/>
+                                                    <h4>Connecting to SolLightning network...</h4>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Alert className="text-center" show={true} variant="danger" closeVariant="white">
+                                                        <strong>SolLightning network connection error</strong>
+                                                        <p>{swapperLoadingError}</p>
+                                                        <Button variant="light" onClick={() => {
+                                                            loadSwapper(provider)
+                                                        }}>Retry</Button>
+                                                    </Alert>
+                                                </>
+                                            )}
                                         </>
                                     ) : (
                                         <>

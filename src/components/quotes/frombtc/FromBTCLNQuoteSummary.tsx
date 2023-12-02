@@ -5,6 +5,7 @@ import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
 import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
 import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
+import {bool} from "prop-types";
 
 export function FromBTCLNQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
@@ -31,6 +32,29 @@ export function FromBTCLNQuoteSummary(props: {
     const textFieldRef = useRef<ValidatedInputRef>();
     const copyBtnRef = useRef();
     const [showCopyOverlay, setShowCopyOverlay] = useState<number>(0);
+    const [autoClaim, setAutoClaim] = useState<boolean>(false);
+
+    const onCommit = async () => {
+        setStarted(true);
+        if(props.setAmountLock!=null) props.setAmountLock(true);
+        props.quote.waitForPayment(abortControllerRef.current.signal).catch(e => {
+            if(abortControllerRef.current.signal.aborted) return;
+            setError(e.toString());
+            if(props.setAmountLock!=null) props.setAmountLock(false);
+        });
+    };
+
+    const onClaim = async (skipChecks?: boolean) => {
+        setLoading(true);
+        try {
+            await props.quote.commitAndClaim(null, skipChecks);
+            setSuccess(true);
+        } catch (e) {
+            setSuccess(false);
+            setError(e.toString());
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
         if(showCopyOverlay===0) {
@@ -100,6 +124,8 @@ export function FromBTCLNQuoteSummary(props: {
                 const dt = Math.floor((expiryTime.current-Date.now())/1000);
                 setInitialQuoteTimeout(dt);
                 setQuoteTimeRemaining(dt);
+
+                if(autoClaim) onClaim(true);
             }
         });
 
@@ -110,28 +136,6 @@ export function FromBTCLNQuoteSummary(props: {
         };
 
     }, [props.quote]);
-
-    const onCommit = async () => {
-        setStarted(true);
-        if(props.setAmountLock!=null) props.setAmountLock(true);
-        props.quote.waitForPayment(abortControllerRef.current.signal).catch(e => {
-            if(abortControllerRef.current.signal.aborted) return;
-            setError(e.toString());
-            if(props.setAmountLock!=null) props.setAmountLock(false);
-        });
-    };
-
-    const onClaim = async () => {
-        setLoading(true);
-        try {
-            await props.quote.commitAndClaim();
-            setSuccess(true);
-        } catch (e) {
-            setSuccess(false);
-            setError(e.toString());
-        }
-        setLoading(false);
-    };
 
     useEffect(() => {
         if(isStarted) {
@@ -275,7 +279,7 @@ export function FromBTCLNQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onClaim} disabled={loading} size="lg">
+                        <Button onClick={() => onClaim()} disabled={loading} size="lg">
                             {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                             Finish swap (claim funds)
                         </Button>

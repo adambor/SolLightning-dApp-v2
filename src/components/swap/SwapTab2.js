@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { FromBTCSwap, IFromBTCSwap, IToBTCSwap, SwapType, ToBTCSwap } from "sollightning-sdk";
+import { FromBTCSwap, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap } from "sollightning-sdk";
 import { Alert, Button, Card, Spinner } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
@@ -270,7 +270,7 @@ export function SwapTab(props) {
                                             }, value: outCurrency, className: "round-right bg-transparent text-white" })) }) })), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
                                                 setAddress(val);
                                                 if (props.swapper.isValidLNURL(val)) {
-                                                    props.swapper.getLNURLTypeAndData(val).then(() => {
+                                                    props.swapper.getLNURLTypeAndData(val, false).then(() => {
                                                         navigate("/scan/2?address=" + encodeURIComponent(val));
                                                     }).catch(e => { });
                                                 }
@@ -288,8 +288,15 @@ export function SwapTab(props) {
                                                 }
                                                 setDisabled(false);
                                             }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
-                                                return props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
-                                                    : "Invalid bitcoin address/lightning network invoice";
+                                                if (props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val))
+                                                    return null;
+                                                try {
+                                                    if (SolanaSwapper.getLightningInvoiceValue(val) == null) {
+                                                        return "Lightning invoice needs to contain a payment amount!";
+                                                    }
+                                                }
+                                                catch (e) { }
+                                                return "Invalid bitcoin address/lightning network invoice";
                                             } }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);

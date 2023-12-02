@@ -1,12 +1,13 @@
 import {useEffect, useRef, useState} from "react";
 import {Alert, Button, ProgressBar, Spinner} from "react-bootstrap";
-import {FromBTCLNSwap} from "sollightning-sdk";
+import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
 
 export function LNURLWithdrawQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
     refreshQuote: () => void,
     setAmountLock: (isLocked: boolean) => void,
-    type?: "payment" | "swap"
+    type?: "payment" | "swap",
+    autoContinue?: boolean
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
@@ -40,19 +41,23 @@ export function LNURLWithdrawQuoteSummary(props: {
         setInitialQuoteTimeout(dt);
         setQuoteTimeRemaining(dt);
 
+        if(props.quote.getState()===FromBTCLNSwapState.PR_CREATED) {
+            if(props.autoContinue) onContinue(true);
+        }
+
         return () => {
             clearInterval(interval);
         };
 
     }, [props.quote]);
 
-    const onContinue = async () => {
+    const onContinue = async (skipChecks?: boolean) => {
         if (!props.quote.prPosted) {
             setLoading(true);
             try {
                 if(props.setAmountLock) props.setAmountLock(true);
                 await props.quote.waitForPayment();
-                await props.quote.commitAndClaim();
+                await props.quote.commitAndClaim(null, skipChecks);
                 setSuccess(true);
             } catch (e) {
                 setSuccess(false);
@@ -80,7 +85,7 @@ export function LNURLWithdrawQuoteSummary(props: {
                         New quote
                     </Button>
                 ) : (
-                    <Button onClick={onContinue} disabled={loading} size="lg">
+                    <Button onClick={() => onContinue()} disabled={loading} size="lg">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                         Claim
                     </Button>

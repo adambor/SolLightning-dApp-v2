@@ -21,15 +21,15 @@ export function FeePart(props: {
         <div className={"d-flex font-medium "+props.className}>
             <span className={"d-flex align-items-center"+(props.bold ? " fw-bold" : "")}>{props.text}</span>
             <span className="ms-auto text-end">
-                    <span className="fw-bold d-block mb--8">
-                        <img src={props.currency1.icon} className="currency-icon-small"/>
-                        <span>{toHumanReadableString(props.amount1, props.currency1)}</span>
-                    </span>
-                    <span className="d-block">
-                        <img src={props.currency2.icon} className="currency-icon-small"/>
-                        <small>{toHumanReadableString(props.amount2, props.currency2)}</small>
-                    </span>
+                <span className="fw-bold d-block mb--8">
+                    <img src={props.currency1.icon} className="currency-icon-small"/>
+                    <span>{toHumanReadableString(props.amount1, props.currency1)}</span>
                 </span>
+                <span className="d-block">
+                    <img src={props.currency2.icon} className="currency-icon-small"/>
+                    <small>{toHumanReadableString(props.amount2, props.currency2)}</small>
+                </span>
+            </span>
         </div>
     );
 }

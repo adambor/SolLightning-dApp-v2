@@ -16,7 +16,6 @@ import {FeePart, SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
-import { BN } from "@coral-xyz/anchor";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -376,7 +375,7 @@ export function SwapTab(props: {
                                     onChange={(val) => {
                                         setAddress(val);
                                         if(props.swapper.isValidLNURL(val)) {
-                                            props.swapper.getLNURLTypeAndData(val).then(() => {
+                                            props.swapper.getLNURLTypeAndData(val, false).then(() => {
                                                 navigate("/scan/2?address="+encodeURIComponent(val));
                                             }).catch(e => {});
                                         }
@@ -397,8 +396,13 @@ export function SwapTab(props: {
                                     inputRef={addressRef}
                                     placeholder={"Paste Bitcoin/Lightning address"}
                                     onValidate={(val) => {
-                                        return props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val) ? null
-                                            : "Invalid bitcoin address/lightning network invoice";
+                                        if(props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val)) return null;
+                                        try {
+                                            if(SolanaSwapper.getLightningInvoiceValue(val)==null) {
+                                                return "Lightning invoice needs to contain a payment amount!";
+                                            }
+                                        } catch (e) {}
+                                        return "Invalid bitcoin address/lightning network invoice";
                                     }}
                                 />
                                 {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (
