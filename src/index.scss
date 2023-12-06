@@ -280,3 +280,17 @@ code {
   width: 32px;
   height: 32px;
 }
+
+.pill-round {
+  padding-left: 8.5px;
+  padding-right: 8.5px;
+}
+
+.newBadge {
+  margin-bottom: -20px;
+}
+
+.newBadgeCollapse {
+  margin: -10px 30px -10px -5px;
+  z-index: 1;
+}

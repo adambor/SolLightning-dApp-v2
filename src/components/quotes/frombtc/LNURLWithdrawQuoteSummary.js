@@ -41,7 +41,7 @@ export function LNURLWithdrawQuoteSummary(props) {
             try {
                 if (props.setAmountLock)
                     props.setAmountLock(true);
-                await props.quote.waitForPayment();
+                await props.quote.waitForPayment(null, 1);
                 await props.quote.commitAndClaim(null, skipChecks);
                 setSuccess(true);
             }

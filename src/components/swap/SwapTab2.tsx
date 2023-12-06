@@ -189,7 +189,7 @@ export function SwapTab(props: {
 
         setQuote(null);
         setQuoteError(null);
-        setQuoteLoading(false);
+        // setQuoteLoading(false);
 
         if(exactIn) {
             outAmountRef.current.validate();

@@ -2,7 +2,7 @@ import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import {CurrencyDropdown} from "../CurrencyDropdown";
 import {useEffect, useRef, useState} from "react";
 import {FeeSummaryScreen} from "../FeeSummaryScreen";
-import {Alert, Button, Spinner} from "react-bootstrap";
+import {Alert, Badge, Button, Form, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {ISwap, SolanaSwapper, SwapType, TokenAddress} from "sollightning-sdk";
 import BigNumber from "bignumber.js";
 import * as BN from "bn.js";
@@ -68,6 +68,21 @@ export function Step2Screen(props: {
             };
         }
         return balanceCache.current[tokenAddress.toString()].balance as BN;
+    };
+
+    const [autoContinue, setAutoContinue] = useState<boolean>();
+
+    useEffect(() => {
+
+        const config = window.localStorage.getItem("crossLightning-autoContinue");
+
+        setAutoContinue(config==null ? true : config==="true");
+
+    }, []);
+
+    const setAndSaveAutoContinue = (value: boolean) => {
+        setAutoContinue(value);
+        window.localStorage.setItem("crossLightning-autoContinue", ""+value);
     };
 
     useEffect(() => {
@@ -353,6 +368,21 @@ export function Step2Screen(props: {
                                     if(isLocked) return;
                                     setSelectedCurrency(val);
                                 }} value={selectedCurrency} className="bg-transparent text-white"/>
+
+                                <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-2">
+                                    <Form.Check // prettier-ignore
+                                        id="autoclaim-pay"
+                                        type="switch"
+                                        onChange={(val) => setAndSaveAutoContinue(val.target.checked)}
+                                        checked={autoContinue}
+                                    />
+                                    <label title="" htmlFor="autoclaim-pay" className="form-check-label me-2">{type==="send" ? "Auto-pay" : "Auto-claim"}</label>
+                                    <OverlayTrigger overlay={<Tooltip id="autoclaim-pay-tooltip">
+                                        Automatically requests authorization of the transaction through your wallet - as soon as the swap pricing is returned.
+                                    </Tooltip>}>
+                                        <Badge bg="primary" className="pill-round" pill>?</Badge>
+                                    </OverlayTrigger>
+                                </Form>
                             </div>
                         ) : ""}
 
@@ -379,7 +409,7 @@ export function Step2Screen(props: {
                         {quote!=null ? (
                             <>
                                 <FeeSummaryScreen swap={quote[0]} className="mt-3 mb-3 tab-accent"/>
-                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={true}/>
+                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={autoContinue}/>
                             </>
                         ) : ""}
                     </div>

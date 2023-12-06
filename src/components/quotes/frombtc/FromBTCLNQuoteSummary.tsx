@@ -1,11 +1,11 @@
 import {useEffect, useRef, useState} from "react";
-import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
+import {Alert, Badge, Button, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip, Form} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
 import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
 import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
-import {bool} from "prop-types";
+import * as React from "react";
 
 export function FromBTCLNQuoteSummary(props: {
     quote: FromBTCLNSwap<any>,
@@ -34,10 +34,23 @@ export function FromBTCLNQuoteSummary(props: {
     const [showCopyOverlay, setShowCopyOverlay] = useState<number>(0);
     const [autoClaim, setAutoClaim] = useState<boolean>(false);
 
+    useEffect(() => {
+
+        const config = window.localStorage.getItem("crossLightning-autoClaim");
+
+        setAutoClaim(config==null ? false : config==="true");
+
+    }, []);
+
+    const setAndSaveAutoClaim = (value: boolean) => {
+        setAutoClaim(value);
+        window.localStorage.setItem("crossLightning-autoClaim", ""+value);
+    };
+
     const onCommit = async () => {
         setStarted(true);
         if(props.setAmountLock!=null) props.setAmountLock(true);
-        props.quote.waitForPayment(abortControllerRef.current.signal).catch(e => {
+        props.quote.waitForPayment(abortControllerRef.current.signal, 2).catch(e => {
             if(abortControllerRef.current.signal.aborted) return;
             setError(e.toString());
             if(props.setAmountLock!=null) props.setAmountLock(false);
@@ -124,8 +137,6 @@ export function FromBTCLNQuoteSummary(props: {
                 const dt = Math.floor((expiryTime.current-Date.now())/1000);
                 setInitialQuoteTimeout(dt);
                 setQuoteTimeRemaining(dt);
-
-                if(autoClaim) onClaim(true);
             }
         });
 
@@ -136,6 +147,12 @@ export function FromBTCLNQuoteSummary(props: {
         };
 
     }, [props.quote]);
+
+    useEffect(() => {
+        if(state===FromBTCLNSwapState.PR_PAID) {
+            if(autoClaim) onClaim(true);
+        }
+    }, [state, autoClaim]);
 
     useEffect(() => {
         if(isStarted) {
@@ -232,6 +249,21 @@ export function FromBTCLNQuoteSummary(props: {
                                 )}
                                 inputRef={textFieldRef}
                             />
+
+                            <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-3">
+                                <Form.Check // prettier-ignore
+                                    id="autoclaim"
+                                    type="switch"
+                                    onChange={(val) => setAndSaveAutoClaim(val.target.checked)}
+                                    checked={autoClaim}
+                                />
+                                <label title="" htmlFor="autoclaim" className="form-check-label me-2">Auto-claim</label>
+                                <OverlayTrigger overlay={<Tooltip id="autoclaim-pay-tooltip">
+                                    Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives.
+                                </Tooltip>}>
+                                    <Badge bg="primary" className="pill-round" pill>?</Badge>
+                                </OverlayTrigger>
+                            </Form>
                         </div>
                     )}
 
@@ -243,6 +275,7 @@ export function FromBTCLNQuoteSummary(props: {
                         )}
                         <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                     </div>
+
                     {quoteTimeRemaining===0 ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote

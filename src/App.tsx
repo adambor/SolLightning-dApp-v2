@@ -15,9 +15,26 @@ import {SwapsContext} from "./components/context/SwapsContext";
 import {FromBTCSwap, ISwap} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
-import {Alert, Button, Card, Container, Nav, Navbar, NavDropdown, Spinner} from "react-bootstrap";
+import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    Container, Form,
+    Nav,
+    Navbar,
+    NavDropdown,
+    OverlayTrigger,
+    Spinner, Tooltip
+} from "react-bootstrap";
 import {FAQ} from "./info/FAQ";
 import {About} from "./info/About";
+import {Map} from "./info/Map";
+import {map} from 'react-icons-kit/fa/map';
+import {info} from 'react-icons-kit/fa/info';
+import {question} from 'react-icons-kit/fa/question';
+import {exchange} from 'react-icons-kit/fa/exchange';
+import Icon from "react-icons-kit";
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -64,7 +81,7 @@ function WrappedApp() {
 
     React.useEffect(() => {
 
-        if(pathName==="/about" || pathName==="/faq") return;
+        if(pathName==="/about" || pathName==="/faq" || pathName==="/map") return;
 
         if(wallet==null) {
             setSwapper(null);
@@ -84,30 +101,52 @@ function WrappedApp() {
 
     return (
         <>
-            <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000}}>
+            <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container>
                     <Navbar.Brand href="/" className="fw-semibold">
                         <img src="/icons/logoicon.png" className="logo-img"/>SolLightning
                     </Navbar.Brand>
 
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" className="ms-3" />
+                    <div className="d-flex flex-column">
+                        <Badge className="newBadgeCollapse d-md-none">New!</Badge>
+                        <Navbar.Toggle aria-controls="basic-navbar-nav" className="ms-3" />
+                    </div>
 
                     <Navbar.Collapse role="" id="basic-navbar-nav">
                         <Nav className="d-flex d-md-none me-auto text-start border-top border-bottom border-dark-subtle my-2" navbarScroll style={{ maxHeight: '100px' }}>
-                            {pathName==="/about" || pathName==="/faq" ? (
-                                <Nav.Link href="/">Swap</Nav.Link>
+                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" ? (
+                                <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
-                            <Nav.Link href="/about">About</Nav.Link>
-                            <Nav.Link href="/faq">FAQ</Nav.Link>
-                            <Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>
+                            <Nav.Link href="/map" className="d-flex flex-row align-items-center">
+                                <Icon icon={map} className="d-flex me-1"/>
+                                <span className="me-1">Map</span>
+                                <Badge className="me-2">New!</Badge>
+                                <small>Find merchants accepting lightning!</small>
+                            </Nav.Link>
+                            <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
+                            <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
                         <Nav className="d-none d-md-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
-                            {pathName==="/about" || pathName==="/faq" ? (
-                                <Nav.Link href="/">Swap</Nav.Link>
+                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" ? (
+                                <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
-                            <Nav.Link href="/about">About</Nav.Link>
-                            <Nav.Link href="/faq">FAQ</Nav.Link>
-                            <Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>
+
+                            <OverlayTrigger placement="bottom" overlay={<Tooltip id="map-tooltip">
+                                Find merchants near you accepting bitcoin lightning!
+                            </Tooltip>}>
+                                <Nav.Link href="/map" className="d-flex flex-column align-items-center">
+                                    <div className="d-flex flex-row align-items-center">
+                                        <Icon icon={map} className="d-flex me-1"/>
+                                        <span>Map</span>
+                                    </div>
+                                    <Badge className="newBadge">New!</Badge>
+                                </Nav.Link>
+                            </OverlayTrigger>
+
+                            <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
+                            <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
                         <Nav className="ms-auto">
                             <div className="d-flex flex-row align-items-center" style={{height: "3rem"}}>
@@ -136,7 +175,7 @@ function WrappedApp() {
                 }
             }}>
                 <div className="d-flex flex-grow-1 flex-column">
-                    {swapper==null && pathName!=="/about" && pathName!=="/faq" ? (
+                    {swapper==null && pathName!=="/about" && pathName!=="/faq" && pathName!=="/map" ? (
                         <div className="no-wallet-overlay d-flex align-items-center">
                             <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                 <div className="text-white text-center">
@@ -180,6 +219,7 @@ function WrappedApp() {
                                 <Route path="history" element={<HistoryScreen swapper={swapper}/>}/>
                                 <Route path="faq" element={<FAQ/>}/>
                                 <Route path="about" element={<About/>}/>
+                                <Route path="map" element={<Map/>}/>
                             </Route>
                         </Routes>
                     </BrowserRouter>
