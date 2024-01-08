@@ -3,12 +3,12 @@ import {SolanaChains, SwapType} from "sollightning-sdk";
 import {PublicKey} from "@solana/web3.js";
 import {WalletAdapterNetwork} from "@solana/wallet-adapter-base";
 
-const solanaRpcUrl: string = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
-const chain: "DEVNET" | "MAINNET" = "MAINNET"; //DEVNET or MAINNET
-const btcBlockExplorer: string = "https://mempool.space/tx/";
-// const solanaRpcUrl: string = "https://api.devnet.solana.com";
-// const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
-// const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
+// const solanaRpcUrl: string = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
+// const chain: "DEVNET" | "MAINNET" = "MAINNET"; //DEVNET or MAINNET
+// const btcBlockExplorer: string = "https://mempool.space/tx/";
+const solanaRpcUrl: string = "https://api.devnet.solana.com";
+const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
+const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
 
 export const FEConstants = {
     // expirySecondsBTCLNtoSol: 1*86400, //1 days
