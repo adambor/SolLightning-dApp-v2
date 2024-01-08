@@ -1,11 +1,12 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Badge, Button, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip, Form } from "react-bootstrap";
+import { Alert, Badge, Button, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
 import { QRCodeSVG } from "qrcode.react";
 import ValidatedInput from "../../ValidatedInput";
 import { FromBTCLNSwapState } from "sollightning-sdk";
 import { clipboard } from 'react-icons-kit/fa/clipboard';
 import Icon from "react-icons-kit";
+import { LNNFCReader, LNNFCStartResult } from "../../lnnfc/LNNFCReader";
 export function FromBTCLNQuoteSummary(props) {
     const [state, setState] = useState(null);
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState();
@@ -21,6 +22,36 @@ export function FromBTCLNQuoteSummary(props) {
     const copyBtnRef = useRef();
     const [showCopyOverlay, setShowCopyOverlay] = useState(0);
     const [autoClaim, setAutoClaim] = useState(false);
+    const [NFCScanning, setNFCScanning] = useState(null);
+    const [payingWithLNURL, setPayingWithLNURL] = useState(false);
+    const nfcScannerRef = useRef(null);
+    useEffect(() => {
+        const nfcScanner = new LNNFCReader();
+        if (!nfcScanner.isSupported())
+            return;
+        nfcScanner.onScanned((lnurls) => {
+            console.log("LNURL read: ", lnurls);
+            if (lnurls[0] != null) {
+                props.swapper.getLNURLTypeAndData(lnurls[0]).then((result) => {
+                    if (result == null)
+                        return;
+                    if (result.type !== "withdraw")
+                        return;
+                    nfcScanner.stop();
+                    props.quote.settleWithLNURLWithdraw(result).then(() => {
+                        setPayingWithLNURL(true);
+                    });
+                });
+            }
+        });
+        nfcScannerRef.current = nfcScanner;
+        nfcScanner.start().then((res) => {
+            setNFCScanning(res);
+        });
+        return () => {
+            nfcScanner.stop();
+        };
+    }, []);
     useEffect(() => {
         const config = window.localStorage.getItem("crossLightning-autoClaim");
         setAutoClaim(config == null ? false : config === "true");
@@ -152,10 +183,15 @@ export function FromBTCLNQuoteSummary(props) {
         }
         setShowCopyOverlay(num);
     };
-    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] }))) : "", state === FromBTCLNSwapState.PR_CREATED ? (!isStarted ? (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onCommit, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] })))] })) : (_jsxs(_Fragment, { children: [quoteTimeRemaining === 0 ? "" : (_jsxs("div", Object.assign({ className: "tab-accent mb-3" }, { children: [_jsx(Overlay, Object.assign({ target: showCopyOverlay === 1 ? copyBtnRef.current : (showCopyOverlay === 2 ? qrCodeRef.current : null), show: showCopyOverlay > 0, placement: "top" }, { children: (props) => (_jsx(Tooltip, Object.assign({ id: "overlay-example" }, props, { children: "Address copied to clipboard!" }))) })), _jsx("div", Object.assign({ ref: qrCodeRef }, { children: _jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true, className: "cursor-pointer", onClick: () => {
-                                        copy(2);
-                                    } }) })), _jsx("label", { children: "Please initiate a payment to this lightning network invoice" }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress(), textEnd: (_jsx("a", Object.assign({ href: "javascript:void(0);", ref: copyBtnRef, onClick: () => {
-                                        copy(1);
-                                    } }, { children: _jsx(Icon, { icon: clipboard }) }))), inputRef: textFieldRef }), _jsxs(Form, Object.assign({ className: "text-start d-flex align-items-center justify-content-center font-bigger mt-3" }, { children: [_jsx(Form.Check // prettier-ignore
-                                    , { id: "autoclaim", type: "switch", onChange: (val) => setAndSaveAutoClaim(val.target.checked), checked: autoClaim }), _jsx("label", Object.assign({ title: "", htmlFor: "autoclaim", className: "form-check-label me-2" }, { children: "Auto-claim" })), _jsx(OverlayTrigger, Object.assign({ overlay: _jsx(Tooltip, Object.assign({ id: "autoclaim-pay-tooltip" }, { children: "Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives." })) }, { children: _jsx(Badge, Object.assign({ bg: "primary", className: "pill-round", pill: true }, { children: "?" })) }))] }))] }))), _jsxs("div", Object.assign({ className: "d-flex flex-column mb-3 tab-accent" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsx(Button, Object.assign({ onClick: props.abortSwap, variant: "danger" }, { children: "Abort swap" })))] }))) : "", state === FromBTCLNSwapState.PR_PAID || state === FromBTCLNSwapState.CLAIM_COMMITED ? (_jsxs(_Fragment, { children: [quoteTimeRemaining !== 0 ? (_jsxs("div", Object.assign({ className: "mb-3 tab-accent" }, { children: [_jsx("label", { children: "Lightning network payment received" }), _jsx("label", { children: "Claim it below to finish the swap!" })] }))) : "", state === FromBTCLNSwapState.PR_PAID ? (_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap expired! Your lightning payment should refund shortly." })) : (_jsxs("label", { children: ["Offer expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] }))) : "", quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: () => onClaim(), disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] })))] })) : "", state === FromBTCLNSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, Object.assign({ variant: "success", className: "mb-0" }, { children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] }))) : ""] }));
+    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] }))) : "", state === FromBTCLNSwapState.PR_CREATED ? (!isStarted ? (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onCommit, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] })))] })) : (_jsxs(_Fragment, { children: [quoteTimeRemaining === 0 ? "" : (_jsxs("div", Object.assign({ className: "tab-accent mb-3" }, { children: [payingWithLNURL ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center" }, { children: [_jsx(Spinner, { animation: "border" }), "Paying via NFC card..."] }))) : (_jsxs(_Fragment, { children: [_jsx(Overlay, Object.assign({ target: showCopyOverlay === 1 ? copyBtnRef.current : (showCopyOverlay === 2 ? qrCodeRef.current : null), show: showCopyOverlay > 0, placement: "top" }, { children: (props) => (_jsx(Tooltip, Object.assign({ id: "overlay-example" }, props, { children: "Address copied to clipboard!" }))) })), _jsx("div", Object.assign({ ref: qrCodeRef }, { children: _jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true, className: "cursor-pointer", onClick: () => {
+                                                copy(2);
+                                            }, imageSettings: NFCScanning === LNNFCStartResult.OK ? {
+                                                src: "/icons/contactless.png",
+                                                excavate: true,
+                                                height: 50,
+                                                width: 50
+                                            } : null }) })), _jsx("label", { children: "Please initiate a payment to this lightning network invoice" }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress(), textEnd: (_jsx("a", Object.assign({ href: "javascript:void(0);", ref: copyBtnRef, onClick: () => {
+                                                copy(1);
+                                            } }, { children: _jsx(Icon, { icon: clipboard }) }))), inputRef: textFieldRef })] })), _jsxs(Form, Object.assign({ className: "text-start d-flex align-items-center justify-content-center font-bigger mt-3" }, { children: [_jsx(Form.Check // prettier-ignore
+                                    , { id: "autoclaim", type: "switch", onChange: (val) => setAndSaveAutoClaim(val.target.checked), checked: autoClaim }), _jsx("label", Object.assign({ title: "", htmlFor: "autoclaim", className: "form-check-label me-2" }, { children: "Auto-claim" })), _jsx(OverlayTrigger, Object.assign({ overlay: _jsx(Tooltip, Object.assign({ id: "autoclaim-pay-tooltip" }, { children: "Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives." })) }, { children: _jsx(Badge, Object.assign({ bg: "primary", className: "pill-round", pill: true }, { children: "?" })) }))] }))] }))), payingWithLNURL && quoteTimeRemaining !== 0 ? "" : (_jsxs("div", Object.assign({ className: "d-flex flex-column mb-3 tab-accent" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] }))), quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsx(Button, Object.assign({ onClick: props.abortSwap, variant: "danger" }, { children: "Abort swap" })))] }))) : "", state === FromBTCLNSwapState.PR_PAID || state === FromBTCLNSwapState.CLAIM_COMMITED ? (_jsxs(_Fragment, { children: [quoteTimeRemaining !== 0 ? (_jsxs("div", Object.assign({ className: "mb-3 tab-accent" }, { children: [_jsx("label", { children: "Lightning network payment received" }), _jsx("label", { children: "Claim it below to finish the swap!" })] }))) : "", state === FromBTCLNSwapState.PR_PAID ? (_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap expired! Your lightning payment should refund shortly." })) : (_jsxs("label", { children: ["Offer expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] }))) : "", quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: () => onClaim(), disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] })))] })) : "", state === FromBTCLNSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, Object.assign({ variant: "success", className: "mb-0" }, { children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] }))) : ""] }));
 }

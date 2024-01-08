@@ -6,6 +6,7 @@ import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
 import {FromBTCSwap, FromBTCSwapState} from "sollightning-sdk";
 import Icon from "react-icons-kit";
 import {clipboard} from "react-icons-kit/fa/clipboard";
+import {LNNFCReader} from "../../lnnfc/LNNFCReader";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -292,7 +293,7 @@ export function FromBTCQuoteSummary(props: {
 
             {state===FromBTCSwapState.BTC_TX_CONFIRMED ? (
                 <>
-                    <div className="d-flex flex-column align-items-center tab-accent">
+                    <div className="d-flex flex-column align-items-center tab-accent mb-3">
                         <label>Transaction received & confirmed</label>
                     </div>
 

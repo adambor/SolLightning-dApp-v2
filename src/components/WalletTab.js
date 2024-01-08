@@ -1,21 +1,16 @@
 import { jsx as _jsx } from "react/jsx-runtime";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
-import { LedgerWalletAdapter, PhantomWalletAdapter, SlopeWalletAdapter, SolletExtensionWalletAdapter, SolletWalletAdapter, TorusWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { LedgerWalletAdapter, PhantomWalletAdapter, SlopeWalletAdapter, TorusWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
 import fetch from "cross-fetch";
 import { NetworkError } from "sollightning-sdk";
-//const endpoint = "https://api.devnet.solana.com";
-const endpoint = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
-const network = WalletAdapterNetwork.Mainnet;
+import { FEConstants } from "../FEConstants";
 const wallets = [
     new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network }),
+    new SolflareWalletAdapter({ network: FEConstants.solanaChain }),
     new SlopeWalletAdapter(),
     new TorusWalletAdapter(),
-    new LedgerWalletAdapter(),
-    new SolletWalletAdapter({ network }),
-    new SolletExtensionWalletAdapter({ network }),
+    new LedgerWalletAdapter()
 ];
 const fetchWithTimeout = async (input, init) => {
     if (init == null)
@@ -48,6 +43,6 @@ const fetchWithTimeout = async (input, init) => {
     }
 };
 function WalletTab(props) {
-    return (_jsx(ConnectionProvider, Object.assign({ endpoint: endpoint, config: { fetch: fetchWithTimeout, commitment: "confirmed" } }, { children: _jsx(WalletProvider, Object.assign({ wallets: wallets, autoConnect: true }, { children: _jsx(WalletModalProvider, { children: props.children }) })) })));
+    return (_jsx(ConnectionProvider, Object.assign({ endpoint: FEConstants.rpcUrl, config: { fetch: fetchWithTimeout, commitment: "confirmed" } }, { children: _jsx(WalletProvider, Object.assign({ wallets: wallets, autoConnect: true }, { children: _jsx(WalletModalProvider, { children: props.children }) })) })));
 }
 export default WalletTab;

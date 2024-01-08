@@ -375,8 +375,16 @@ export function SwapTab(props: {
                                     onChange={(val) => {
                                         setAddress(val);
                                         if(props.swapper.isValidLNURL(val)) {
-                                            props.swapper.getLNURLTypeAndData(val, false).then(() => {
-                                                navigate("/scan/2?address="+encodeURIComponent(val));
+                                            props.swapper.getLNURLTypeAndData(val, false).then((result) => {
+                                                navigate("/scan/2?address="+encodeURIComponent(val), {
+                                                    state: {
+                                                        lnurlParams: {
+                                                            ...result,
+                                                            min: result.min.toString(10),
+                                                            max: result.max.toString(10)
+                                                        }
+                                                    }
+                                                });
                                             }).catch(e => {});
                                         }
                                         if(props.swapper.isValidBitcoinAddress(val)) {
@@ -396,6 +404,7 @@ export function SwapTab(props: {
                                     inputRef={addressRef}
                                     placeholder={"Paste Bitcoin/Lightning address"}
                                     onValidate={(val) => {
+                                        console.log("Is valid bitcoin address: ", val);
                                         if(props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val)) return null;
                                         try {
                                             if(SolanaSwapper.getLightningInvoiceValue(val)==null) {
@@ -432,7 +441,7 @@ export function SwapTab(props: {
                                 <SimpleFeeSummaryScreen swap={quote}/>
                             </div>
                             <div className="mt-3 d-flex flex-column text-white">
-                                <QuoteSummary quote={quote} refreshQuote={getQuote} setAmountLock={setLocked} abortSwap={() => {
+                                <QuoteSummary type="swap" swapper={props.swapper} quote={quote} refreshQuote={getQuote} setAmountLock={setLocked} abortSwap={() => {
                                     setLocked(false);
                                     setQuote(null);
                                     setAmount("");

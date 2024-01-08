@@ -10,10 +10,16 @@ export function QRScanner(props: {
 
     const videoRef = useRef<HTMLVideoElement>(null);
 
+    const callbackRef = useRef<(data: string, err) => void>(null);
+
+    useEffect(() => {
+        callbackRef.current = props.onResult;
+    }, [props.onResult]);
+
     useEffect(() => {
         const qrScanner = new QrScanner(
             videoRef.current,
-            result => props.onResult(result.data, null),
+            result => callbackRef.current(result.data, null),
             {
                 preferredCamera: props.camera,
                 highlightScanRegion: true,
@@ -26,7 +32,7 @@ export function QRScanner(props: {
         return () => {
             qrScanner.stop();
         }
-    }, []);
+    }, [props.camera]);
 
     return (
         <video ref={videoRef} className="qr-video" style={{

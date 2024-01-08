@@ -3,7 +3,7 @@ import {CurrencyDropdown} from "../CurrencyDropdown";
 import {useEffect, useRef, useState} from "react";
 import {FeeSummaryScreen} from "../FeeSummaryScreen";
 import {Alert, Badge, Button, Form, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
-import {ISwap, SolanaSwapper, SwapType, TokenAddress} from "sollightning-sdk";
+import {ISwap, LNURLPay, LNURLWithdraw, SolanaSwapper, SwapType, TokenAddress} from "sollightning-sdk";
 import BigNumber from "bignumber.js";
 import * as BN from "bn.js";
 import {
@@ -26,9 +26,15 @@ export function Step2Screen(props: {
 
     const navigate = useNavigate();
 
-    const {search} = useLocation() as {search: string};
+    const {search, state} = useLocation() as {search: string, state: any};
     const params = new URLSearchParams(search);
     const propAddress = params.get("address") || params.get("lightning");
+
+    const stateLnurlParams = state?.lnurlParams!=null ? {
+        ...state.lnurlParams,
+        min: new BN(state.lnurlParams.min),
+        max: new BN(state.lnurlParams.max)
+    } : null;
 
     const [selectedCurrency, setSelectedCurrency] = useState<CurrencySpec>(null);
 
@@ -44,6 +50,8 @@ export function Step2Screen(props: {
     const [amount, setAmount] = useState<string>(null);
     const amountRef = useRef<ValidatedInputRef>();
 
+    const [lnurlParams, setLnurlParams] = useState<LNURLWithdraw | LNURLPay>(null);
+    const computedLnurlParams = stateLnurlParams || lnurlParams;
     const [type, setType] = useState<"send" | "receive">("send");
     const [network, setNetwork] = useState<"ln" | "btc">("ln");
 
@@ -55,7 +63,7 @@ export function Step2Screen(props: {
 
     const balanceCache = useRef<{
         [tokenAddress: string]: {
-            balance: BN | void,
+            balance: any | void,
             timestamp: number
         }
     }>({});
@@ -69,6 +77,14 @@ export function Step2Screen(props: {
         }
         return balanceCache.current[tokenAddress.toString()].balance as BN;
     };
+
+    useEffect(() => {
+        const propToken = params.get("token");
+        console.log("Prop token: ", propToken);
+        if(propToken!=null) {
+            setSelectedCurrency(smartChainCurrencies.find(token => token.ticker===propToken));
+        }
+    }, []);
 
     const [autoContinue, setAutoContinue] = useState<boolean>();
 
@@ -185,12 +201,14 @@ export function Step2Screen(props: {
                 setLnurlLoading(true);
                 setLnurl(true);
                 setNetwork("ln");
-                props.swapper.getLNURLTypeAndData(resultText).then((result) => {
+                const processLNURL = (result: LNURLWithdraw | LNURLPay, doSetState: boolean) => {
+                    console.log(result);
                     setLnurlLoading(false);
                     if(result==null) {
                         setAddressError("Invalid LNURL, cannot process");
                         return;
                     }
+                    if(doSetState) setLnurlParams(result);
                     if(result.type==="pay") {
                         setType("send");
                         const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
@@ -228,7 +246,13 @@ export function Step2Screen(props: {
                         setAmount(toHumanReadable(BN.min(result.max, max), btcCurrency).toString(10));
                     }
                     setNetwork("ln");
-                }).catch((e) => {
+                };
+                if(stateLnurlParams!=null) {
+                    console.log("LNurl params passed: ", stateLnurlParams);
+                    processLNURL(stateLnurlParams, false);
+                    return;
+                }
+                props.swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
                     setLnurlLoading(false);
                     setAddressError("Failed to contact LNURL service, check you internet connection and retry later.");
                 });
@@ -266,13 +290,13 @@ export function Step2Screen(props: {
                     }
                     if(network==="ln") {
                         if(isLnurl) {
-                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60);
+                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLPay, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60);
                         } else {
                             swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60);
                         }
                     }
                 } else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLWithdraw, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
@@ -409,7 +433,7 @@ export function Step2Screen(props: {
                         {quote!=null ? (
                             <>
                                 <FeeSummaryScreen swap={quote[0]} className="mt-3 mb-3 tab-accent"/>
-                                <QuoteSummary setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={autoContinue}/>
+                                <QuoteSummary swapper={props.swapper} setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={autoContinue}/>
                             </>
                         ) : ""}
                     </div>

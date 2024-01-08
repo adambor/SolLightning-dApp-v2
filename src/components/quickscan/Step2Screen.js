@@ -14,9 +14,10 @@ import { Topbar } from "../Topbar";
 const balanceExpiryTime = 30000;
 export function Step2Screen(props) {
     const navigate = useNavigate();
-    const { search } = useLocation();
+    const { search, state } = useLocation();
     const params = new URLSearchParams(search);
     const propAddress = params.get("address") || params.get("lightning");
+    const stateLnurlParams = (state === null || state === void 0 ? void 0 : state.lnurlParams) != null ? Object.assign(Object.assign({}, state.lnurlParams), { min: new BN(state.lnurlParams.min), max: new BN(state.lnurlParams.max) }) : null;
     const [selectedCurrency, setSelectedCurrency] = useState(null);
     const [lnurlLoading, setLnurlLoading] = useState(false);
     const [addressError, setAddressError] = useState(null);
@@ -25,6 +26,8 @@ export function Step2Screen(props) {
     const [amountConstraints, setAmountConstraints] = useState(null);
     const [amount, setAmount] = useState(null);
     const amountRef = useRef();
+    const [lnurlParams, setLnurlParams] = useState(null);
+    const computedLnurlParams = stateLnurlParams || lnurlParams;
     const [type, setType] = useState("send");
     const [network, setNetwork] = useState("ln");
     const [quoteLoading, setQuoteLoading] = useState(null);
@@ -41,6 +44,13 @@ export function Step2Screen(props) {
         }
         return balanceCache.current[tokenAddress.toString()].balance;
     };
+    useEffect(() => {
+        const propToken = params.get("token");
+        console.log("Prop token: ", propToken);
+        if (propToken != null) {
+            setSelectedCurrency(smartChainCurrencies.find(token => token.ticker === propToken));
+        }
+    }, []);
     const [autoContinue, setAutoContinue] = useState();
     useEffect(() => {
         const config = window.localStorage.getItem("crossLightning-autoContinue");
@@ -144,12 +154,15 @@ export function Step2Screen(props) {
                 setLnurlLoading(true);
                 setLnurl(true);
                 setNetwork("ln");
-                props.swapper.getLNURLTypeAndData(resultText).then((result) => {
+                const processLNURL = (result, doSetState) => {
+                    console.log(result);
                     setLnurlLoading(false);
                     if (result == null) {
                         setAddressError("Invalid LNURL, cannot process");
                         return;
                     }
+                    if (doSetState)
+                        setLnurlParams(result);
                     if (result.type === "pay") {
                         setType("send");
                         const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
@@ -187,7 +200,13 @@ export function Step2Screen(props) {
                         setAmount(toHumanReadable(BN.min(result.max, max), btcCurrency).toString(10));
                     }
                     setNetwork("ln");
-                }).catch((e) => {
+                };
+                if (stateLnurlParams != null) {
+                    console.log("LNurl params passed: ", stateLnurlParams);
+                    processLNURL(stateLnurlParams, false);
+                    return;
+                }
+                props.swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
                     setLnurlLoading(false);
                     setAddressError("Failed to contact LNURL service, check you internet connection and retry later.");
                 });
@@ -225,7 +244,7 @@ export function Step2Screen(props) {
                     }
                     if (network === "ln") {
                         if (isLnurl) {
-                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60);
+                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60);
                         }
                         else {
                             swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5 * 24 * 60 * 60);
@@ -233,7 +252,7 @@ export function Step2Screen(props) {
                     }
                 }
                 else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
@@ -271,5 +290,5 @@ export function Step2Screen(props) {
                                                     return;
                                                 setSelectedCurrency(val);
                                             }, value: selectedCurrency, className: "bg-transparent text-white" }), _jsxs(Form, Object.assign({ className: "text-start d-flex align-items-center justify-content-center font-bigger mt-2" }, { children: [_jsx(Form.Check // prettier-ignore
-                                                , { id: "autoclaim-pay", type: "switch", onChange: (val) => setAndSaveAutoContinue(val.target.checked), checked: autoContinue }), _jsx("label", Object.assign({ title: "", htmlFor: "autoclaim-pay", className: "form-check-label me-2" }, { children: type === "send" ? "Auto-pay" : "Auto-claim" })), _jsx(OverlayTrigger, Object.assign({ overlay: _jsx(Tooltip, Object.assign({ id: "autoclaim-pay-tooltip" }, { children: "Automatically requests authorization of the transaction through your wallet - as soon as the swap pricing is returned." })) }, { children: _jsx(Badge, Object.assign({ bg: "primary", className: "pill-round", pill: true }, { children: "?" })) }))] }))] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mt-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quoteError || addressError ? (_jsx(Button, Object.assign({ variant: "secondary", onClick: goBack, className: "mt-3" }, { children: "Back" }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote[0], className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { setAmountLock: setLocked, type: "payment", quote: quote[0], balance: quote[1], refreshQuote: getQuote, autoContinue: autoContinue })] })) : ""] })), _jsx("div", Object.assign({ className: "d-flex mt-auto py-4" }, { children: _jsx(Button, Object.assign({ variant: "secondary flex-fill", disabled: isLocked, onClick: goBack }, { children: "< Back" })) }))] })) }))] }));
+                                                , { id: "autoclaim-pay", type: "switch", onChange: (val) => setAndSaveAutoContinue(val.target.checked), checked: autoContinue }), _jsx("label", Object.assign({ title: "", htmlFor: "autoclaim-pay", className: "form-check-label me-2" }, { children: type === "send" ? "Auto-pay" : "Auto-claim" })), _jsx(OverlayTrigger, Object.assign({ overlay: _jsx(Tooltip, Object.assign({ id: "autoclaim-pay-tooltip" }, { children: "Automatically requests authorization of the transaction through your wallet - as soon as the swap pricing is returned." })) }, { children: _jsx(Badge, Object.assign({ bg: "primary", className: "pill-round", pill: true }, { children: "?" })) }))] }))] }))) : "", quoteLoading ? (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3" }, { children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] }))) : "", quoteError ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mt-3" }, { children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] }))) : "", quoteError || addressError ? (_jsx(Button, Object.assign({ variant: "secondary", onClick: goBack, className: "mt-3" }, { children: "Back" }))) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote[0], className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { swapper: props.swapper, setAmountLock: setLocked, type: "payment", quote: quote[0], balance: quote[1], refreshQuote: getQuote, autoContinue: autoContinue })] })) : ""] })), _jsx("div", Object.assign({ className: "d-flex mt-auto py-4" }, { children: _jsx(Button, Object.assign({ variant: "secondary flex-fill", disabled: isLocked, onClick: goBack }, { children: "< Back" })) }))] })) }))] }));
 }

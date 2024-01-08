@@ -5,6 +5,7 @@ import {getCurrencySpec, toHumanReadableString} from "../../../utils/Currencies"
 import * as React from "react";
 import * as bolt11 from "bolt11";
 import * as BN from "bn.js";
+import {FEConstants} from "../../../FEConstants";
 
 const SNOWFLAKE_LIST: Set<string> = new Set([
     "038f8f113c580048d847d6949371726653e02b928196bad310e3eda39ff61723f6",
@@ -25,6 +26,7 @@ export function ToBTCQuoteSummary(props: {
     const expiryTime = useRef<number>();
 
     const [confidenceWarning, setConfidenceWarning] = useState<boolean>(false);
+    const [nonCustodialWarning, setNonCustodialWarning] = useState<boolean>(false);
 
     const [loading, setLoading] = useState<boolean>();
     const [success, setSuccess] = useState<boolean>();
@@ -39,9 +41,11 @@ export function ToBTCQuoteSummary(props: {
         try {
             if(props.setAmountLock) props.setAmountLock(true);
             await props.quote.commit(null, null, skipChecks);
-            const success = await props.quote.waitForPayment();
+            const success = await props.quote.waitForPayment(null, 1);
             if(success) {
                 setSuccess(true);
+                setNonCustodialWarning(false);
+                setConfidenceWarning(false);
                 if(props.setAmountLock) props.setAmountLock(false);
             } else {
                 setSuccess(false);
@@ -78,20 +82,23 @@ export function ToBTCQuoteSummary(props: {
         if(confidenceWarning) setConfidenceWarning(false);
         if(props.quote.getState()===ToBTCSwapState.CREATED) {
             if(props.quote instanceof ToBTCLNSwap && props.quote.getConfidence()===0) {
-                let is_snowflake: boolean = false;
+                let isSnowflake: boolean = false;
+                let isNonCustodial: boolean = false;
                 if(props.quote.pr!=null) {
                     const parsedRequest = bolt11.decode(props.quote.pr);
 
                     if(parsedRequest.tagsObject.routing_info!=null) {
                         for (let route of parsedRequest.tagsObject.routing_info) {
+                            isNonCustodial = true;
                             if (SNOWFLAKE_LIST.has(route.pubkey)) {
-                                is_snowflake = true;
+                                isSnowflake = true;
                             }
                         }
                     }
                 }
 
-                if(confidenceWarning===is_snowflake) setConfidenceWarning(!is_snowflake);
+                if(confidenceWarning===isSnowflake) setConfidenceWarning(!isSnowflake);
+                setNonCustodialWarning(!confidenceWarning && isNonCustodial);
             }
 
             //Check that we have enough funds!
@@ -156,6 +163,11 @@ export function ToBTCQuoteSummary(props: {
                 <label>We weren't able to check if the recipient is reachable (send probe request) on the Lightning network, this is common with some wallets, but could also indicate that the destination is unreachable and payment might therefore fail (you will get a refund in that case)!</label>
             </Alert>
 
+            {props.type==="swap" ? <Alert className="text-center mb-3" show={nonCustodialWarning} variant="success" onClose={() => setNonCustodialWarning(false)} dismissible closeVariant="white">
+                <strong>Non-custodial wallet info</strong>
+                <label>Please make sure your lightning wallet is online & running to be able to receive a lightning network payment, otherwise the payment will fail (you will get a refund in that case)!</label>
+            </Alert> : ""}
+
             <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                 {quoteTimeRemaining===0 ? (
                     <label>Quote expired!</label>
@@ -181,6 +193,7 @@ export function ToBTCQuoteSummary(props: {
                     <Alert variant="success" className="mb-0">
                         <strong>Swap successful</strong>
                         <label>Swap was concluded successfully</label>
+                        <Button href={FEConstants.btcBlockExplorer+props.quote.getTxId()} target="_blank" variant="success" className="mt-3">View transaction</Button>
                     </Alert>
                 ) : (
                     <>

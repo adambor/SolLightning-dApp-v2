@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "SolLightning",
+  "name": "SolLightning dApp",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,33 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "protocol_handlers": [
+    {
+      "protocol": "web+lightning",
+      "url": "/scan/2?address=%s"
+    },
+    {
+      "protocol": "web+lnurlw",
+      "url": "/scan/2?address=%s"
+    },
+    {
+      "protocol": "web+lnurlp",
+      "url": "/scan/2?address=%s"
+    },
+    {
+      "protocol": "web+lnurl",
+      "url": "/scan/2?address=%s"
+    },
+    {
+      "protocol": "bitcoin",
+      "url": "/scan/2?address=%s"
+    },
+    {
+      "protocol": "web+bitcoin",
+      "url": "/scan/2?address=%s"
+    }
+  ]
+
 }

@@ -5,28 +5,17 @@ import WalletTab from "./components/WalletTab";
 import {QuickScanScreen} from "./components/quickscan/QuickScanScreen";
 import {Step2Screen} from "./components/quickscan/Step2Screen";
 import {useAnchorWallet, useConnection} from '@solana/wallet-adapter-react';
-import {createSwapperOptions, NetworkError, SolanaSwapper} from "sollightning-sdk/dist";
+import {createSwapperOptions, NetworkError, SolanaSwapper, UserError} from "sollightning-sdk/dist";
 import {AnchorProvider} from "@coral-xyz/anchor";
 import {FEConstants} from "./FEConstants";
 import {SwapTab} from "./components/swap/SwapTab2";
 import {smartChainCurrencies} from "./utils/Currencies";
-import {BrowserRouter, Route, Routes, useLocation, useNavigate} from "react-router-dom";
+import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {SwapsContext} from "./components/context/SwapsContext";
-import {FromBTCSwap, ISwap} from "sollightning-sdk";
+import {ChainUtils, FromBTCSwap, ISwap} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
-import {
-    Alert,
-    Badge,
-    Button,
-    Card,
-    Container, Form,
-    Nav,
-    Navbar,
-    NavDropdown,
-    OverlayTrigger,
-    Spinner, Tooltip
-} from "react-bootstrap";
+import {Alert, Badge, Button, Container, Form, Nav, Navbar, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {FAQ} from "./info/FAQ";
 import {About} from "./info/About";
 import {Map} from "./info/Map";
@@ -34,18 +23,31 @@ import {map} from 'react-icons-kit/fa/map';
 import {info} from 'react-icons-kit/fa/info';
 import {question} from 'react-icons-kit/fa/question';
 import {exchange} from 'react-icons-kit/fa/exchange';
+import {AddressPurpose, BitcoinNetworkType, getAddress, sendBtcTransaction} from 'sats-connect';
 import Icon from "react-icons-kit";
+import * as BN from "bn.js";
+import {LNNFCReader, LNNFCStartResult} from './components/lnnfc/LNNFCReader';
+import {ic_contactless} from 'react-icons-kit/md/ic_contactless';
+import {BitcoinWalletButton} from "./components/wallet/BitcoinWalletButton";
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-function WrappedApp() {
+// export type BtcConnectionState = {
+//     declined: boolean,
+//     address: string,
+//     getBalance?: () => Promise<BN>,
+//     sendTransaction?: (address: string, amount: BN) => Promise<void>
+// };
 
+function WrappedApp() {
     const wallet: any = useAnchorWallet();
     const {connection} = useConnection();
     const [provider, setProvider] = React.useState<AnchorProvider>();
     const [swapper, setSwapper] = React.useState<SolanaSwapper>();
     const [swapperLoadingError, setSwapperLoadingError] = React.useState<string>();
     const [actionableSwaps, setActionableSwaps] = React.useState<ISwap[]>([]);
+
+    // const [btcConnectionState, setBtcConnectionState] = React.useState<BtcConnectionState>(null);
 
     // @ts-ignore
     const pathName = window.location.pathname;
@@ -55,14 +57,71 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const swapper = new SolanaSwapper(_provider, createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
-            }));
+            });
+
+            const swapper = new SolanaSwapper(_provider, options);
 
             await swapper.init();
 
             console.log(swapper);
+
+            // if(btcConnectionState==null) {
+            //     const getAddressOptions = {
+            //         payload: {
+            //             purposes: [AddressPurpose.Payment],
+            //             message: 'Bitcoin address for SolLightning swaps',
+            //             network: {
+            //                 type: BitcoinNetworkType.Mainnet
+            //             },
+            //         },
+            //         onFinish: (response) => {
+            //             const address = response.addresses[0].address;
+            //             const connectedWallet = {
+            //                 address,
+            //                 declined: false,
+            //                 getBalance: () => ChainUtils.getAddressBalances(address).then(val => val.confirmedBalance.add(val.unconfirmedBalance)),
+            //                 sendTransaction: (recipientAddress: string, amount: BN) => new Promise<void>((resolve, reject) => {
+            //                     // @ts-ignore
+            //                     const amt = BigInt(amount.toString(10))
+            //                     const sendBtcOptions = {
+            //                         payload: {
+            //                             network: {
+            //                                 type: BitcoinNetworkType.Mainnet,
+            //                             },
+            //                             recipients: [
+            //                                 {
+            //                                     address: recipientAddress,
+            //                                     amountSats: amt,
+            //                                 }
+            //                             ],
+            //                             senderAddress: address,
+            //                         },
+            //                         onFinish: (response) => resolve(),
+            //                         onCancel: () => reject(new UserError("Bitcoin transaction rejected by the user!")),
+            //                     };
+            //
+            //                     sendBtcTransaction(sendBtcOptions).catch(reject);
+            //                 })
+            //             };
+            //             setBtcConnectionState(connectedWallet);
+            //             console.log("Bitcoin wallet connected:", connectedWallet);
+            //         },
+            //         onCancel: () => {
+            //             setBtcConnectionState({
+            //                 address: null,
+            //                 declined: true
+            //             });
+            //             console.log("Canceled getaddress request");
+            //         },
+            //     };
+            //
+            //     getAddress(getAddressOptions).catch(err => {
+            //         console.error(err)
+            //     });
+            // }
 
             console.log("Swapper initialized, getting claimable swaps...");
 
@@ -78,6 +137,8 @@ function WrappedApp() {
             console.error(e)
         }
     };
+
+    const [scanResult, setScanResult] = React.useState<string>(null);
 
     React.useEffect(() => {
 
@@ -97,14 +158,48 @@ function WrappedApp() {
         setProvider(_provider);
 
         loadSwapper(_provider);
+
     }, [wallet]);
+
+    const [nfcSupported, setNfcSupported] = React.useState<boolean>(false);
+    const [nfcEnabled, setNfcEnabled] = React.useState<boolean>(true);
+
+    React.useEffect(() => {
+        setNfcSupported(LNNFCReader.isSupported());
+        setNfcEnabled(!LNNFCReader.isUserDisabled());
+    }, []);
+
+    const nfcSet = (val: boolean, target: any) => {
+        console.log("NFC set: ", val);
+        if(val===true) {
+            const reader = new LNNFCReader();
+            reader.start(true).then(resp => {
+                console.log("start response: ", resp);
+                if(resp===LNNFCStartResult.OK) {
+                    setNfcEnabled(true);
+                    target.checked = true;
+                    reader.stop();
+                }
+            })
+        }
+        if(val===false) {
+            setNfcEnabled(false);
+            target.checked = false;
+            LNNFCReader.userDisable();
+            console.log("Set nfc disabled: ", val);
+        }
+    };
+
+    console.log("nfcDisabled: ", nfcEnabled);
 
     return (
         <>
             <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
-                <Container>
+                <Container className="max-width-100">
                     <Navbar.Brand href="/" className="fw-semibold">
-                        <img src="/icons/logoicon.png" className="logo-img"/>SolLightning
+                        <img src="/icons/logoicon.png" className="logo-img"/>
+                        SolLightning
+                        {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2" bg="danger">DEVNET</Badge> : ""}
                     </Navbar.Brand>
 
                     <div className="d-flex flex-column">
@@ -125,6 +220,18 @@ function WrappedApp() {
                             </Nav.Link>
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            {nfcSupported ? (
+                                <div className="nav-link d-flex flex-row align-items-center">
+                                    <Icon icon={ic_contactless} className="d-flex me-1"/>
+                                    <label title="" htmlFor="nfc" className="form-check-label me-2">NFC enable</label>
+                                    <Form.Check // prettier-ignore
+                                        id="nfc"
+                                        type="switch"
+                                        onChange={(val) => nfcSet(val.target.checked, val.target)}
+                                        checked={nfcEnabled}
+                                    />
+                                </div>
+                            ) : ""}
                             {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
                         <Nav className="d-none d-md-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
@@ -146,6 +253,18 @@ function WrappedApp() {
 
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            {nfcSupported ? (
+                                <div className="nav-link d-flex flex-row align-items-center">
+                                    <Icon icon={ic_contactless} className="d-flex me-1"/>
+                                    <label title="" htmlFor="nfc" className="form-check-label me-2">NFC enable</label>
+                                    <Form.Check // prettier-ignore
+                                        id="nfc"
+                                        type="switch"
+                                        onChange={(val) => nfcSet(val.target.checked, val.target)}
+                                        checked={nfcEnabled}
+                                    />
+                                </div>
+                            ) : ""}
                             {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
                         <Nav className="ms-auto">
@@ -153,7 +272,8 @@ function WrappedApp() {
                                 <a href="https://twitter.com/SolLightning" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
                                 <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
                                 <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
-                                {swapper!=null ? (<div className="ms-auto">
+                                {swapper!=null ? (<div className="d-flex ms-auto">
+                                    {/*<BitcoinWalletButton/>*/}
                                     <WalletMultiButton />
                                 </div>) : ""}
                             </div>
@@ -225,6 +345,10 @@ function WrappedApp() {
                     </BrowserRouter>
                 </div>
             </SwapsContext.Provider>
+            {/*<Button onClick={() => {*/}
+                {/*const nfcReader = new LNNFCReader();*/}
+                {/*nfcReader.start().then(result => console.log("Scan started success: ", result));*/}
+            {/*}}>NFC read</Button>*/}
         </>
     )
 }

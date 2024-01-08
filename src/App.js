@@ -15,7 +15,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SwapsContext } from "./components/context/SwapsContext";
 import { HistoryScreen } from "./components/history/HistoryScreen";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { Alert, Badge, Button, Container, Nav, Navbar, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
+import { Alert, Badge, Button, Container, Form, Nav, Navbar, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
 import { FAQ } from "./info/FAQ";
 import { About } from "./info/About";
 import { Map } from "./info/Map";
@@ -24,7 +24,15 @@ import { info } from 'react-icons-kit/fa/info';
 import { question } from 'react-icons-kit/fa/question';
 import { exchange } from 'react-icons-kit/fa/exchange';
 import Icon from "react-icons-kit";
+import { LNNFCReader, LNNFCStartResult } from './components/lnnfc/LNNFCReader';
+import { ic_contactless } from 'react-icons-kit/md/ic_contactless';
 require('@solana/wallet-adapter-react-ui/styles.css');
+// export type BtcConnectionState = {
+//     declined: boolean,
+//     address: string,
+//     getBalance?: () => Promise<BN>,
+//     sendTransaction?: (address: string, amount: BN) => Promise<void>
+// };
 function WrappedApp() {
     const wallet = useAnchorWallet();
     const { connection } = useConnection();
@@ -32,18 +40,74 @@ function WrappedApp() {
     const [swapper, setSwapper] = React.useState();
     const [swapperLoadingError, setSwapperLoadingError] = React.useState();
     const [actionableSwaps, setActionableSwaps] = React.useState([]);
+    // const [btcConnectionState, setBtcConnectionState] = React.useState<BtcConnectionState>(null);
     // @ts-ignore
     const pathName = window.location.pathname;
     const loadSwapper = async (_provider) => {
         setSwapperLoadingError(null);
         try {
             console.log("init start");
-            const swapper = new SolanaSwapper(_provider, createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
-            }));
+            });
+            const swapper = new SolanaSwapper(_provider, options);
             await swapper.init();
             console.log(swapper);
+            // if(btcConnectionState==null) {
+            //     const getAddressOptions = {
+            //         payload: {
+            //             purposes: [AddressPurpose.Payment],
+            //             message: 'Bitcoin address for SolLightning swaps',
+            //             network: {
+            //                 type: BitcoinNetworkType.Mainnet
+            //             },
+            //         },
+            //         onFinish: (response) => {
+            //             const address = response.addresses[0].address;
+            //             const connectedWallet = {
+            //                 address,
+            //                 declined: false,
+            //                 getBalance: () => ChainUtils.getAddressBalances(address).then(val => val.confirmedBalance.add(val.unconfirmedBalance)),
+            //                 sendTransaction: (recipientAddress: string, amount: BN) => new Promise<void>((resolve, reject) => {
+            //                     // @ts-ignore
+            //                     const amt = BigInt(amount.toString(10))
+            //                     const sendBtcOptions = {
+            //                         payload: {
+            //                             network: {
+            //                                 type: BitcoinNetworkType.Mainnet,
+            //                             },
+            //                             recipients: [
+            //                                 {
+            //                                     address: recipientAddress,
+            //                                     amountSats: amt,
+            //                                 }
+            //                             ],
+            //                             senderAddress: address,
+            //                         },
+            //                         onFinish: (response) => resolve(),
+            //                         onCancel: () => reject(new UserError("Bitcoin transaction rejected by the user!")),
+            //                     };
+            //
+            //                     sendBtcTransaction(sendBtcOptions).catch(reject);
+            //                 })
+            //             };
+            //             setBtcConnectionState(connectedWallet);
+            //             console.log("Bitcoin wallet connected:", connectedWallet);
+            //         },
+            //         onCancel: () => {
+            //             setBtcConnectionState({
+            //                 address: null,
+            //                 declined: true
+            //             });
+            //             console.log("Canceled getaddress request");
+            //         },
+            //     };
+            //
+            //     getAddress(getAddressOptions).catch(err => {
+            //         console.error(err)
+            //     });
+            // }
             console.log("Swapper initialized, getting claimable swaps...");
             setSwapper(swapper);
             const actionableSwaps = (await swapper.getActionableSwaps());
@@ -56,6 +120,7 @@ function WrappedApp() {
             console.error(e);
         }
     };
+    const [scanResult, setScanResult] = React.useState(null);
     React.useEffect(() => {
         if (pathName === "/about" || pathName === "/faq" || pathName === "/map")
             return;
@@ -70,7 +135,36 @@ function WrappedApp() {
         setProvider(_provider);
         loadSwapper(_provider);
     }, [wallet]);
-    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ collapseOnSelect: true, expand: "md", bg: "dark", variant: "dark", className: "bg-dark bg-opacity-50", style: { zIndex: 1000, minHeight: "64px" } }, { children: _jsxs(Container, { children: [_jsxs(Navbar.Brand, Object.assign({ href: "/", className: "fw-semibold" }, { children: [_jsx("img", { src: "/icons/logoicon.png", className: "logo-img" }), "SolLightning"] })), _jsxs("div", Object.assign({ className: "d-flex flex-column" }, { children: [_jsx(Badge, Object.assign({ className: "newBadgeCollapse d-md-none" }, { children: "New!" })), _jsx(Navbar.Toggle, { "aria-controls": "basic-navbar-nav", className: "ms-3" })] })), _jsxs(Navbar.Collapse, Object.assign({ role: "", id: "basic-navbar-nav" }, { children: [_jsxs(Nav, Object.assign({ className: "d-flex d-md-none me-auto text-start border-top border-bottom border-dark-subtle my-2", navbarScroll: true, style: { maxHeight: '100px' } }, { children: [pathName === "/about" || pathName === "/faq" || pathName === "/map" ? (_jsxs(Nav.Link, Object.assign({ href: "/", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: exchange, className: "d-flex me-1" }), _jsx("span", { children: "Swap" })] }))) : "", _jsxs(Nav.Link, Object.assign({ href: "/map", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: map, className: "d-flex me-1" }), _jsx("span", Object.assign({ className: "me-1" }, { children: "Map" })), _jsx(Badge, Object.assign({ className: "me-2" }, { children: "New!" })), _jsx("small", { children: "Find merchants accepting lightning!" })] })), _jsxs(Nav.Link, Object.assign({ href: "/about", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: info, className: "d-flex me-1" }), _jsx("span", { children: "About" })] })), _jsxs(Nav.Link, Object.assign({ href: "/faq", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: question, className: "d-flex me-1" }), _jsx("span", { children: "FAQ" })] }))] })), _jsxs(Nav, Object.assign({ className: "d-none d-md-flex me-auto text-start", navbarScroll: true, style: { maxHeight: '100px' } }, { children: [pathName === "/about" || pathName === "/faq" || pathName === "/map" ? (_jsxs(Nav.Link, Object.assign({ href: "/", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: exchange, className: "d-flex me-1" }), _jsx("span", { children: "Swap" })] }))) : "", _jsx(OverlayTrigger, Object.assign({ placement: "bottom", overlay: _jsx(Tooltip, Object.assign({ id: "map-tooltip" }, { children: "Find merchants near you accepting bitcoin lightning!" })) }, { children: _jsxs(Nav.Link, Object.assign({ href: "/map", className: "d-flex flex-column align-items-center" }, { children: [_jsxs("div", Object.assign({ className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: map, className: "d-flex me-1" }), _jsx("span", { children: "Map" })] })), _jsx(Badge, Object.assign({ className: "newBadge" }, { children: "New!" }))] })) })), _jsxs(Nav.Link, Object.assign({ href: "/about", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: info, className: "d-flex me-1" }), _jsx("span", { children: "About" })] })), _jsxs(Nav.Link, Object.assign({ href: "/faq", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: question, className: "d-flex me-1" }), _jsx("span", { children: "FAQ" })] }))] })), _jsx(Nav, Object.assign({ className: "ms-auto" }, { children: _jsxs("div", Object.assign({ className: "d-flex flex-row align-items-center", style: { height: "3rem" } }, { children: [_jsx("a", Object.assign({ href: "https://twitter.com/SolLightning", target: "_blank", className: "mx-2" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/twitter.png" }) })), _jsx("a", Object.assign({ href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", className: "mx-2" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/telegram.png" }) })), _jsx("a", Object.assign({ href: "https://github.com/adambor/SolLightning-readme", target: "_blank", className: "ms-2 me-4" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/github.png" }) })), swapper != null ? (_jsx("div", Object.assign({ className: "ms-auto" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] })) }))] }))] }) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
+    const [nfcSupported, setNfcSupported] = React.useState(false);
+    const [nfcEnabled, setNfcEnabled] = React.useState(true);
+    React.useEffect(() => {
+        setNfcSupported(LNNFCReader.isSupported());
+        setNfcEnabled(!LNNFCReader.isUserDisabled());
+    }, []);
+    const nfcSet = (val, target) => {
+        console.log("NFC set: ", val);
+        if (val === true) {
+            const reader = new LNNFCReader();
+            reader.start(true).then(resp => {
+                console.log("start response: ", resp);
+                if (resp === LNNFCStartResult.OK) {
+                    setNfcEnabled(true);
+                    target.checked = true;
+                    reader.stop();
+                }
+            });
+        }
+        if (val === false) {
+            setNfcEnabled(false);
+            target.checked = false;
+            LNNFCReader.userDisable();
+            console.log("Set nfc disabled: ", val);
+        }
+    };
+    console.log("nfcDisabled: ", nfcEnabled);
+    return (_jsxs(_Fragment, { children: [_jsx(Navbar, Object.assign({ collapseOnSelect: true, expand: "md", bg: "dark", variant: "dark", className: "bg-dark bg-opacity-50", style: { zIndex: 1000, minHeight: "64px" } }, { children: _jsxs(Container, Object.assign({ className: "max-width-100" }, { children: [_jsxs(Navbar.Brand, Object.assign({ href: "/", className: "fw-semibold" }, { children: [_jsx("img", { src: "/icons/logoicon.png", className: "logo-img" }), "SolLightning", FEConstants.chain === "DEVNET" ? _jsx(Badge, Object.assign({ className: "ms-2", bg: "danger" }, { children: "DEVNET" })) : ""] })), _jsxs("div", Object.assign({ className: "d-flex flex-column" }, { children: [_jsx(Badge, Object.assign({ className: "newBadgeCollapse d-md-none" }, { children: "New!" })), _jsx(Navbar.Toggle, { "aria-controls": "basic-navbar-nav", className: "ms-3" })] })), _jsxs(Navbar.Collapse, Object.assign({ role: "", id: "basic-navbar-nav" }, { children: [_jsxs(Nav, Object.assign({ className: "d-flex d-md-none me-auto text-start border-top border-bottom border-dark-subtle my-2", navbarScroll: true, style: { maxHeight: '100px' } }, { children: [pathName === "/about" || pathName === "/faq" || pathName === "/map" ? (_jsxs(Nav.Link, Object.assign({ href: "/", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: exchange, className: "d-flex me-1" }), _jsx("span", { children: "Swap" })] }))) : "", _jsxs(Nav.Link, Object.assign({ href: "/map", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: map, className: "d-flex me-1" }), _jsx("span", Object.assign({ className: "me-1" }, { children: "Map" })), _jsx(Badge, Object.assign({ className: "me-2" }, { children: "New!" })), _jsx("small", { children: "Find merchants accepting lightning!" })] })), _jsxs(Nav.Link, Object.assign({ href: "/about", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: info, className: "d-flex me-1" }), _jsx("span", { children: "About" })] })), _jsxs(Nav.Link, Object.assign({ href: "/faq", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: question, className: "d-flex me-1" }), _jsx("span", { children: "FAQ" })] })), nfcSupported ? (_jsxs("div", Object.assign({ className: "nav-link d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: ic_contactless, className: "d-flex me-1" }), _jsx("label", Object.assign({ title: "", htmlFor: "nfc", className: "form-check-label me-2" }, { children: "NFC enable" })), _jsx(Form.Check // prettier-ignore
+                                                , { id: "nfc", type: "switch", onChange: (val) => nfcSet(val.target.checked, val.target), checked: nfcEnabled })] }))) : ""] })), _jsxs(Nav, Object.assign({ className: "d-none d-md-flex me-auto text-start", navbarScroll: true, style: { maxHeight: '100px' } }, { children: [pathName === "/about" || pathName === "/faq" || pathName === "/map" ? (_jsxs(Nav.Link, Object.assign({ href: "/", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: exchange, className: "d-flex me-1" }), _jsx("span", { children: "Swap" })] }))) : "", _jsx(OverlayTrigger, Object.assign({ placement: "bottom", overlay: _jsx(Tooltip, Object.assign({ id: "map-tooltip" }, { children: "Find merchants near you accepting bitcoin lightning!" })) }, { children: _jsxs(Nav.Link, Object.assign({ href: "/map", className: "d-flex flex-column align-items-center" }, { children: [_jsxs("div", Object.assign({ className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: map, className: "d-flex me-1" }), _jsx("span", { children: "Map" })] })), _jsx(Badge, Object.assign({ className: "newBadge" }, { children: "New!" }))] })) })), _jsxs(Nav.Link, Object.assign({ href: "/about", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: info, className: "d-flex me-1" }), _jsx("span", { children: "About" })] })), _jsxs(Nav.Link, Object.assign({ href: "/faq", className: "d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: question, className: "d-flex me-1" }), _jsx("span", { children: "FAQ" })] })), nfcSupported ? (_jsxs("div", Object.assign({ className: "nav-link d-flex flex-row align-items-center" }, { children: [_jsx(Icon, { icon: ic_contactless, className: "d-flex me-1" }), _jsx("label", Object.assign({ title: "", htmlFor: "nfc", className: "form-check-label me-2" }, { children: "NFC enable" })), _jsx(Form.Check // prettier-ignore
+                                                , { id: "nfc", type: "switch", onChange: (val) => nfcSet(val.target.checked, val.target), checked: nfcEnabled })] }))) : ""] })), _jsx(Nav, Object.assign({ className: "ms-auto" }, { children: _jsxs("div", Object.assign({ className: "d-flex flex-row align-items-center", style: { height: "3rem" } }, { children: [_jsx("a", Object.assign({ href: "https://twitter.com/SolLightning", target: "_blank", className: "mx-2" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/twitter.png" }) })), _jsx("a", Object.assign({ href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", className: "mx-2" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/telegram.png" }) })), _jsx("a", Object.assign({ href: "https://github.com/adambor/SolLightning-readme", target: "_blank", className: "ms-2 me-4" }, { children: _jsx("img", { className: "social-icon", src: "/icons/socials/github.png" }) })), swapper != null ? (_jsx("div", Object.assign({ className: "d-flex ms-auto" }, { children: _jsx(WalletMultiButton, {}) }))) : ""] })) }))] }))] })) })), _jsx(SwapsContext.Provider, Object.assign({ value: {
                     actionableSwaps,
                     removeSwap: (swap) => {
                         setActionableSwaps((val) => {

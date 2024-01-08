@@ -4,6 +4,7 @@ import { Alert, Button, ProgressBar, Spinner } from "react-bootstrap";
 import { ToBTCLNSwap, ToBTCSwapState } from "sollightning-sdk";
 import { getCurrencySpec, toHumanReadableString } from "../../../utils/Currencies";
 import * as bolt11 from "bolt11";
+import { FEConstants } from "../../../FEConstants";
 const SNOWFLAKE_LIST = new Set([
     "038f8f113c580048d847d6949371726653e02b928196bad310e3eda39ff61723f6",
     "03a6ce61fcaacd38d31d4e3ce2d506602818e3856b4b44faff1dde9642ba705976"
@@ -13,6 +14,7 @@ export function ToBTCQuoteSummary(props) {
     const [initialQuoteTimeout, setInitialQuoteTimeout] = useState();
     const expiryTime = useRef();
     const [confidenceWarning, setConfidenceWarning] = useState(false);
+    const [nonCustodialWarning, setNonCustodialWarning] = useState(false);
     const [loading, setLoading] = useState();
     const [success, setSuccess] = useState();
     const [refund, setRefund] = useState();
@@ -25,9 +27,11 @@ export function ToBTCQuoteSummary(props) {
             if (props.setAmountLock)
                 props.setAmountLock(true);
             await props.quote.commit(null, null, skipChecks);
-            const success = await props.quote.waitForPayment();
+            const success = await props.quote.waitForPayment(null, 1);
             if (success) {
                 setSuccess(true);
+                setNonCustodialWarning(false);
+                setConfidenceWarning(false);
                 if (props.setAmountLock)
                     props.setAmountLock(false);
             }
@@ -66,19 +70,22 @@ export function ToBTCQuoteSummary(props) {
             setConfidenceWarning(false);
         if (props.quote.getState() === ToBTCSwapState.CREATED) {
             if (props.quote instanceof ToBTCLNSwap && props.quote.getConfidence() === 0) {
-                let is_snowflake = false;
+                let isSnowflake = false;
+                let isNonCustodial = false;
                 if (props.quote.pr != null) {
                     const parsedRequest = bolt11.decode(props.quote.pr);
                     if (parsedRequest.tagsObject.routing_info != null) {
                         for (let route of parsedRequest.tagsObject.routing_info) {
+                            isNonCustodial = true;
                             if (SNOWFLAKE_LIST.has(route.pubkey)) {
-                                is_snowflake = true;
+                                isSnowflake = true;
                             }
                         }
                     }
                 }
-                if (confidenceWarning === is_snowflake)
-                    setConfidenceWarning(!is_snowflake);
+                if (confidenceWarning === isSnowflake)
+                    setConfidenceWarning(!isSnowflake);
+                setNonCustodialWarning(!confidenceWarning && isNonCustodial);
             }
             //Check that we have enough funds!
             const neededToPay = props.quote.getInAmount();
@@ -127,5 +134,5 @@ export function ToBTCQuoteSummary(props) {
             cancelled = true;
         };
     }, [props.quote]);
-    return (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ className: "text-center mb-3", show: confidenceWarning, variant: "warning", onClose: () => setConfidenceWarning(false), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Payment might likely fail!" }), _jsx("label", { children: "We weren't able to check if the recipient is reachable (send probe request) on the Lightning network, this is common with some wallets, but could also indicate that the destination is unreachable and payment might therefore fail (you will get a refund in that case)!" })] })), _jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), success === null ? (quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: () => onContinue(), disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", props.type === "payment" ? "Pay" : "Swap"] })))) : (success ? (_jsxs(Alert, Object.assign({ variant: "success", className: "mb-0" }, { children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] }))) : (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] })), refund ? (_jsxs(Button, Object.assign({ onClick: onRefund, className: refunded ? "d-none" : "", disabled: refunding, variant: "secondary" }, { children: [refunding ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Refund deposit"] }))) : (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" })))] })))] }));
+    return (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ className: "text-center mb-3", show: confidenceWarning, variant: "warning", onClose: () => setConfidenceWarning(false), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Payment might likely fail!" }), _jsx("label", { children: "We weren't able to check if the recipient is reachable (send probe request) on the Lightning network, this is common with some wallets, but could also indicate that the destination is unreachable and payment might therefore fail (you will get a refund in that case)!" })] })), props.type === "swap" ? _jsxs(Alert, Object.assign({ className: "text-center mb-3", show: nonCustodialWarning, variant: "success", onClose: () => setNonCustodialWarning(false), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Non-custodial wallet info" }), _jsx("label", { children: "Please make sure your lightning wallet is online & running to be able to receive a lightning network payment, otherwise the payment will fail (you will get a refund in that case)!" })] })) : "", _jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), success === null ? (quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: () => onContinue(), disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", props.type === "payment" ? "Pay" : "Swap"] })))) : (success ? (_jsxs(Alert, Object.assign({ variant: "success", className: "mb-0" }, { children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" }), _jsx(Button, Object.assign({ href: FEConstants.btcBlockExplorer + props.quote.getTxId(), target: "_blank", variant: "success", className: "mt-3" }, { children: "View transaction" }))] }))) : (_jsxs(_Fragment, { children: [_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] })), refund ? (_jsxs(Button, Object.assign({ onClick: onRefund, className: refunded ? "d-none" : "", disabled: refunding, variant: "secondary" }, { children: [refunding ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Refund deposit"] }))) : (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" })))] })))] }));
 }

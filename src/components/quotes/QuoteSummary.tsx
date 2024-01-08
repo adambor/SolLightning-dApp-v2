@@ -1,4 +1,4 @@
-import {FromBTCLNSwap, FromBTCLNSwapState, FromBTCSwap, FromBTCSwapState, IFromBTCSwap, ISwap, IToBTCSwap} from "sollightning-sdk";
+import {FromBTCLNSwap, FromBTCLNSwapState, FromBTCSwap, FromBTCSwapState, IFromBTCSwap, ISwap, IToBTCSwap, Swapper} from "sollightning-sdk";
 import {ToBTCQuoteSummary} from "./tobtc/ToBTCQuoteSummary";
 import {LNURLWithdrawQuoteSummary} from "./frombtc/LNURLWithdrawQuoteSummary";
 import {FromBTCLNQuoteSummary} from "./frombtc/FromBTCLNQuoteSummary";
@@ -7,6 +7,7 @@ import * as React from "react";
 import * as BN from "bn.js";
 
 export function QuoteSummary(props: {
+    swapper: Swapper<any, any, any, any>,
     quote: ISwap,
     refreshQuote: () => void,
     setAmountLock?: (isLocked: boolean) => void,
@@ -26,7 +27,7 @@ export function QuoteSummary(props: {
     />;
     if(props.quote instanceof IFromBTCSwap) {
         if(props.quote instanceof FromBTCLNSwap) {
-            if(props.quote.lnurl!=null) {
+            if(props.quote.lnurl!=null && props.type!=="swap") {
                 return <LNURLWithdrawQuoteSummary
                     type={props.type}
                     setAmountLock={props.setAmountLock}
@@ -36,6 +37,7 @@ export function QuoteSummary(props: {
                 />;
             } else {
                 return <FromBTCLNQuoteSummary
+                    swapper={props.swapper}
                     type={props.type}
                     setAmountLock={props.setAmountLock}
                     quote={props.quote}

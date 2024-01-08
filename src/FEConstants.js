@@ -1,7 +1,13 @@
 import BigNumber from "bignumber.js";
 import { SolanaChains } from "sollightning-sdk";
 import { PublicKey } from "@solana/web3.js";
-const chain = "MAINNET";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+const solanaRpcUrl = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
+const chain = "MAINNET"; //DEVNET or MAINNET
+const btcBlockExplorer = "https://mempool.space/tx/";
+// const solanaRpcUrl: string = "https://api.devnet.solana.com";
+// const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
+// const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
 export const FEConstants = {
     // expirySecondsBTCLNtoSol: 1*86400, //1 days
     // expirySecondsSoltoBTCLN: 3*86400, //3 days
@@ -16,6 +22,9 @@ export const FEConstants = {
     // },
     // url: "http://localhost:4000",
     // customPorts: null,
+    btcBlockExplorer,
+    solanaChain: chain === "MAINNET" ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet,
+    rpcUrl: solanaRpcUrl,
     chain,
     wbtcToken: new PublicKey(SolanaChains[chain].tokens.WBTC),
     usdcToken: new PublicKey(SolanaChains[chain].tokens.USDC),

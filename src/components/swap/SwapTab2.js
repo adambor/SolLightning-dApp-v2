@@ -270,8 +270,12 @@ export function SwapTab(props) {
                                             }, value: outCurrency, className: "round-right bg-transparent text-white" })) }) })), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
                                                 setAddress(val);
                                                 if (props.swapper.isValidLNURL(val)) {
-                                                    props.swapper.getLNURLTypeAndData(val, false).then(() => {
-                                                        navigate("/scan/2?address=" + encodeURIComponent(val));
+                                                    props.swapper.getLNURLTypeAndData(val, false).then((result) => {
+                                                        navigate("/scan/2?address=" + encodeURIComponent(val), {
+                                                            state: {
+                                                                lnurlParams: Object.assign(Object.assign({}, result), { min: result.min.toString(10), max: result.max.toString(10) })
+                                                            }
+                                                        });
                                                     }).catch(e => { });
                                                 }
                                                 if (props.swapper.isValidBitcoinAddress(val)) {
@@ -288,6 +292,7 @@ export function SwapTab(props) {
                                                 }
                                                 setDisabled(false);
                                             }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
+                                                console.log("Is valid bitcoin address: ", val);
                                                 if (props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val))
                                                     return null;
                                                 try {
@@ -297,7 +302,7 @@ export function SwapTab(props) {
                                                 }
                                                 catch (e) { }
                                                 return "Invalid bitcoin address/lightning network invoice";
-                                            } }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
+                                            } }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), _jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
                                             setAmount("");

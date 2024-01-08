@@ -7,19 +7,14 @@ import {LedgerWalletAdapter, PhantomWalletAdapter, SlopeWalletAdapter,
 import {WalletAdapterNetwork} from "@solana/wallet-adapter-base";
 import fetch from "cross-fetch";
 import {NetworkError} from "sollightning-sdk";
-
-//const endpoint = "https://api.devnet.solana.com";
-const endpoint = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
-const network = WalletAdapterNetwork.Mainnet;
+import {FEConstants} from "../FEConstants";
 
 const wallets = [
     new PhantomWalletAdapter(),
-    new SolflareWalletAdapter({ network }),
+    new SolflareWalletAdapter({ network: FEConstants.solanaChain }),
     new SlopeWalletAdapter(),
     new TorusWalletAdapter(),
-    new LedgerWalletAdapter(),
-    new SolletWalletAdapter({ network }),
-    new SolletExtensionWalletAdapter({ network }),
+    new LedgerWalletAdapter()
 ];
 
 const fetchWithTimeout = async (input: RequestInfo | URL, init: RequestInit) => {
@@ -55,7 +50,7 @@ function WalletTab(props: {
     children: any
 }) {
     return (
-        <ConnectionProvider endpoint={endpoint} config={{fetch: fetchWithTimeout, commitment: "confirmed"}}>
+        <ConnectionProvider endpoint={FEConstants.rpcUrl} config={{fetch: fetchWithTimeout, commitment: "confirmed"}}>
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
                     {props.children}

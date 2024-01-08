@@ -1,13 +1,15 @@
+import * as React from "react";
 import {useEffect, useRef, useState} from "react";
-import {Alert, Badge, Button, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip, Form} from "react-bootstrap";
+import {Alert, Badge, Button, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
-import {FromBTCLNSwap, FromBTCLNSwapState} from "sollightning-sdk";
+import {FromBTCLNSwap, FromBTCLNSwapState, LNURLPay, LNURLWithdraw, Swapper} from "sollightning-sdk";
 import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
-import * as React from "react";
+import {LNNFCReader, LNNFCStartResult} from "../../lnnfc/LNNFCReader";
 
 export function FromBTCLNQuoteSummary(props: {
+    swapper: Swapper<any, any, any, any>,
     quote: FromBTCLNSwap<any>,
     refreshQuote: () => void,
     setAmountLock: (isLocked: boolean) => void,
@@ -33,6 +35,39 @@ export function FromBTCLNQuoteSummary(props: {
     const copyBtnRef = useRef();
     const [showCopyOverlay, setShowCopyOverlay] = useState<number>(0);
     const [autoClaim, setAutoClaim] = useState<boolean>(false);
+
+    const [NFCScanning, setNFCScanning] = useState<LNNFCStartResult>(null);
+    const [payingWithLNURL, setPayingWithLNURL] = useState<boolean>(false);
+
+    const nfcScannerRef = useRef<LNNFCReader>(null);
+
+    useEffect(() => {
+        const nfcScanner = new LNNFCReader();
+        if(!nfcScanner.isSupported()) return;
+        nfcScanner.onScanned((lnurls: string[]) => {
+            console.log("LNURL read: ", lnurls);
+
+            if(lnurls[0]!=null) {
+                props.swapper.getLNURLTypeAndData(lnurls[0]).then((result: LNURLPay | LNURLWithdraw) => {
+                    if(result==null) return;
+                    if(result.type!=="withdraw") return;
+                    nfcScanner.stop();
+                    props.quote.settleWithLNURLWithdraw(result as LNURLWithdraw).then(() => {
+                        setPayingWithLNURL(true);
+                    });
+                });
+            }
+        });
+        nfcScannerRef.current = nfcScanner;
+
+        nfcScanner.start().then((res: LNNFCStartResult) => {
+            setNFCScanning(res);
+        });
+
+        return () => {
+            nfcScanner.stop();
+        };
+    }, []);
 
     useEffect(() => {
 
@@ -217,38 +252,53 @@ export function FromBTCLNQuoteSummary(props: {
                 <>
                     {quoteTimeRemaining===0 ? "" : (
                         <div className="tab-accent mb-3">
-                            <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
-                                {(props) => (
-                                    <Tooltip id="overlay-example" {...props}>
-                                        Address copied to clipboard!
-                                    </Tooltip>
-                                )}
-                            </Overlay>
+                            {payingWithLNURL ? (
+                                <div className="d-flex flex-column align-items-center justify-content-center">
+                                    <Spinner animation="border" />
+                                    Paying via NFC card...
+                                </div>
+                            ) : (
+                                <>
+                                    <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                        {(props) => (
+                                            <Tooltip id="overlay-example" {...props}>
+                                                Address copied to clipboard!
+                                            </Tooltip>
+                                        )}
+                                    </Overlay>
 
-                            <div ref={qrCodeRef}>
-                                <QRCodeSVG
-                                    value={props.quote.getQrData()}
-                                    size={300}
-                                    includeMargin={true}
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        copy(2);
-                                    }}
-                                />
-                            </div>
-                            <label>Please initiate a payment to this lightning network invoice</label>
-                            <ValidatedInput
-                                type={"text"}
-                                value={props.quote.getAddress()}
-                                textEnd={(
-                                    <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
-                                        copy(1);
-                                    }}>
-                                        <Icon icon={clipboard}/>
-                                    </a>
-                                )}
-                                inputRef={textFieldRef}
-                            />
+                                    <div ref={qrCodeRef}>
+                                        <QRCodeSVG
+                                            value={props.quote.getQrData()}
+                                            size={300}
+                                            includeMargin={true}
+                                            className="cursor-pointer"
+                                            onClick={() => {
+                                                copy(2);
+                                            }}
+                                            imageSettings={NFCScanning===LNNFCStartResult.OK ? {
+                                                src: "/icons/contactless.png",
+                                                excavate: true,
+                                                height: 50,
+                                                width: 50
+                                            } : null}
+                                        />
+                                    </div>
+                                    <label>Please initiate a payment to this lightning network invoice</label>
+                                    <ValidatedInput
+                                        type={"text"}
+                                        value={props.quote.getAddress()}
+                                        textEnd={(
+                                            <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
+                                                copy(1);
+                                            }}>
+                                                <Icon icon={clipboard}/>
+                                            </a>
+                                        )}
+                                        inputRef={textFieldRef}
+                                    />
+                                </>
+                            )}
 
                             <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-3">
                                 <Form.Check // prettier-ignore
@@ -267,14 +317,16 @@ export function FromBTCLNQuoteSummary(props: {
                         </div>
                     )}
 
-                    <div className="d-flex flex-column mb-3 tab-accent">
-                        {quoteTimeRemaining===0 ? (
-                            <label>Quote expired!</label>
-                        ) : (
-                            <label>Quote expires in {quoteTimeRemaining} seconds</label>
-                        )}
-                        <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
-                    </div>
+                    {payingWithLNURL && quoteTimeRemaining!==0 ? "" : (
+                        <div className="d-flex flex-column mb-3 tab-accent">
+                            {quoteTimeRemaining===0 ? (
+                                <label>Quote expired!</label>
+                            ) : (
+                                <label>Quote expires in {quoteTimeRemaining} seconds</label>
+                            )}
+                            <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
+                        </div>
+                    )}
 
                     {quoteTimeRemaining===0 ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
