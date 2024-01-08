@@ -36,21 +36,15 @@ $accordion-border-width: 0;
 $accordion-bg: rgba(var(--bs-dark-rgb), 0.25);
 $accordion-color: #fff;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-  sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
   monospace;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url("./fonts/scandia/light/style.css");
+@import url("./fonts/scandia/regular/style.css");
+@import url("./fonts/scandia/medium/style.css");
+//@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 .btn-primary {
@@ -133,7 +127,9 @@ a {
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: Scandia, sans-serif;
+  font-style: normal;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -178,8 +174,8 @@ code {
 }
 
 .background-gradient {
-  background: rgb(20,241,149);
-  background: linear-gradient(126deg, rgba(20,241,149,1) 0%, rgba(153,69,255,1) 50%, rgba(255,153,0,1) 100%);
+  background: #d147a6;
+  background: linear-gradient(135deg,#fc9626,#d147a6 50%,#944afc);
 }
 
 .card {
@@ -277,8 +273,9 @@ code {
 
 .logo-img {
   margin-top: -4px;
-  width: 32px;
-  height: 32px;
+  margin-bottom: -4px;
+  width: 40px;
+  height: 40px;
 }
 
 .pill-round {

@@ -196,9 +196,9 @@ function WrappedApp() {
         <>
             <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container className="max-width-100">
-                    <Navbar.Brand href="/" className="fw-semibold">
-                        <img src="/icons/logoicon.png" className="logo-img"/>
-                        SolLightning
+                    <Navbar.Brand href="/" className="d-flex flex-row" style={{fontSize: "1.5rem"}}>
+                        <img src="/icons/atomiq-flask.png" className="logo-img"/>
+                        <b>atomiq</b><span style={{fontWeight: 300}}>.exchange</span>
                         {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2" bg="danger">DEVNET</Badge> : ""}
                     </Navbar.Brand>
 
