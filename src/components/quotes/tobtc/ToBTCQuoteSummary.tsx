@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from "react";
 import {Alert, Button, Card, ProgressBar, Spinner} from "react-bootstrap";
-import {IToBTCSwap, ToBTCLNSwap, ToBTCSwapState} from "sollightning-sdk";
+import {IToBTCSwap, SwapType, ToBTCLNSwap, ToBTCSwapState} from "sollightning-sdk";
 import {getCurrencySpec, toHumanReadableString} from "../../../utils/Currencies";
 import * as React from "react";
 import * as bolt11 from "bolt11";
@@ -193,7 +193,9 @@ export function ToBTCQuoteSummary(props: {
                     <Alert variant="success" className="mb-0">
                         <strong>Swap successful</strong>
                         <label>Swap was concluded successfully</label>
-                        <Button href={FEConstants.btcBlockExplorer+props.quote.getTxId()} target="_blank" variant="success" className="mt-3">View transaction</Button>
+                        {props.quote.getType()===SwapType.TO_BTC ? (
+                            <Button href={FEConstants.btcBlockExplorer+props.quote.getTxId()} target="_blank" variant="success" className="mt-3">View transaction</Button>
+                        ) : ""}
                     </Alert>
                 ) : (
                     <>
