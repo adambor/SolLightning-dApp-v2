@@ -108,7 +108,7 @@ function ValidatedInput(props : {
         }}>
             <Form.Group controlId="validationCustom01">
                 {props.label ? (<Form.Label>{props.label}</Form.Label>) : ""}
-                <InputGroup>
+                <InputGroup className="has-validation">
                     {props.type==="checkbox" ? (
                         <Form.Check
                             disabled={props.disabled}
@@ -277,7 +277,12 @@ function ValidatedInput(props : {
                             ) : ""}
                         </>
                     )}
-                    <Form.Control.Feedback type="invalid"><Icon icon={exclamationTriangle}/> {props.validated || state.validated}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">
+                        <div className="d-flex align-items-center">
+                            <Icon className="mb-1 me-1" icon={exclamationTriangle}/>
+                            <span>{props.validated || state.validated}</span>
+                        </div>
+                    </Form.Control.Feedback>
                 </InputGroup>
             </Form.Group>
         </Form>

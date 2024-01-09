@@ -61,7 +61,7 @@ function ValidatedInput(props) {
             evnt.preventDefault();
             if (props.onSubmit != null)
                 props.onSubmit();
-        } }, { children: _jsxs(Form.Group, Object.assign({ controlId: "validationCustom01" }, { children: [props.label ? (_jsx(Form.Label, { children: props.label })) : "", _jsxs(InputGroup, { children: [props.type === "checkbox" ? (_jsx(Form.Check, { disabled: props.disabled, ref: inputRef, isInvalid: !!(props.validated || state.validated), type: "checkbox", readOnly: props.readOnly, label: props.placeholder, defaultValue: props.defaultValue, onChange: (evnt) => {
+        } }, { children: _jsxs(Form.Group, Object.assign({ controlId: "validationCustom01" }, { children: [props.label ? (_jsx(Form.Label, { children: props.label })) : "", _jsxs(InputGroup, Object.assign({ className: "has-validation" }, { children: [props.type === "checkbox" ? (_jsx(Form.Check, { disabled: props.disabled, ref: inputRef, isInvalid: !!(props.validated || state.validated), type: "checkbox", readOnly: props.readOnly, label: props.placeholder, defaultValue: props.defaultValue, onChange: (evnt) => {
                                 const obj = {};
                                 if (props.onValidate != null) {
                                     obj.validated = props.onValidate(evnt.target.checked);
@@ -119,6 +119,6 @@ function ValidatedInput(props) {
                                                 refObj.input.current.setSelectionRange(0, 99999);
                                                 // @ts-ignore
                                                 navigator.clipboard.writeText(refObj.input.current.value);
-                                            } }, { children: _jsx(Icon, { icon: copy }) })) })) })) : "", props.elementEnd || "", props.textEnd ? (_jsx(InputGroup.Text, { children: props.textEnd })) : ""] })), _jsxs(Form.Control.Feedback, Object.assign({ type: "invalid" }, { children: [_jsx(Icon, { icon: exclamationTriangle }), " ", props.validated || state.validated] }))] })] })) })));
+                                            } }, { children: _jsx(Icon, { icon: copy }) })) })) })) : "", props.elementEnd || "", props.textEnd ? (_jsx(InputGroup.Text, { children: props.textEnd })) : ""] })), _jsx(Form.Control.Feedback, Object.assign({ type: "invalid" }, { children: _jsxs("div", Object.assign({ className: "d-flex align-items-center" }, { children: [_jsx(Icon, { className: "mb-1 me-1", icon: exclamationTriangle }), _jsx("span", { children: props.validated || state.validated })] })) }))] }))] })) })));
 }
 export default ValidatedInput;

@@ -21,13 +21,13 @@ export function FeePart(props: {
         <div className={"d-flex font-medium "+props.className}>
             <span className={"d-flex align-items-center"+(props.bold ? " fw-bold" : "")}>{props.text}</span>
             <span className="ms-auto text-end">
-                <span className="fw-bold d-block mb--8">
-                    <img src={props.currency1.icon} className="currency-icon-small"/>
+                <span className="fw-bold d-flex mb--6 align-items-center justify-content-end">
+                    <img src={props.currency1.icon} className="currency-icon-small"  style={{marginTop: "-1px"}}/>
                     <span>{toHumanReadableString(props.amount1, props.currency1)}</span>
                 </span>
-                <span className="d-block">
+                <span className="d-flex align-items-center justify-content-end">
                     <img src={props.currency2.icon} className="currency-icon-small"/>
-                    <small>{toHumanReadableString(props.amount2, props.currency2)}</small>
+                    <small style={{marginTop: "2px"}}>{toHumanReadableString(props.amount2, props.currency2)}</small>
                 </span>
             </span>
         </div>
@@ -75,8 +75,8 @@ export function SimpleFeeSummaryScreen(props: {
             <FeePart className="border-bottom border-light pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
             <div className="d-flex font-medium py-2 mt-2">
                 <span>Watchtower fee:</span>
-                <span className="ms-auto fw-bold">
-                    <img src={getNativeCurrency().icon} className="currency-icon-small"/>
+                <span className="ms-auto fw-bold d-flex align-items-center">
+                    <img src={getNativeCurrency().icon} className="currency-icon-small" style={{marginTop: "-2px"}}/>
                     {toHumanReadableString(props.swap.getClaimerBounty(), getNativeCurrency())}
                 </span>
             </div>

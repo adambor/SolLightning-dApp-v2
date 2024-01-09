@@ -1,11 +1,12 @@
 //$primary: #FF9300;
 //$primary: #a679ff;
-$primary: #a679ff;
+//$primary: #a679ff;
+$primary: #d147a6;
 $secondary: #F2F5F9;
 $danger: #F25151;
 $success: #2BDD72;
 $warning: #B2B2B2;
-$dark: #272D33;
+$dark: #141414;
 $btn-border-radius-lg: 0.25rem;
 $body-color: #272D33;
 $info: #006CFF;
@@ -13,8 +14,8 @@ $info: #006CFF;
 //$form-invalid-border-color: #ffdb00;
 //$form-invalid-color: #ffdb00;
 
-$form-invalid-border-color: #F25151;
-$form-invalid-color: #ff7979;
+$form-invalid-border-color: #ff5e5e;
+$form-invalid-color: #ff9393;
 
 $success-border-subtle: #00ff68;
 $success-bg-subtle: rgba(0, 255, 96, 0.25);
@@ -35,6 +36,10 @@ $accordion-button-color: #fff;
 $accordion-border-width: 0;
 $accordion-bg: rgba(var(--bs-dark-rgb), 0.25);
 $accordion-color: #fff;
+
+$font-weight-bold: 600;
+
+$badge-font-weight: 500;
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
@@ -96,6 +101,18 @@ code {
 .btn {
   padding-left: 32px;
   padding-right: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invalid-feedback #text {
+  margin-top: 500px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
 }
 
 //.alert-danger {

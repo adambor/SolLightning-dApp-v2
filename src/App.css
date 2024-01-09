@@ -116,6 +116,10 @@
   margin-bottom: -8px;
 }
 
+.mb--6 {
+  margin-bottom: -6px;
+}
+
 .line-height-100 {
   line-height: 100% ;
 }

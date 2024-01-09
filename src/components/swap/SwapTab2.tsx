@@ -16,6 +16,8 @@ import {FeePart, SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
+import Icon from "react-icons-kit";
+import {ic_arrow_downward} from 'react-icons-kit/md/ic_arrow_downward'
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -329,7 +331,7 @@ export function SwapTab(props: {
                     </Card>
                     <div className="d-flex justify-content-center swap-direction-wrapper">
                         <Button onClick={changeDirection} size="lg" className="px-0 swap-direction-btn">
-                            ↓
+                            <Icon size={24} icon={ic_arrow_downward} style={{marginTop: "-3px", marginBottom: "2px"}}/>
                         </Button>
                     </div>
                     <Card className="tab-accent-p3">

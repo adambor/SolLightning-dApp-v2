@@ -10,6 +10,8 @@ import { SimpleFeeSummaryScreen } from "../SimpleFeeScreen";
 import { QuoteSummary } from "../quotes/QuoteSummary";
 import { Topbar } from "../Topbar";
 import { useLocation, useNavigate } from "react-router-dom";
+import Icon from "react-icons-kit";
+import { ic_arrow_downward } from 'react-icons-kit/md/ic_arrow_downward';
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
     max: null
@@ -254,7 +256,7 @@ export function SwapTab(props) {
                                         if (locked)
                                             return;
                                         setInCurrency(val);
-                                    }, value: inCurrency, className: "round-right bg-transparent text-white" })) }) })), _jsx("div", Object.assign({ className: "d-flex justify-content-center swap-direction-wrapper" }, { children: _jsx(Button, Object.assign({ onClick: changeDirection, size: "lg", className: "px-0 swap-direction-btn" }, { children: "\u2193" })) })), _jsxs(Card, Object.assign({ className: "tab-accent-p3" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: outAmountRef, className: "flex-fill strip-group-text", type: "number", value: exactIn ? (quote == null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount, size: "lg", textStart: exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
+                                    }, value: inCurrency, className: "round-right bg-transparent text-white" })) }) })), _jsx("div", Object.assign({ className: "d-flex justify-content-center swap-direction-wrapper" }, { children: _jsx(Button, Object.assign({ onClick: changeDirection, size: "lg", className: "px-0 swap-direction-btn" }, { children: _jsx(Icon, { size: 24, icon: ic_arrow_downward, style: { marginTop: "-3px", marginBottom: "2px" } }) })) })), _jsxs(Card, Object.assign({ className: "tab-accent-p3" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: outAmountRef, className: "flex-fill strip-group-text", type: "number", value: exactIn ? (quote == null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount, size: "lg", textStart: exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                             setAmount(val);
                                             setExactIn(false);
                                         }, step: outCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals)), min: outConstraints.min, max: outConstraints.max, onValidate: (val) => {
