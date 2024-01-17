@@ -1,10 +1,7 @@
 import * as React from "react";
 import {WalletModalProvider, WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import {ConnectionProvider, WalletProvider} from "@solana/wallet-adapter-react";
-import {LedgerWalletAdapter, PhantomWalletAdapter, SlopeWalletAdapter,
-    SolletExtensionWalletAdapter,
-    SolletWalletAdapter, TorusWalletAdapter, SolflareWalletAdapter} from "@solana/wallet-adapter-wallets";
-import {WalletAdapterNetwork} from "@solana/wallet-adapter-base";
+import {LedgerWalletAdapter, PhantomWalletAdapter, TorusWalletAdapter, SolflareWalletAdapter} from "@solana/wallet-adapter-wallets";
 import fetch from "cross-fetch";
 import {NetworkError} from "sollightning-sdk";
 import {FEConstants} from "../FEConstants";
@@ -12,7 +9,6 @@ import {FEConstants} from "../FEConstants";
 const wallets = [
     new PhantomWalletAdapter(),
     new SolflareWalletAdapter({ network: FEConstants.solanaChain }),
-    new SlopeWalletAdapter(),
     new TorusWalletAdapter(),
     new LedgerWalletAdapter()
 ];
