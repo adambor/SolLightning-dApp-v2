@@ -3,12 +3,14 @@ import {SolanaChains, SwapType} from "sollightning-sdk";
 import {PublicKey} from "@solana/web3.js";
 import {WalletAdapterNetwork} from "@solana/wallet-adapter-base";
 
-const solanaRpcUrl: string = "https://vevay-8ywdib-fast-mainnet.helius-rpc.com/";
-const chain: "DEVNET" | "MAINNET" = "MAINNET"; //DEVNET or MAINNET
-const btcBlockExplorer: string = "https://mempool.space/tx/";
+const solanaRpcUrl: string = process.env.REACT_APP_SOLANA_RPC_URL;
+const chain: "DEVNET" | "MAINNET" = process.env.REACT_APP_SOLANA_NETWORK as ("DEVNET" | "MAINNET"); //DEVNET or MAINNET
+const btcBlockExplorer: string = process.env.REACT_APP_BTC_BLOCK_EXPLORER;
 // const solanaRpcUrl: string = "https://api.devnet.solana.com";
 // const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
 // const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
+
+console.log("SOLana RPC: ", solanaRpcUrl);
 
 export const FEConstants = {
     // expirySecondsBTCLNtoSol: 1*86400, //1 days
@@ -25,7 +27,7 @@ export const FEConstants = {
     // url: "http://localhost:4000",
     // customPorts: null,
     btcBlockExplorer,
-    solanaChain: (chain as string)==="MAINNET" ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet,
+    solanaChain: chain==="MAINNET" ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet,
     rpcUrl: solanaRpcUrl,
     chain,
     wbtcToken: new PublicKey(SolanaChains[chain].tokens.WBTC),

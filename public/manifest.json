@@ -1,5 +1,5 @@
 {
-  "short_name": "atomiq.exchange",
+  "short_name": "atomiq DEX",
   "name": "atomiq.exchange bitcoin cross-chain DEX",
   "icons": [
     {
@@ -8,12 +8,12 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "atomiq-flask-192px-sq-maskable.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "atomiq-flask-512px-sq-maskable.png",
       "type": "image/png",
       "sizes": "512x512"
     }
