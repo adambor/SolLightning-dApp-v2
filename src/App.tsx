@@ -202,11 +202,13 @@ function WrappedApp() {
                             <b>atomiq</b><span style={{fontWeight: 300}}>.exchange</span>
                             {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2 d-flex align-items-center" bg="danger">DEVNET</Badge> : ""}
                         </div>
-                        <div className="d-flex flex-row align-items-end justify-content-center" style={{fontSize: "0.75rem", marginTop: "-8px", marginBottom: "-8px", marginLeft: "40px"}}>
-                            <small>formerly</small>
-                            <img src="/icons/logoicon.png" className="logo-img-small"/>
-                            <span>SolLightning</span>
-                        </div>
+                        {(FEConstants.chain as string)==="MAINNET" ? (
+                            <div className="d-flex flex-row align-items-end justify-content-center" style={{fontSize: "0.75rem", marginTop: "-8px", marginBottom: "-8px", marginLeft: "40px"}}>
+                                <small>formerly</small>
+                                <img src="/icons/logoicon.png" className="logo-img-small"/>
+                                <span>SolLightning</span>
+                            </div>
+                        ) : ""}
                     </Navbar.Brand>
 
                     <div className="d-flex flex-column">
@@ -281,7 +283,7 @@ function WrappedApp() {
                                 <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
                                 {swapper!=null ? (<div className="d-flex ms-auto">
                                     {/*<BitcoinWalletButton/>*/}
-                                    <WalletMultiButton />
+                                    <WalletMultiButton className="bg-primary"/>
                                 </div>) : ""}
                             </div>
                         </Nav>
