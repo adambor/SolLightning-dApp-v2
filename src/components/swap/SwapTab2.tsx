@@ -341,7 +341,8 @@ export function SwapTab(props: {
                 tokenCurrency = inCurrency;
                 quoteCurrency = outCurrency;
                 if(dataLNURL!=null) {
-                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null);
+                    quoteCurrency = exactIn ? inCurrency : outCurrency;
+                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null, 5*24*60*60, null, null, exactIn);
                 } else {
                     promise = props.swapper.createToBTCLNSwap(inCurrency.address, useAddress, 5*24*60*60);
                 }
@@ -412,7 +413,7 @@ export function SwapTab(props: {
 
                     <Card className="d-flex flex-row tab-accent-p3">
                         <ValidatedInput
-                            disabled={locked || disabled || (kind==="tobtc" && isLNURL)}
+                            disabled={locked || disabled}
                             inputRef={inAmountRef}
                             className="flex-fill"
                             type="number"
@@ -422,7 +423,6 @@ export function SwapTab(props: {
                                 <Spinner size="sm" className="text-white"/>
                             ) : null}
                             onChange={val => {
-                                if(kind==="tobtc" && isLNURL) return;
                                 setAmount(val);
                                 setExactIn(true);
                             }}
@@ -500,7 +500,6 @@ export function SwapTab(props: {
                                             //     });
                                             // }).catch(e => {});
                                             setOutCurrency(bitcoinCurrencies[1]);
-                                            setExactIn(false);
                                             setDisabled(false);
                                         }
                                         if(props.swapper.isValidBitcoinAddress(val)) {
@@ -532,7 +531,7 @@ export function SwapTab(props: {
                                     }}
                                     validated={quoteAddressError?.error}
                                 />
-                                {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (
+                                {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (
                                     <Alert variant={"success"} className="mt-3 mb-0 text-center">
                                         <label>We only support lightning network invoices with pre-set amount!</label>
                                     </Alert>

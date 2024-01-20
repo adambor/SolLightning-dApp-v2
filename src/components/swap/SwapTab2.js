@@ -279,7 +279,8 @@ export function SwapTab(props) {
                 tokenCurrency = inCurrency;
                 quoteCurrency = outCurrency;
                 if (dataLNURL != null) {
-                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null);
+                    quoteCurrency = exactIn ? inCurrency : outCurrency;
+                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null, 5 * 24 * 60 * 60, null, null, exactIn);
                 }
                 else {
                     promise = props.swapper.createToBTCLNSwap(inCurrency.address, useAddress, 5 * 24 * 60 * 60);
@@ -334,9 +335,7 @@ export function SwapTab(props) {
             return;
         getQuote();
     }, [address, amount, inCurrency, outCurrency, exactIn, props.swapper]);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled || (kind === "tobtc" && isLNURL), inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
-                                    if (kind === "tobtc" && isLNURL)
-                                        return;
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                     setAmount(val);
                                     setExactIn(true);
                                 }, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: inConstraints.max, onValidate: (val) => {
@@ -373,7 +372,6 @@ export function SwapTab(props) {
                                                     //     });
                                                     // }).catch(e => {});
                                                     setOutCurrency(bitcoinCurrencies[1]);
-                                                    setExactIn(false);
                                                     setDisabled(false);
                                                 }
                                                 if (props.swapper.isValidBitcoinAddress(val)) {
@@ -402,7 +400,7 @@ export function SwapTab(props) {
                                                 }
                                                 catch (e) { }
                                                 return "Invalid bitcoin address/lightning network invoice";
-                                            }, validated: quoteAddressError === null || quoteAddressError === void 0 ? void 0 : quoteAddressError.error }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
+                                            }, validated: quoteAddressError === null || quoteAddressError === void 0 ? void 0 : quoteAddressError.error }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
                                             setAmount("");
