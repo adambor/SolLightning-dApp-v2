@@ -560,6 +560,7 @@ export function SwapTab(props: {
                                 setExactIn(true);
                             }}
                             inputId="amount-input"
+                            inputClassName="font-weight-500"
                             floatingLabel={inputValue==null ? null : USDollar.format(inputValue.toNumber())}
                             expectingFloatingLabel={true}
                             step={inCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals))}
@@ -598,6 +599,7 @@ export function SwapTab(props: {
                                     setExactIn(false);
                                 }}
                                 inputId="amount-output"
+                                inputClassName="font-weight-500"
                                 floatingLabel={outputValue==null ? null : USDollar.format(outputValue.toNumber())}
                                 expectingFloatingLabel={true}
                                 step={outCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals))}

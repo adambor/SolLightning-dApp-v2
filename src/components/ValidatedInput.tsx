@@ -50,6 +50,7 @@ function ValidatedInput(props : {
     value?: any,
 
     inputId?: string,
+    inputClassName?: string,
 
     min?: BigNumber,
     max?: BigNumber,
@@ -105,7 +106,9 @@ function ValidatedInput(props : {
         props.inputRef.current = refObj;
     }
 
-    const inputClassName: string = props.floatingLabel!=null ? "input-with-offset" : props.expectingFloatingLabel ? "py-expect-floating-label" : "";
+    const inputClassName: string = (props.inputClassName || "")
+        + " "
+        + (props.floatingLabel!=null ? "input-with-offset" : props.expectingFloatingLabel ? "py-expect-floating-label" : "");
 
     const mainElement = props.type==="select" ? (
             <Form.Select

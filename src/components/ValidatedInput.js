@@ -57,7 +57,9 @@ function ValidatedInput(props) {
     if (props.inputRef != null) {
         props.inputRef.current = refObj;
     }
-    const inputClassName = props.floatingLabel != null ? "input-with-offset" : props.expectingFloatingLabel ? "py-expect-floating-label" : "";
+    const inputClassName = (props.inputClassName || "")
+        + " "
+        + (props.floatingLabel != null ? "input-with-offset" : props.expectingFloatingLabel ? "py-expect-floating-label" : "");
     const mainElement = props.type === "select" ? (_jsx(Form.Select, Object.assign({ disabled: props.disabled, isInvalid: !!(props.validated || state.validated), defaultValue: props.defaultValue, size: props.size, id: props.inputId, onChange: (evnt) => {
             const obj = {};
             if (props.onValidate != null) {
