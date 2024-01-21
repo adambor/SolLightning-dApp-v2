@@ -8,6 +8,7 @@ const btcBlockExplorer = process.env.REACT_APP_BTC_BLOCK_EXPLORER;
 // const solanaRpcUrl: string = "https://api.devnet.solana.com";
 // const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
 // const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
+console.log("SOLana chain: ", chain);
 console.log("SOLana RPC: ", solanaRpcUrl);
 export const FEConstants = {
     // expirySecondsBTCLNtoSol: 1*86400, //1 days

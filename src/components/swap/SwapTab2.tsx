@@ -1,4 +1,15 @@
-import {FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, LNURLPay, LNURLWithdraw, SolanaSwapper, SwapType, ToBTCSwap} from "sollightning-sdk";
+import {
+    BinanceSwapPrice,
+    FromBTCSwap,
+    IFromBTCSwap,
+    ISwap,
+    IToBTCSwap,
+    LNURLPay,
+    LNURLWithdraw,
+    SolanaSwapper,
+    SwapType,
+    ToBTCSwap
+} from "sollightning-sdk";
 import {Accordion, Alert, Button, Card, Spinner} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
@@ -19,8 +30,9 @@ import {useLocation, useNavigate} from "react-router-dom";
 import Icon from "react-icons-kit";
 import {ic_arrow_downward} from 'react-icons-kit/md/ic_arrow_downward'
 import * as bitcoin from "bitcoinjs-lib";
-import {randomBytes} from "crypto";
+import {randomBytes} from "crypto-browserify";
 import {FEConstants} from "../../FEConstants";
+import * as BN from "bn.js";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -31,6 +43,11 @@ const RANDOM_BTC_ADDRESS = bitcoin.payments.p2wsh({
     hash: randomBytes(32),
     network: FEConstants.chain==="DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
 }).address;
+
+const USDollar = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+});
 
 export function SwapTab(props: {
     swapper: SolanaSwapper,
@@ -91,6 +108,24 @@ export function SwapTab(props: {
     const propSwapId = params.get("swapId");
 
     const [doValidate, setDoValidate] = useState<boolean>();
+
+    const [inputValue, setInputValue] = useState<BigNumber>();
+    const [outputValue, setOutputValue] = useState<BigNumber>();
+
+    const inPricing = useRef<{
+        updates: number,
+        promise: Promise<any>
+    }>({
+        updates: 0,
+        promise: Promise.resolve()
+    });
+    const outPricing = useRef<{
+        updates: number,
+        promise: Promise<any>
+    }>({
+        updates: 0,
+        promise: Promise.resolve()
+    });
 
     const navigate = useNavigate();
 
@@ -399,6 +434,104 @@ export function SwapTab(props: {
 
     }, [address, amount, inCurrency, outCurrency, exactIn, props.swapper]);
 
+    //Input pricing
+    useEffect(() => {
+        if(inCurrency==null) return;
+
+        inPricing.current.updates++;
+        const updateNum = inPricing.current.updates;
+
+        let _amount: BN;
+        if(exactIn) {
+            if(amount==="") {
+                setInputValue(null);
+                return;
+            }
+            _amount = fromHumanReadableString(amount, inCurrency);
+        } else {
+            if(quote==null) {
+                setInputValue(null);
+                return;
+            }
+            _amount = quote.getInAmount();
+        }
+
+        if(_amount.isZero()) {
+            setInputValue(null);
+            return;
+        }
+
+        const process = () => {
+            inPricing.current.promise = (async () => {
+                if(inCurrency.ticker==="USDC") {
+                    return _amount;
+                }
+                const usdcPrice = props.swapper.clientSwapContract.swapPrice.preFetchPrice(FEConstants.usdcToken);
+                let btcAmount = _amount;
+                if(inCurrency.ticker!=="BTC" && inCurrency.ticker!=="BTC-LN") {
+                    btcAmount = await props.swapper.clientSwapContract.swapPrice.getToBtcSwapAmount(_amount, inCurrency.address);
+                }
+                return await props.swapper.clientSwapContract.swapPrice.getFromBtcSwapAmount(btcAmount, FEConstants.usdcToken, null, await usdcPrice);
+            })().then(value => {
+                if(inPricing.current.updates!==updateNum) {
+                    return;
+                }
+                setInputValue(toHumanReadable(value, FEConstants.usdcToken));
+            });
+        }
+
+        inPricing.current.promise.then(process, process);
+    }, [amount, inCurrency, exactIn, quote]);
+
+    //Output pricing
+    useEffect(() => {
+        if(outCurrency==null) return;
+
+        outPricing.current.updates++;
+        const updateNum = outPricing.current.updates;
+
+        let _amount: BN;
+        if(!exactIn) {
+            if(amount==="") {
+                setOutputValue(null);
+                return;
+            }
+            _amount = fromHumanReadableString(amount, outCurrency);
+        } else {
+            if(quote==null) {
+                setOutputValue(null);
+                return;
+            }
+            _amount = quote.getOutAmount();
+        }
+
+        if(_amount.isZero()) {
+            setOutputValue(null);
+            return;
+        }
+
+        const process = () => {
+            outPricing.current.promise = (async () => {
+                if(outCurrency.ticker==="USDC") {
+                    return _amount;
+                }
+                const usdcPrice = props.swapper.clientSwapContract.swapPrice.preFetchPrice(FEConstants.usdcToken);
+                let btcAmount = _amount;
+                if(outCurrency.ticker!=="BTC" && outCurrency.ticker!=="BTC-LN") {
+                    btcAmount = await props.swapper.clientSwapContract.swapPrice.getToBtcSwapAmount(_amount, outCurrency.address);
+                }
+                return await props.swapper.clientSwapContract.swapPrice.getFromBtcSwapAmount(btcAmount, FEConstants.usdcToken, null, await usdcPrice);
+            })().then(value => {
+                if(outPricing.current.updates!==updateNum) {
+                    return;
+                }
+                setOutputValue(toHumanReadable(value, FEConstants.usdcToken));
+            });
+        }
+
+        outPricing.current.promise.then(process, process);
+    }, [amount, outCurrency, exactIn, quote]);
+
     return (
         <>
             <Topbar selected={0} enabled={!locked}/>
@@ -426,6 +559,9 @@ export function SwapTab(props: {
                                 setAmount(val);
                                 setExactIn(true);
                             }}
+                            inputId="amount-input"
+                            floatingLabel={inputValue==null ? null : USDollar.format(inputValue.toNumber())}
+                            expectingFloatingLabel={true}
                             step={inCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals))}
                             min={inConstraints.min}
                             max={inConstraints.max}
@@ -461,6 +597,9 @@ export function SwapTab(props: {
                                     setAmount(val);
                                     setExactIn(false);
                                 }}
+                                inputId="amount-output"
+                                floatingLabel={outputValue==null ? null : USDollar.format(outputValue.toNumber())}
+                                expectingFloatingLabel={true}
                                 step={outCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals))}
                                 min={outConstraints.min}
                                 max={outConstraints.max}

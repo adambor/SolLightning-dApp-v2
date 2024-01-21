@@ -46,7 +46,10 @@ function ValidatedInput(props : {
     type?: string,
     label?: string | JSX.Element,
     floatingLabel?: string | JSX.Element,
+    expectingFloatingLabel?: boolean,
     value?: any,
+
+    inputId?: string,
 
     min?: BigNumber,
     max?: BigNumber,
@@ -102,12 +105,15 @@ function ValidatedInput(props : {
         props.inputRef.current = refObj;
     }
 
+    const inputClassName: string = props.floatingLabel!=null ? "input-with-offset" : props.expectingFloatingLabel ? "py-expect-floating-label" : "";
+
     const mainElement = props.type==="select" ? (
             <Form.Select
                 disabled={props.disabled}
                 isInvalid={!!(props.validated || state.validated)}
                 defaultValue={props.defaultValue}
                 size={props.size}
+                id={props.inputId}
                 onChange={(evnt: any) => {
                     const obj: any = {};
                     if(props.onValidate!=null) {
@@ -118,6 +124,7 @@ function ValidatedInput(props : {
                     if(props.onChange!=null) props.onChange(evnt.target.value);
                 }}
                 value={props.value==null ? state.value : props.value}
+                className={inputClassName}
             >
                 {props.options==null ? "" : props.options.map((e) => {
                     return (<option key={e.key} value={e.key}>{e.value}</option>)
@@ -135,6 +142,7 @@ function ValidatedInput(props : {
                     as={"textarea"}
                     placeholder={props.placeholder}
                     defaultValue={props.defaultValue}
+                    id={props.inputId}
                     onChange={(evnt: any) => {
                         const obj: any = {};
                         if(props.type==="number") {
@@ -148,6 +156,7 @@ function ValidatedInput(props : {
                         if(props.onChange!=null) props.onChange(evnt.target.value);
                     }}
                     value={props.value==null ? state.value : props.value}
+                    className={inputClassName}
                 />
                 {props.copyEnabled ? (
                     <InputGroup.Text>
@@ -177,6 +186,7 @@ function ValidatedInput(props : {
                     type={props.type || "text"}
                     placeholder={props.placeholder}
                     defaultValue={props.defaultValue}
+                    id={props.inputId}
                     onChange={(evnt: any) => {
                         const obj: any = {};
                         if(props.type==="number") {
@@ -193,6 +203,7 @@ function ValidatedInput(props : {
                     max={props.max!=null ? props.max.toString(10): null}
                     step={props.step!=null ? props.step.toString(10): null}
                     value={props.value==null ? state.value : props.value}
+                    className={inputClassName}
                 />
                 {props.copyEnabled ? (
                     <InputGroup.Text>
@@ -213,13 +224,11 @@ function ValidatedInput(props : {
             </>
         );
 
-    const _mainElement = props.floatingLabel!=null ? (
-        <FloatingLabel
-            controlId="floatingInput"
-            label={props.floatingLabel}
-        >
+    const _mainElement = props.floatingLabel!=null || props.expectingFloatingLabel ? (
+        <div className="form-floating">
             {mainElement}
-        </FloatingLabel>
+            {props.floatingLabel==null ? "" : <label>{props.floatingLabel}</label>}
+        </div>
     ) : mainElement;
 
     return (

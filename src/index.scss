@@ -319,3 +319,36 @@ code {
 .max-width-100 {
   max-width: 100% !important;
 }
+
+.form-floating > label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  height: 100%; // allow textareas
+  padding: $form-floating-padding-y $form-floating-padding-x;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  border: $input-border-width solid transparent; // Required for aligning label's text with the input as it affects inner box model
+  transform-origin: 0 0;
+  @include transition($form-floating-transition);
+  color: #d9d9d9 !important;
+  transform: scale(0.85) translateY(1.3rem) translateX(0.15rem) !important;
+}
+
+.form-floating > label::after {
+  background: transparent !important;
+}
+
+.input-with-offset {
+  padding-top: 0.625rem !important;
+  padding-bottom: 1.625rem !important;
+}
+
+.py-expect-floating-label {
+  padding-top: 0.8125rem !important;
+  padding-bottom: 0.8125rem !important;
+}
