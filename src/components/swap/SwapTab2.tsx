@@ -441,23 +441,22 @@ export function SwapTab(props: {
         inPricing.current.updates++;
         const updateNum = inPricing.current.updates;
 
+        setInputValue(null);
+
         let _amount: BN;
         if(exactIn) {
             if(amount==="") {
-                setInputValue(null);
                 return;
             }
             _amount = fromHumanReadableString(amount, inCurrency);
         } else {
             if(quote==null) {
-                setInputValue(null);
                 return;
             }
             _amount = quote.getInAmount();
         }
 
         if(_amount.isZero()) {
-            setInputValue(null);
             return;
         }
 
@@ -490,23 +489,22 @@ export function SwapTab(props: {
         outPricing.current.updates++;
         const updateNum = outPricing.current.updates;
 
+        setOutputValue(null);
+
         let _amount: BN;
         if(!exactIn) {
             if(amount==="") {
-                setOutputValue(null);
                 return;
             }
             _amount = fromHumanReadableString(amount, outCurrency);
         } else {
             if(quote==null) {
-                setOutputValue(null);
                 return;
             }
             _amount = quote.getOutAmount();
         }
 
         if(_amount.isZero()) {
-            setOutputValue(null);
             return;
         }
 

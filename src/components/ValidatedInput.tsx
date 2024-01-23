@@ -227,21 +227,14 @@ function ValidatedInput(props : {
             </>
         );
 
-    const _mainElement = props.floatingLabel!=null || props.expectingFloatingLabel ? (
-        <div className="form-floating">
-            {mainElement}
-            {props.floatingLabel==null ? "" : <label>{props.floatingLabel}</label>}
-        </div>
-    ) : mainElement;
-
     return (
         <Form className={props.className} onSubmit={(evnt) => {
             evnt.preventDefault();
             if(props.onSubmit!=null) props.onSubmit();
         }}>
-            <Form.Group controlId="validationCustom01">
+            <Form.Group controlId={props.inputId==null ? "validationCustom01" : undefined}>
                 {props.label ? (<Form.Label>{props.label}</Form.Label>) : ""}
-                <InputGroup className="has-validation">
+                <InputGroup className={"has-validation "+(props.floatingLabel!=null || props.expectingFloatingLabel ? "form-floating" : "")}>
                     {props.type==="checkbox" ? (
                         <Form.Check
                             disabled={props.disabled}
@@ -251,6 +244,7 @@ function ValidatedInput(props : {
                             readOnly={props.readOnly}
                             label={props.placeholder}
                             defaultValue={props.defaultValue}
+                            id={props.inputId}
                             onChange={(evnt: any) => {
                                 const obj: any = {};
                                 if(props.onValidate!=null) {
@@ -270,7 +264,8 @@ function ValidatedInput(props : {
                                     {props.textStart}
                                 </InputGroup.Text>
                             ) : ""}
-                            {_mainElement}
+                            {mainElement}
+                            {props.floatingLabel==null ? "" : <label>{props.floatingLabel}</label>}
                             {props.elementEnd || ""}
                             {props.textEnd ? (
                                 <InputGroup.Text>

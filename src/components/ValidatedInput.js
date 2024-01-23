@@ -110,12 +110,11 @@ function ValidatedInput(props) {
                             // @ts-ignore
                             navigator.clipboard.writeText(refObj.input.current.value);
                         } }, { children: _jsx(Icon, { icon: copy }) })) })) })) : ""] }));
-    const _mainElement = props.floatingLabel != null || props.expectingFloatingLabel ? (_jsxs("div", Object.assign({ className: "form-floating" }, { children: [mainElement, props.floatingLabel == null ? "" : _jsx("label", { children: props.floatingLabel })] }))) : mainElement;
     return (_jsx(Form, Object.assign({ className: props.className, onSubmit: (evnt) => {
             evnt.preventDefault();
             if (props.onSubmit != null)
                 props.onSubmit();
-        } }, { children: _jsxs(Form.Group, Object.assign({ controlId: "validationCustom01" }, { children: [props.label ? (_jsx(Form.Label, { children: props.label })) : "", _jsxs(InputGroup, Object.assign({ className: "has-validation" }, { children: [props.type === "checkbox" ? (_jsx(Form.Check, { disabled: props.disabled, ref: inputRef, isInvalid: !!(props.validated || state.validated), type: "checkbox", readOnly: props.readOnly, label: props.placeholder, defaultValue: props.defaultValue, onChange: (evnt) => {
+        } }, { children: _jsxs(Form.Group, Object.assign({ controlId: props.inputId == null ? "validationCustom01" : undefined }, { children: [props.label ? (_jsx(Form.Label, { children: props.label })) : "", _jsxs(InputGroup, Object.assign({ className: "has-validation " + (props.floatingLabel != null || props.expectingFloatingLabel ? "form-floating" : "") }, { children: [props.type === "checkbox" ? (_jsx(Form.Check, { disabled: props.disabled, ref: inputRef, isInvalid: !!(props.validated || state.validated), type: "checkbox", readOnly: props.readOnly, label: props.placeholder, defaultValue: props.defaultValue, id: props.inputId, onChange: (evnt) => {
                                 const obj = {};
                                 if (props.onValidate != null) {
                                     obj.validated = props.onValidate(evnt.target.checked);
@@ -124,6 +123,6 @@ function ValidatedInput(props) {
                                 setState(obj);
                                 if (props.onChange != null)
                                     props.onChange(evnt.target.checked);
-                            }, checked: props.value == null ? (state.value === "" ? props.defaultValue : state.value) : props.value })) : (_jsxs(_Fragment, { children: [props.elementStart || "", props.textStart ? (_jsx(InputGroup.Text, { children: props.textStart })) : "", _mainElement, props.elementEnd || "", props.textEnd ? (_jsx(InputGroup.Text, { children: props.textEnd })) : ""] })), _jsx(Form.Control.Feedback, Object.assign({ type: "invalid" }, { children: _jsxs("div", Object.assign({ className: "d-flex align-items-center" }, { children: [_jsx(Icon, { className: "mb-1 me-1", icon: exclamationTriangle }), _jsx("span", { children: props.validated || state.validated })] })) }))] }))] })) })));
+                            }, checked: props.value == null ? (state.value === "" ? props.defaultValue : state.value) : props.value })) : (_jsxs(_Fragment, { children: [props.elementStart || "", props.textStart ? (_jsx(InputGroup.Text, { children: props.textStart })) : "", mainElement, props.floatingLabel == null ? "" : _jsx("label", { children: props.floatingLabel }), props.elementEnd || "", props.textEnd ? (_jsx(InputGroup.Text, { children: props.textEnd })) : ""] })), _jsx(Form.Control.Feedback, Object.assign({ type: "invalid" }, { children: _jsxs("div", Object.assign({ className: "d-flex align-items-center" }, { children: [_jsx(Icon, { className: "mb-1 me-1", icon: exclamationTriangle }), _jsx("span", { children: props.validated || state.validated })] })) }))] }))] })) })));
 }
 export default ValidatedInput;
