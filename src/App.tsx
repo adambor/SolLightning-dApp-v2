@@ -57,7 +57,7 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options = createSwapperOptions(FEConstants.chain, null, "https://192.168.3.77:24000", null, {
+            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
