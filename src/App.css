@@ -79,6 +79,7 @@
 .swap-panel {
   max-width: 500px;
   min-width: 370px;
+  width: calc(100% - 2rem);
 }
 
 .font-bigger {
