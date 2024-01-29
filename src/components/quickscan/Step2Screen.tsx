@@ -392,7 +392,7 @@ export function Step2Screen(props: {
                                     <CurrencyDropdown currencyList={smartChainCurrencies} onSelect={val => {
                                         if(isLocked) return;
                                         setSelectedCurrency(val);
-                                    }} value={selectedCurrency} className="bg-transparent text-white"/>
+                                    }} value={selectedCurrency} className="bg-black bg-opacity-10 text-white"/>
                                 </div>
 
                                 <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-2">
