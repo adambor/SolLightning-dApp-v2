@@ -484,6 +484,7 @@ export function SwapTab(props) {
                     setAddress(resultText);
                     if (_amount != null) {
                         setAmount(_amount);
+                        setExactIn(false);
                     }
                     setQrScanning(false);
                 }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {

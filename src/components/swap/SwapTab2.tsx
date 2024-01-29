@@ -585,6 +585,7 @@ export function SwapTab(props: {
                 setAddress(resultText);
                 if(_amount!=null) {
                     setAmount(_amount);
+                    setExactIn(false);
                 }
 
                 setQrScanning(false);
