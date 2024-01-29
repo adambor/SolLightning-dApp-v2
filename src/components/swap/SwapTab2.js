@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { FromBTCSwap, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap } from "sollightning-sdk";
-import { Alert, Button, Card, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
 import { useEffect, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -15,6 +15,8 @@ import { ic_arrow_downward } from 'react-icons-kit/md/ic_arrow_downward';
 import * as bitcoin from "bitcoinjs-lib";
 import { randomBytes } from "crypto-browserify";
 import { FEConstants } from "../../FEConstants";
+import { ic_qr_code_scanner } from 'react-icons-kit/md/ic_qr_code_scanner';
+import { QRScannerModal } from "../qr/QRScannerModal";
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
     max: null
@@ -28,6 +30,7 @@ const USDollar = new Intl.NumberFormat('en-US', {
     currency: 'USD',
 });
 export function SwapTab(props) {
+    const [qrScanning, setQrScanning] = useState(false);
     const [inCurrency, setInCurrency] = useState(btcCurrency);
     const [outCurrency, setOutCurrency] = useState(smartChainCurrencies[0]);
     const [amount, setAmount] = useState("");
@@ -38,7 +41,7 @@ export function SwapTab(props) {
     const [btcAmountConstraints, setBtcAmountConstraints] = useState();
     const [tokenConstraints, setTokenConstraints] = useState();
     const [exactIn, setExactIn] = useState(true);
-    const [address, setAddress] = useState();
+    const [address, _setAddress] = useState();
     const addressRef = useRef();
     const isLNURL = address == null ? false : props.swapper.isValidLNURL(address);
     const [quote, setQuote] = useState();
@@ -114,6 +117,26 @@ export function SwapTab(props) {
         outConstraints.min = BigNumber.max(outConstraints.min, outConstraintsOverride.min);
         outConstraints.max = BigNumber.min(outConstraints.max, outConstraintsOverride.max);
     }
+    const setAddress = (val) => {
+        _setAddress(val);
+        if (props.swapper.isValidLNURL(val)) {
+            setOutCurrency(bitcoinCurrencies[1]);
+            setDisabled(false);
+        }
+        if (props.swapper.isValidBitcoinAddress(val)) {
+            setOutCurrency(bitcoinCurrencies[0]);
+            setDisabled(false);
+        }
+        if (props.swapper.isValidLightningInvoice(val)) {
+            setOutCurrency(bitcoinCurrencies[1]);
+            const outAmt = props.swapper.getLightningInvoiceValue(val);
+            setAmount(toHumanReadableString(outAmt, btcCurrency));
+            setExactIn(false);
+            setDisabled(true);
+            return;
+        }
+        setDisabled(false);
+    };
     useEffect(() => {
         if (!doValidate)
             return;
@@ -135,7 +158,7 @@ export function SwapTab(props) {
                     setInCurrency(inCurr);
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getOutAmount(), outCurr));
-                    setAddress(foundSwap.getAddress());
+                    _setAddress(foundSwap.getAddress());
                     setExactIn(false);
                 }
                 else if (foundSwap instanceof IFromBTCSwap) {
@@ -171,7 +194,7 @@ export function SwapTab(props) {
         setInCurrency(outCurrency);
         setOutCurrency(inCurrency);
         setDisabled(false);
-        setAddress("");
+        _setAddress("");
     };
     const quoteUpdates = useRef(0);
     const currentQuotation = useRef(Promise.resolve());
@@ -435,7 +458,36 @@ export function SwapTab(props) {
         };
         outPricing.current.promise.then(process, process);
     }, [amount, outCurrency, exactIn, quote]);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx(QRScannerModal, { onScanned: (data) => {
+                    console.log("QR scanned: ", data);
+                    let resultText = data;
+                    let _amount = null;
+                    if (resultText.startsWith("lightning:")) {
+                        resultText = resultText.substring(10);
+                    }
+                    else if (resultText.startsWith("bitcoin:")) {
+                        resultText = resultText.substring(8);
+                        if (resultText.includes("?")) {
+                            const arr = resultText.split("?");
+                            resultText = arr[0];
+                            const params = arr[1].split("&");
+                            for (let param of params) {
+                                const arr2 = param.split("=");
+                                const key = arr2[0];
+                                const value = decodeURIComponent(arr2[1]);
+                                if (key === "amount") {
+                                    _amount = value;
+                                }
+                            }
+                        }
+                    }
+                    setAddress(resultText);
+                    if (_amount != null) {
+                        setAmount(_amount);
+                        setExactIn(false);
+                    }
+                    setQrScanning(false);
+                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsx(Card, Object.assign({ className: "d-flex flex-row tab-accent-p3" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                     setAmount(val);
                                     setExactIn(true);
                                 }, inputId: "amount-input", inputClassName: "font-weight-500", floatingLabel: inputValue == null ? null : USDollar.format(inputValue.toNumber()), expectingFloatingLabel: true, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: inConstraints.max, onValidate: (val) => {
@@ -444,7 +496,7 @@ export function SwapTab(props) {
                                         if (locked)
                                             return;
                                         setInCurrency(val);
-                                    }, value: inCurrency, className: "round-right bg-transparent text-white" })) }) })), _jsx("div", Object.assign({ className: "d-flex justify-content-center swap-direction-wrapper" }, { children: _jsx(Button, Object.assign({ onClick: changeDirection, size: "lg", className: "px-0 swap-direction-btn" }, { children: _jsx(Icon, { size: 24, icon: ic_arrow_downward, style: { marginTop: "-3px", marginBottom: "2px" } }) })) })), _jsxs(Card, Object.assign({ className: "tab-accent-p3" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: outAmountRef, className: "flex-fill strip-group-text", type: "number", value: exactIn ? (quote == null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount, size: "lg", textStart: exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
+                                    }, value: inCurrency, className: "round-right text-white bg-black bg-opacity-10" })) }) })), _jsx("div", Object.assign({ className: "d-flex justify-content-center swap-direction-wrapper" }, { children: _jsx(Button, Object.assign({ onClick: changeDirection, size: "lg", className: "px-0 swap-direction-btn" }, { children: _jsx(Icon, { size: 24, icon: ic_arrow_downward, style: { marginTop: "-3px", marginBottom: "2px" } }) })) })), _jsxs(Card, Object.assign({ className: "tab-accent-p3" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: outAmountRef, className: "flex-fill strip-group-text", type: "number", value: exactIn ? (quote == null ? "" : toHumanReadableString(quote.getOutAmount(), outCurrency)) : amount, size: "lg", textStart: exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                             setAmount(val);
                                             setExactIn(false);
                                         }, inputId: "amount-output", inputClassName: "font-weight-500", floatingLabel: outputValue == null ? null : USDollar.format(outputValue.toNumber()), expectingFloatingLabel: true, step: outCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals)), min: outConstraints.min, max: outConstraints.max, onValidate: (val) => {
@@ -455,38 +507,10 @@ export function SwapTab(props) {
                                                 setOutCurrency(val);
                                                 if (kind === "tobtc" && val !== outCurrency) {
                                                     setDisabled(false);
-                                                    setAddress("");
+                                                    _setAddress("");
                                                 }
-                                            }, value: outCurrency, className: "round-right bg-transparent text-white" })) }) })), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
+                                            }, value: outCurrency, className: "round-right text-white bg-black bg-opacity-10" })) }) })), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3", value: address, onChange: (val) => {
                                                 setAddress(val);
-                                                if (props.swapper.isValidLNURL(val)) {
-                                                    // props.swapper.getLNURLTypeAndData(val, false).then((result) => {
-                                                    //     navigate("/scan/2?address="+encodeURIComponent(val), {
-                                                    //         state: {
-                                                    //             lnurlParams: {
-                                                    //                 ...result,
-                                                    //                 min: result.min.toString(10),
-                                                    //                 max: result.max.toString(10)
-                                                    //             }
-                                                    //         }
-                                                    //     });
-                                                    // }).catch(e => {});
-                                                    setOutCurrency(bitcoinCurrencies[1]);
-                                                    setDisabled(false);
-                                                }
-                                                if (props.swapper.isValidBitcoinAddress(val)) {
-                                                    setOutCurrency(bitcoinCurrencies[0]);
-                                                    setDisabled(false);
-                                                }
-                                                if (props.swapper.isValidLightningInvoice(val)) {
-                                                    setOutCurrency(bitcoinCurrencies[1]);
-                                                    const outAmt = props.swapper.getLightningInvoiceValue(val);
-                                                    setAmount(toHumanReadableString(outAmt, btcCurrency));
-                                                    setExactIn(false);
-                                                    setDisabled(true);
-                                                    return;
-                                                }
-                                                setDisabled(false);
                                             }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: (val) => {
                                                 if (val === "")
                                                     return "Destination address/lightning invoice required";
@@ -500,7 +524,12 @@ export function SwapTab(props) {
                                                 }
                                                 catch (e) { }
                                                 return "Invalid bitcoin address/lightning network invoice";
-                                            }, validated: quoteAddressError === null || quoteAddressError === void 0 ? void 0 : quoteAddressError.error }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "We only support lightning network invoices with pre-set amount!" }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
+                                            }, validated: quoteAddressError === null || quoteAddressError === void 0 ? void 0 : quoteAddressError.error, textEnd: (_jsx(OverlayTrigger, Object.assign({ placement: "top", overlay: _jsx(Tooltip, Object.assign({ id: "scan-qr-tooltip" }, { children: "Scan QR code" })) }, { children: _jsx("a", Object.assign({ href: "#", style: {
+                                                        marginTop: "-3px"
+                                                    }, onClick: (e) => {
+                                                        e.preventDefault();
+                                                        setQrScanning(true);
+                                                    } }, { children: _jsx(Icon, { size: 24, icon: ic_qr_code_scanner }) })) }))) }), outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, Object.assign({ variant: "success", className: "mt-3 mb-0 text-center" }, { children: _jsx("label", { children: "Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount." }) }))) : ""] })) : ""] })), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "mt-3" }, { children: _jsx(SimpleFeeSummaryScreen, { swap: quote }) })), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", Object.assign({ className: "mt-3 d-flex flex-column text-white" }, { children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, refreshQuote: getQuote, setAmountLock: setLocked, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
                                             setAmount("");

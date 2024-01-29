@@ -10,7 +10,7 @@ import {
     SwapType,
     ToBTCSwap
 } from "sollightning-sdk";
-import {Accordion, Alert, Button, Card, Spinner} from "react-bootstrap";
+import {Accordion, Alert, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -33,6 +33,8 @@ import * as bitcoin from "bitcoinjs-lib";
 import {randomBytes} from "crypto-browserify";
 import {FEConstants} from "../../FEConstants";
 import * as BN from "bn.js";
+import {ic_qr_code_scanner} from 'react-icons-kit/md/ic_qr_code_scanner';
+import {QRScannerModal} from "../qr/QRScannerModal";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -54,6 +56,7 @@ export function SwapTab(props: {
     supportedCurrencies: CurrencySpec[]
 }) {
 
+    const [qrScanning, setQrScanning] = useState<boolean>(false);
     const [inCurrency, setInCurrency] = useState<CurrencySpec>(btcCurrency);
     const [outCurrency, setOutCurrency] = useState<CurrencySpec>(smartChainCurrencies[0]);
     const [amount, setAmount] = useState<string>("");
@@ -86,7 +89,7 @@ export function SwapTab(props: {
 
     const [exactIn, setExactIn] = useState<boolean>(true);
 
-    const [address, setAddress] = useState<string>();
+    const [address, _setAddress] = useState<string>();
     const addressRef = useRef<ValidatedInputRef>();
 
     const isLNURL = address==null ? false : props.swapper.isValidLNURL(address);
@@ -175,6 +178,27 @@ export function SwapTab(props: {
         outConstraints.max = BigNumber.min(outConstraints.max, outConstraintsOverride.max);
     }
 
+    const setAddress = (val: string) => {
+        _setAddress(val);
+        if(props.swapper.isValidLNURL(val)) {
+            setOutCurrency(bitcoinCurrencies[1]);
+            setDisabled(false);
+        }
+        if(props.swapper.isValidBitcoinAddress(val)) {
+            setOutCurrency(bitcoinCurrencies[0]);
+            setDisabled(false);
+        }
+        if(props.swapper.isValidLightningInvoice(val)) {
+            setOutCurrency(bitcoinCurrencies[1]);
+            const outAmt = props.swapper.getLightningInvoiceValue(val);
+            setAmount(toHumanReadableString(outAmt, btcCurrency));
+            setExactIn(false);
+            setDisabled(true);
+            return;
+        }
+        setDisabled(false);
+    };
+
     useEffect(() => {
         if(!doValidate) return;
         outAmountRef.current.validate();
@@ -195,7 +219,7 @@ export function SwapTab(props: {
                     setInCurrency(inCurr);
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getOutAmount(), outCurr));
-                    setAddress(foundSwap.getAddress());
+                    _setAddress(foundSwap.getAddress());
                     setExactIn(false);
                 } else if(foundSwap instanceof IFromBTCSwap) {
                     const inCurr = foundSwap instanceof FromBTCSwap ? bitcoinCurrencies[0] : bitcoinCurrencies[1];
@@ -240,7 +264,7 @@ export function SwapTab(props: {
         setInCurrency(outCurrency);
         setOutCurrency(inCurrency);
         setDisabled(false);
-        setAddress("");
+        _setAddress("");
     };
 
     const quoteUpdates = useRef<number>(0);
@@ -534,6 +558,40 @@ export function SwapTab(props: {
         <>
             <Topbar selected={0} enabled={!locked}/>
 
+            <QRScannerModal onScanned={(data: string) => {
+                console.log("QR scanned: ", data);
+
+                let resultText: string = data;
+                let _amount: string = null;
+                if(resultText.startsWith("lightning:")) {
+                    resultText = resultText.substring(10);
+                } else if(resultText.startsWith("bitcoin:")) {
+                    resultText = resultText.substring(8);
+                    if(resultText.includes("?")) {
+                        const arr = resultText.split("?");
+                        resultText = arr[0];
+                        const params = arr[1].split("&");
+                        for(let param of params) {
+                            const arr2 = param.split("=");
+                            const key = arr2[0];
+                            const value = decodeURIComponent(arr2[1]);
+                            if(key==="amount") {
+                                _amount = value;
+                            }
+                        }
+                    }
+                }
+
+                setAddress(resultText);
+                if(_amount!=null) {
+                    setAmount(_amount);
+                    setExactIn(false);
+                }
+
+                setQrScanning(false);
+
+            }} show={qrScanning} onHide={() => setQrScanning(false)}/>
+
             <div className="d-flex flex-column flex-fill align-items-center text-white">
                 <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
@@ -571,7 +629,7 @@ export function SwapTab(props: {
                                 <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
                                     if(locked) return;
                                     setInCurrency(val);
-                                }} value={inCurrency} className="round-right bg-transparent text-white"/>
+                                }} value={inCurrency} className="round-right text-white bg-black bg-opacity-10"/>
                             )}
                         />
                     </Card>
@@ -612,9 +670,9 @@ export function SwapTab(props: {
                                         setOutCurrency(val);
                                         if(kind==="tobtc" && val!==outCurrency) {
                                             setDisabled(false);
-                                            setAddress("");
+                                            _setAddress("");
                                         }
-                                    }} value={outCurrency} className="round-right bg-transparent text-white"/>
+                                    }} value={outCurrency} className="round-right text-white bg-black bg-opacity-10"/>
                                 )}
                             />
                         </div>
@@ -626,34 +684,6 @@ export function SwapTab(props: {
                                     value={address}
                                     onChange={(val) => {
                                         setAddress(val);
-                                        if(props.swapper.isValidLNURL(val)) {
-                                            // props.swapper.getLNURLTypeAndData(val, false).then((result) => {
-                                            //     navigate("/scan/2?address="+encodeURIComponent(val), {
-                                            //         state: {
-                                            //             lnurlParams: {
-                                            //                 ...result,
-                                            //                 min: result.min.toString(10),
-                                            //                 max: result.max.toString(10)
-                                            //             }
-                                            //         }
-                                            //     });
-                                            // }).catch(e => {});
-                                            setOutCurrency(bitcoinCurrencies[1]);
-                                            setDisabled(false);
-                                        }
-                                        if(props.swapper.isValidBitcoinAddress(val)) {
-                                            setOutCurrency(bitcoinCurrencies[0]);
-                                            setDisabled(false);
-                                        }
-                                        if(props.swapper.isValidLightningInvoice(val)) {
-                                            setOutCurrency(bitcoinCurrencies[1]);
-                                            const outAmt = props.swapper.getLightningInvoiceValue(val);
-                                            setAmount(toHumanReadableString(outAmt, btcCurrency));
-                                            setExactIn(false);
-                                            setDisabled(true);
-                                            return;
-                                        }
-                                        setDisabled(false);
                                     }}
                                     inputRef={addressRef}
                                     placeholder={"Paste Bitcoin/Lightning address"}
@@ -669,10 +699,23 @@ export function SwapTab(props: {
                                         return "Invalid bitcoin address/lightning network invoice";
                                     }}
                                     validated={quoteAddressError?.error}
+                                    textEnd={(
+                                        <OverlayTrigger
+                                            placement="top"
+                                            overlay={<Tooltip id="scan-qr-tooltip">Scan QR code</Tooltip>}
+                                        >
+                                            <a href="#" style={{
+                                                marginTop: "-3px"
+                                            }} onClick={(e) => {
+                                                e.preventDefault();
+                                                setQrScanning(true);
+                                            }}><Icon size={24} icon={ic_qr_code_scanner}/></a>
+                                        </OverlayTrigger>
+                                    )}
                                 />
                                 {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (
                                     <Alert variant={"success"} className="mt-3 mb-0 text-center">
-                                        <label>We only support lightning network invoices with pre-set amount!</label>
+                                        <label>Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount.</label>
                                     </Alert>
                                 ) : ""}
                             </>

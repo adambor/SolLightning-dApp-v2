@@ -1,5 +1,5 @@
 import * as React from "react";
-import {WalletModalProvider, WalletMultiButton} from "@solana/wallet-adapter-react-ui";
+import {WalletModalProvider} from "@solana/wallet-adapter-react-ui";
 import {ConnectionProvider, WalletProvider} from "@solana/wallet-adapter-react";
 import {LedgerWalletAdapter, PhantomWalletAdapter, TorusWalletAdapter, SolflareWalletAdapter} from "@solana/wallet-adapter-wallets";
 import fetch from "cross-fetch";

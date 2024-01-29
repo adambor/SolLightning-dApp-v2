@@ -10,6 +10,8 @@ $dark: #141414;
 $btn-border-radius-lg: 0.25rem;
 $body-color: #272D33;
 $info: #006CFF;
+$atomiq-purple: #944afc;
+$atomiq-orange: #fc9626;
 
 //$form-invalid-border-color: #ffdb00;
 //$form-invalid-color: #ffdb00;
@@ -235,7 +237,8 @@ code {
 }
 
 .input-group-text {
-  @extend .bg-transparent;
+  @extend .bg-black;
+  @extend .bg-opacity-10;
 }
 
 .round-right {
