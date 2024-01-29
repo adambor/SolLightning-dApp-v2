@@ -10,7 +10,7 @@ import {
     SwapType,
     ToBTCSwap
 } from "sollightning-sdk";
-import {Accordion, Alert, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
+import {Accordion, Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -28,7 +28,8 @@ import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
 import Icon from "react-icons-kit";
-import {ic_arrow_downward} from 'react-icons-kit/md/ic_arrow_downward'
+import {arrows_vertical} from 'react-icons-kit/ikons/arrows_vertical';
+import {ic_account_balance_wallet_outline} from 'react-icons-kit/md/ic_account_balance_wallet_outline';
 import * as bitcoin from "bitcoinjs-lib";
 import {randomBytes} from "crypto-browserify";
 import {FEConstants} from "../../FEConstants";
@@ -600,7 +601,16 @@ export function SwapTab(props: {
                         <label>{quoteError}</label>
                     </Alert>
 
-                    <Card className="d-flex flex-row tab-accent-p3">
+                    <Card className="d-flex flex-column tab-accent-p3 pt-2">
+                        <div className="d-flex flex-row">
+                            <small className="text-light text-opacity-75 me-auto">You pay</small>
+
+                            {/*<Icon size={16} icon={ic_account_balance_wallet_outline} style={{marginTop: "-0.3125rem"}} className=""/>*/}
+                            {/*<small className="text-light text-opacity-75 ms-1 me-2">0.00018372 BTC</small>*/}
+
+                            {/*<Badge pill className="bg-transparent border-light border border-opacity-75 pb-0">HALF</Badge>*/}
+                            {/*<Badge pill className="bg-transparent border-light border border-opacity-75 pb-0">MAX</Badge>*/}
+                        </div>
                         <ValidatedInput
                             disabled={locked || disabled}
                             inputRef={inAmountRef}
@@ -635,10 +645,11 @@ export function SwapTab(props: {
                     </Card>
                     <div className="d-flex justify-content-center swap-direction-wrapper">
                         <Button onClick={changeDirection} size="lg" className="px-0 swap-direction-btn">
-                            <Icon size={24} icon={ic_arrow_downward} style={{marginTop: "-3px", marginBottom: "2px"}}/>
+                            <Icon size={22} icon={arrows_vertical} style={{marginTop: "-8px"}}/>
                         </Button>
                     </div>
-                    <Card className="tab-accent-p3">
+                    <Card className="tab-accent-p3 pt-2">
+                        <small className="text-light text-opacity-75">You receive</small>
                         <div className="d-flex flex-row">
                             <ValidatedInput
                                 disabled={locked || disabled}
