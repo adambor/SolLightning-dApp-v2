@@ -57,10 +57,12 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options = createSwapperOptions(FEConstants.chain, null, "https://192.168.3.77:24000", null, {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+
+            console.log("Created swapper options: ", options);
 
             const swapper = new SolanaSwapper(_provider, options);
 
