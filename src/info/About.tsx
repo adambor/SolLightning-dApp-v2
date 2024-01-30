@@ -24,7 +24,7 @@ export function About(props: {}) {
                         <h3>Fully open-source</h3>
                         <p>
                             <strong>atomiq.exchange</strong> is being build on the principles of OSS and is fully open source (even including this very webapp)! You can review all our code on <a target="_blank" href="https://github.com/adambor/SolLightning-readme">github</a>.
-                            Our smart contracts are currently being audited by Ackee Blockchain.
+                            Our smart contracts are fully audited by Ackee Blockchain and are immutably deployed on Solana (with no upgrade authority).
                         </p>
                     </Card>
                 </Col>

@@ -280,7 +280,7 @@ function WrappedApp() {
                         </Nav>
                         <Nav className="ms-auto">
                             <div className="d-flex flex-row align-items-center" style={{height: "3rem"}}>
-                                <a href="https://twitter.com/SolLightning" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
+                                <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
                                 <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
                                 <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
                                 {swapper!=null ? (<div className="d-flex ms-auto">
