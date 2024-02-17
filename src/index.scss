@@ -1,20 +1,23 @@
 //$primary: #FF9300;
 //$primary: #a679ff;
-$primary: #a679ff;
+//$primary: #a679ff;
+$primary: #d147a6;
 $secondary: #F2F5F9;
 $danger: #F25151;
 $success: #2BDD72;
 $warning: #B2B2B2;
-$dark: #272D33;
+$dark: #141414;
 $btn-border-radius-lg: 0.25rem;
 $body-color: #272D33;
 $info: #006CFF;
+$atomiq-purple: #944afc;
+$atomiq-orange: #fc9626;
 
 //$form-invalid-border-color: #ffdb00;
 //$form-invalid-color: #ffdb00;
 
-$form-invalid-border-color: #F25151;
-$form-invalid-color: #ff7979;
+$form-invalid-border-color: #ff5e5e;
+$form-invalid-color: #ff9393;
 
 $success-border-subtle: #00ff68;
 $success-bg-subtle: rgba(0, 255, 96, 0.25);
@@ -36,21 +39,19 @@ $accordion-border-width: 0;
 $accordion-bg: rgba(var(--bs-dark-rgb), 0.25);
 $accordion-color: #fff;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-  sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+$font-weight-bold: 600;
+
+$badge-font-weight: 500;
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
   monospace;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url("./fonts/scandia/light/style.css");
+@import url("./fonts/scandia/regular/style.css");
+@import url("./fonts/scandia/medium/style.css");
+//@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @import "../node_modules/bootstrap/scss/bootstrap";
 
 .btn-primary {
@@ -102,6 +103,18 @@ code {
 .btn {
   padding-left: 32px;
   padding-right: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.invalid-feedback #text {
+  margin-top: 500px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
 }
 
 //.alert-danger {
@@ -133,7 +146,9 @@ a {
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: Scandia, sans-serif;
+  font-style: normal;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -178,8 +193,8 @@ code {
 }
 
 .background-gradient {
-  background: rgb(20,241,149);
-  background: linear-gradient(126deg, rgba(20,241,149,1) 0%, rgba(153,69,255,1) 50%, rgba(255,153,0,1) 100%);
+  background: #d147a6;
+  background: linear-gradient(135deg,#fc9626,#d147a6 50%,#944afc);
 }
 
 .card {
@@ -222,7 +237,8 @@ code {
 }
 
 .input-group-text {
-  @extend .bg-transparent;
+  @extend .bg-black;
+  @extend .bg-opacity-10;
 }
 
 .round-right {
@@ -277,8 +293,16 @@ code {
 
 .logo-img {
   margin-top: -4px;
-  width: 32px;
-  height: 32px;
+  margin-bottom: -4px;
+  width: 40px;
+  height: 40px;
+}
+
+.logo-img-small {
+  margin-bottom: 1.5px;
+  margin-right: -2px;
+  width: 16px;
+  height: 16px;
 }
 
 .pill-round {
@@ -297,4 +321,41 @@ code {
 
 .max-width-100 {
   max-width: 100% !important;
+}
+
+.form-floating > label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  height: 100%; // allow textareas
+  padding: $form-floating-padding-y $form-floating-padding-x;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  border: $input-border-width solid transparent; // Required for aligning label's text with the input as it affects inner box model
+  transform-origin: 0 0;
+  @include transition($form-floating-transition);
+  color: #d9d9d9 !important;
+  transform: scale(0.85) translateY(1.3rem) translateX(0.15rem) !important;
+}
+
+.form-floating > label::after {
+  background: transparent !important;
+}
+
+.input-with-offset {
+  padding-top: 0.625rem !important;
+  padding-bottom: 1.625rem !important;
+}
+
+.py-expect-floating-label {
+  padding-top: 0.8125rem !important;
+  padding-bottom: 0.8125rem !important;
+}
+
+.font-weight-500 {
+  font-weight: 500;
 }

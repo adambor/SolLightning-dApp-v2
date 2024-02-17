@@ -62,6 +62,8 @@ function WrappedApp() {
                 postTimeout: 30000
             });
 
+            console.log("Created swapper options: ", options);
+
             const swapper = new SolanaSwapper(_provider, options);
 
             await swapper.init();
@@ -196,10 +198,19 @@ function WrappedApp() {
         <>
             <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container className="max-width-100">
-                    <Navbar.Brand href="/" className="fw-semibold">
-                        <img src="/icons/logoicon.png" className="logo-img"/>
-                        SolLightning
-                        {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2" bg="danger">DEVNET</Badge> : ""}
+                    <Navbar.Brand href="/" className="d-flex flex-column" style={{marginBottom: "-4px"}}>
+                        <div className="d-flex flex-row" style={{fontSize: "1.5rem"}}>
+                            <img src="/icons/atomiq-flask.png" className="logo-img"/>
+                            <b>atomiq</b><span style={{fontWeight: 300}}>.exchange</span>
+                            {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2 d-flex align-items-center" bg="danger">DEVNET</Badge> : ""}
+                        </div>
+                        {(FEConstants.chain as string)==="MAINNET" ? (
+                            <div className="d-flex flex-row align-items-end justify-content-center" style={{fontSize: "0.75rem", marginTop: "-8px", marginBottom: "-8px", marginLeft: "40px"}}>
+                                <small>formerly</small>
+                                <img src="/icons/logoicon.png" className="logo-img-small"/>
+                                <span>SolLightning</span>
+                            </div>
+                        ) : ""}
                     </Navbar.Brand>
 
                     <div className="d-flex flex-column">
@@ -269,12 +280,12 @@ function WrappedApp() {
                         </Nav>
                         <Nav className="ms-auto">
                             <div className="d-flex flex-row align-items-center" style={{height: "3rem"}}>
-                                <a href="https://twitter.com/SolLightning" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
+                                <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
                                 <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
                                 <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
                                 {swapper!=null ? (<div className="d-flex ms-auto">
                                     {/*<BitcoinWalletButton/>*/}
-                                    <WalletMultiButton />
+                                    <WalletMultiButton className="bg-primary"/>
                                 </div>) : ""}
                             </div>
                         </Nav>

@@ -9,27 +9,42 @@ export function FAQ(props: {}) {
             <h1 className="section-title">FAQ</h1>
             <div className="mb-3 border-0">
                 <Accordion>
-                    <Accordion.Item eventKey="0">
-                        <Accordion.Header><span className="faq-number">1</span>What is SolLightning?</Accordion.Header>
+                    <Accordion.Item eventKey="10">
+                        <Accordion.Header><span className="faq-number">1</span>Where is SolLightning?</Accordion.Header>
                         <Accordion.Body>
                             <p>
-                                <strong>SolLightning</strong> is a fully trustless cross-chain DEX (decentralized exchange) allowing you to swap between
+                                We've rebranded SolLightning to <strong>atomiq.exchange</strong> as it better represents our product, and doesn't
+                                convey false information that we only support bitcoin lightning. The name atomiq refers to atomic swaps, which are our core
+                                differentiator and allow us to secure our swaps by cryptography and bitcoin's proof-of-work. This is in stark contrast
+                                to cross-chain bridges, which generally use a federation of validators and their security heavily depends on bridge token's price.
+                            </p>
+
+                            <p>
+                                We will continue providing seamless & trustless swap experience under new name - <strong>atomiq.exchange</strong>!
+                            </p>
+                        </Accordion.Body>
+                    </Accordion.Item>
+                    <Accordion.Item eventKey="0">
+                        <Accordion.Header><span className="faq-number">2</span>What is atomiq.exchange?</Accordion.Header>
+                        <Accordion.Body>
+                            <p>
+                                <strong>atomiq.exchange</strong> is a fully trustless cross-chain DEX (decentralized exchange) allowing you to swap between
                                 Solana assets (SOL and USDC) and Bitcoin (on-chain and on the lightning network). All swaps are done atomically, so you
                                 are never exposed to the risk of losing funds.
                             </p>
 
                             <p>
-                                SolLightning was launched in mid June 2023, by a team of blockchain veterans to provide the first fully trustless way
+                                atomiq.exchange was launched in mid June 2023, by a team of blockchain veterans to provide the first fully trustless way
                                 to swap between Solana & Bitcoin ecosystems.
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="2">
-                        <Accordion.Header><span className="faq-number">2</span>How does it work?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">3</span>How does it work?</Accordion.Header>
                         <Accordion.Body>
                             <h4>Connect your Solana wallet</h4>
                             <p>
-                                In order to interact with SolLightning webapp, you need a Solana wallet. In case you don't have a Solana wallet yet we recommend downloading <a target="_blank" href="https://phantom.app/">Phantom wallet</a>, which is best compatible with our webapp.
+                                In order to interact with atomiq.exchange webapp, you need a Solana wallet. In case you don't have a Solana wallet yet we recommend downloading <a target="_blank" href="https://phantom.app/">Phantom wallet</a>, which is best compatible with our webapp.
                             </p>
                             <p>
                                 Connect your Solana wallet by clicking on "Connect" when prompted.
@@ -79,7 +94,7 @@ export function FAQ(props: {}) {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="1">
-                        <Accordion.Header><span className="faq-number">3</span>Do I have to trust anyone?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">4</span>Do I have to trust anyone?</Accordion.Header>
                         <Accordion.Body>
                             <p>
                                 The whole swap is fully trustless and atomic, therefore you are not trusting anyone with the swap funds.
@@ -101,7 +116,7 @@ export function FAQ(props: {}) {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="3">
-                        <Accordion.Header><span className="faq-number">4</span>Why should you use SolLightning?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">5</span>Why should you use atomiq.exchange?</Accordion.Header>
                         <Accordion.Body>
                             <h4>
                                 1. No counterparty risk
@@ -136,7 +151,7 @@ export function FAQ(props: {}) {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="4">
-                        <Accordion.Header><span className="faq-number">5</span>Where can I learn more?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">6</span>Where can I learn more?</Accordion.Header>
                         <Accordion.Body>
                             <p>
                                 We have an extensive documentation about how our whole system works, if you'd like to dive deeper you can check out our <a target="_blank" href="https://github.com/adambor/SolLightning-readme">github</a>.
@@ -147,7 +162,7 @@ export function FAQ(props: {}) {
                         </Accordion.Body>
                     </Accordion.Item>
                     <Accordion.Item eventKey="5">
-                        <Accordion.Header><span className="faq-number">6</span>Where can I reach you?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">7</span>Where can I reach you?</Accordion.Header>
                         <Accordion.Body>
                             <p>
                                 In case you have any questions or issues feel free to bring them up in our <a target="_blank" href="https://t.me/+_MQNtlBXQ2Q1MGEy">Telegram group</a>

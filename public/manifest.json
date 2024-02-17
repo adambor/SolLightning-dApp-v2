@@ -1,6 +1,6 @@
 {
-  "short_name": "SolLightning",
-  "name": "SolLightning dApp",
+  "short_name": "atomiq DEX",
+  "name": "atomiq.exchange bitcoin cross-chain DEX",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,20 +8,20 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "atomiq-flask-192px-sq-maskable.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "atomiq-flask-512px-sq-maskable.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
+  "theme_color": "#141414",
+  "background_color": "#141414",
   "protocol_handlers": [
     {
       "protocol": "web+lightning",

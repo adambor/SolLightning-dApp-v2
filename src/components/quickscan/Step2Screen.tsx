@@ -367,7 +367,7 @@ export function Step2Screen(props: {
                                 <ValidatedInput
                                     type={"number"}
                                     textEnd={(
-                                        <span className="text-white">
+                                        <span className="text-white font-bigger d-flex align-items-center">
                                             <img src={btcCurrency.icon} className="currency-icon"/>
                                             BTC
                                         </span>
@@ -388,10 +388,12 @@ export function Step2Screen(props: {
 
                                 <label className="fw-bold mb-1">{type==="send" ? "with" : "to"}</label>
 
-                                <CurrencyDropdown currencyList={smartChainCurrencies} onSelect={val => {
-                                    if(isLocked) return;
-                                    setSelectedCurrency(val);
-                                }} value={selectedCurrency} className="bg-transparent text-white"/>
+                                <div className="d-flex justify-content-center">
+                                    <CurrencyDropdown currencyList={smartChainCurrencies} onSelect={val => {
+                                        if(isLocked) return;
+                                        setSelectedCurrency(val);
+                                    }} value={selectedCurrency} className="bg-black bg-opacity-10 text-white"/>
+                                </div>
 
                                 <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-2">
                                     <Form.Check // prettier-ignore

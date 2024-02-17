@@ -27,7 +27,7 @@ export function FeeSummaryScreen(props: {
 
             <div className="d-flex fw-bold border-top border-light font-bigger">
                 <span>Total:</span>
-                <span className="ms-auto">
+                <span className="ms-auto d-flex align-items-center">
                     <img src={currency.icon} className="currency-icon-small"/>
                     {toHumanReadableString(props.swap.getInAmount(), currency)} {currency.ticker}
                 </span>
@@ -52,7 +52,7 @@ export function FeeSummaryScreen(props: {
 
             <div className="d-flex fw-bold border-top border-light font-bigger">
                 <span>Total:</span>
-                <span className="ms-auto">
+                <span className="ms-auto d-flex align-items-center">
                     <img src={currency.icon} className="currency-icon-small"/>
                     {toHumanReadableString(props.swap.getOutAmount(), currency)} {currency.ticker}
                 </span>
@@ -74,7 +74,7 @@ export function FeeSummaryScreen(props: {
 
             <div className="d-flex fw-bold border-top border-light font-bigger">
                 <span>Total:</span>
-                <span className="ms-auto">
+                <span className="ms-auto d-flex align-items-center">
                     <img src={currency.icon} className="currency-icon-small"/>
                     {isApproximate? "~" : ""}{toHumanReadableString(props.swap.getOutAmount(), currency)} {currency.ticker}
                 </span>
