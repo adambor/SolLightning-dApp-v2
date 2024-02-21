@@ -7,6 +7,7 @@ import {FromBTCLNSwap, FromBTCLNSwapState, LNURLPay, LNURLWithdraw, Swapper} fro
 import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
 import {LNNFCReader, LNNFCStartResult} from "../../lnnfc/LNNFCReader";
+import {useLocation, useNavigate} from "react-router-dom";
 
 export function FromBTCLNQuoteSummary(props: {
     swapper: Swapper<any, any, any, any>,
@@ -14,8 +15,12 @@ export function FromBTCLNQuoteSummary(props: {
     refreshQuote: () => void,
     setAmountLock: (isLocked: boolean) => void,
     type?: "payment" | "swap",
-    abortSwap?: () => void
+    abortSwap?: () => void,
+    notEnoughForGas: boolean
 }) {
+
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const [state, setState] = useState<FromBTCLNSwapState>(null);
 
@@ -227,6 +232,18 @@ export function FromBTCLNQuoteSummary(props: {
                 </Alert>
             ) : ""}
 
+            <Alert className="text-center mb-3 d-flex align-items-center flex-column" show={props.notEnoughForGas} variant="danger" closeVariant="white">
+                <strong>Not enough SOL for fees</strong>
+                <label>You need at least 0.005 SOL to pay for fees and refundable deposit! You can swap for gas first & then continue swapping here!</label>
+                <Button className="mt-2" variant="secondary" onClick={() => {
+                    navigate("/gas", {
+                        state: {
+                            returnPath: location.pathname+location.search
+                        }
+                    });
+                }}>Swap for gas</Button>
+            </Alert>
+
             {state===FromBTCLNSwapState.PR_CREATED ? (!isStarted ? (
                 <>
                     <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
@@ -242,7 +259,7 @@ export function FromBTCLNQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onCommit} disabled={loading} size="lg">
+                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas} size="lg">
                             {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                             Initiate swap
                         </Button>

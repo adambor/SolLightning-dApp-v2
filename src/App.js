@@ -26,6 +26,7 @@ import { exchange } from 'react-icons-kit/fa/exchange';
 import Icon from "react-icons-kit";
 import { LNNFCReader, LNNFCStartResult } from './components/lnnfc/LNNFCReader';
 import { ic_contactless } from 'react-icons-kit/md/ic_contactless';
+import { SwapForGasScreen } from "./components/swapforgas/SwapForGasScreen";
 require('@solana/wallet-adapter-react-ui/styles.css');
 // export type BtcConnectionState = {
 //     declined: boolean,
@@ -51,6 +52,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+            options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);
             await swapper.init();
@@ -178,7 +180,7 @@ function WrappedApp() {
                     }
                 } }, { children: _jsxs("div", Object.assign({ className: "d-flex flex-grow-1 flex-column" }, { children: [swapper == null && pathName !== "/about" && pathName !== "/faq" && pathName !== "/map" ? (_jsx("div", Object.assign({ className: "no-wallet-overlay d-flex align-items-center" }, { children: _jsx("div", Object.assign({ className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill" }, { children: _jsx("div", Object.assign({ className: "text-white text-center" }, { children: provider != null && swapper == null ? (_jsx(_Fragment, { children: swapperLoadingError == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to SolLightning network..." })] })) : (_jsx(_Fragment, { children: _jsxs(Alert, Object.assign({ className: "text-center", show: true, variant: "danger", closeVariant: "white" }, { children: [_jsx("strong", { children: "SolLightning network connection error" }), _jsx("p", { children: swapperLoadingError }), _jsx(Button, Object.assign({ variant: "light", onClick: () => {
                                                             loadSwapper(provider);
-                                                        } }, { children: "Retry" }))] })) })) })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", Object.assign({ className: "mt-3" }, { children: "Connect your wallet to start" }))] })) })) })) }))) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, Object.assign({ path: "/" }, { children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, Object.assign({ path: "scan" }, { children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] })), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) }), _jsx(Route, { path: "map", element: _jsx(Map, {}) })] })) }) })] })) }))] }));
+                                                        } }, { children: "Retry" }))] })) })) })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", Object.assign({ className: "mt-3" }, { children: "Connect your wallet to start" }))] })) })) })) }))) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, Object.assign({ path: "/" }, { children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, Object.assign({ path: "scan" }, { children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] })), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) }), _jsx(Route, { path: "gas", element: _jsx(SwapForGasScreen, { swapper: swapper }) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) }), _jsx(Route, { path: "map", element: _jsx(Map, {}) })] })) }) })] })) }))] }));
 }
 function App() {
     return (_jsx("div", Object.assign({ className: "App d-flex flex-column" }, { children: _jsx(WalletTab, { children: _jsx(WrappedApp, {}) }) })));

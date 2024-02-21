@@ -18,7 +18,8 @@ export function ToBTCQuoteSummary(props: {
     setAmountLock: (isLocked: boolean) => void,
     type?: "payment" | "swap",
     balance?: BN,
-    autoContinue?: boolean
+    autoContinue?: boolean,
+    notEnoughForGas: boolean
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
@@ -177,13 +178,18 @@ export function ToBTCQuoteSummary(props: {
                 <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
             </div>
 
+            <Alert className="text-center mb-3" show={props.notEnoughForGas} variant="danger" closeVariant="white">
+                <strong>Not enough SOL for fees</strong>
+                <label>You need at least 0.005 SOL to pay for fees and deposits!</label>
+            </Alert>
+
             {success===null ? (
                 quoteTimeRemaining===0 && !loading ? (
                     <Button onClick={props.refreshQuote} variant="secondary">
                         New quote
                     </Button>
                 ) : (
-                    <Button onClick={() => onContinue()} disabled={loading} size="lg">
+                    <Button onClick={() => onContinue()} disabled={loading || props.notEnoughForGas} size="lg">
                         {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                         {props.type==="payment" ? "Pay" : "Swap"}
                     </Button>

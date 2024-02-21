@@ -22,14 +22,15 @@ export const btcCurrency = {
     decimals: 8,
     icon: "/icons/crypto/BTC.svg"
 };
+export const nativeCurrency = {
+    name: "Solana",
+    ticker: "SOL",
+    decimals: 9,
+    address: new PublicKey(FEConstants.wsolToken),
+    icon: "/icons/crypto/SOL.svg"
+};
 export const smartChainCurrencies = [
-    {
-        name: "Solana",
-        ticker: "SOL",
-        decimals: 9,
-        address: new PublicKey(FEConstants.wsolToken),
-        icon: "/icons/crypto/SOL.svg"
-    },
+    nativeCurrency,
     {
         name: "USD Circle",
         ticker: "USDC",
