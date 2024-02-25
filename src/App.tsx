@@ -315,7 +315,7 @@ function WrappedApp() {
                                             {swapperLoadingError==null ? (
                                                 <>
                                                     <Spinner/>
-                                                    <h4>Connecting to SolLightning network...</h4>
+                                                    <h4>Connecting to atomiq network...</h4>
                                                 </>
                                             ) : (
                                                 <>
