@@ -89,6 +89,7 @@ export function FAQ(props: {}) {
                                     <li>Select the <a href="/scan">"Swap" function</a></li>
                                     <li>Select the desired input asset (bitcoin on-chain or lightning) and output asset (SOL or USDC) - you can click on the arrow to reverse asset selection</li>
                                     <li>Fill in the amount you want to send/receive</li>
+                                    <li>(new solana wallets only) In case you have 0 SOL balance, you will be prompted to use the swap for gas feature first (this for now only accepts bitcoin lightning), so you can then cover the transaction fee for a trustless swap</li>
                                     <li>You are presented with the quote, summarizing the swap amount & fees, click "Swap" to initiate it</li>
                                     <li>(on-chain only) You will be prompted to approve the transaction in your wallet, approve it there</li>
                                     <li>Send a BTC payment from a BTC wallet to generated bitcoin/lightning network address</li>

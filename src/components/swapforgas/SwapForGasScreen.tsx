@@ -258,7 +258,7 @@ export function SwapForGasScreen(props: {
                                 New gas swap
                             </Button>
                         ) : ""}
-                        {success && state.returnPath!=null ? (
+                        {success && state?.returnPath!=null ? (
                             <Button onClick={() => {
                                 navigate(state.returnPath);
                             }} variant="primary" className="mt-3">

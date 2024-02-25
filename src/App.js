@@ -52,7 +52,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
-            options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
+            // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);
             await swapper.init();
