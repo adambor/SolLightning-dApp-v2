@@ -29,6 +29,8 @@ import * as BN from "bn.js";
 import {LNNFCReader, LNNFCStartResult} from './components/lnnfc/LNNFCReader';
 import {ic_contactless} from 'react-icons-kit/md/ic_contactless';
 import {BitcoinWalletButton} from "./components/wallet/BitcoinWalletButton";
+import {SwapExplorer} from "./components/explorer/SwapExplorer";
+import {ic_explore} from 'react-icons-kit/md/ic_explore';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -144,7 +146,7 @@ function WrappedApp() {
 
     React.useEffect(() => {
 
-        if(pathName==="/about" || pathName==="/faq" || pathName==="/map") return;
+        if(pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer") return;
 
         if(wallet==null) {
             setSwapper(null);
@@ -196,7 +198,7 @@ function WrappedApp() {
 
     return (
         <>
-            <Navbar collapseOnSelect expand="md" bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
+            <Navbar collapseOnSelect expand="lg " bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container className="max-width-100">
                     <Navbar.Brand href="/" className="d-flex flex-column" style={{marginBottom: "-4px"}}>
                         <div className="d-flex flex-row" style={{fontSize: "1.5rem"}}>
@@ -214,23 +216,27 @@ function WrappedApp() {
                     </Navbar.Brand>
 
                     <div className="d-flex flex-column">
-                        <Badge className="newBadgeCollapse d-md-none">New!</Badge>
+                        <Badge className="newBadgeCollapse d-lg-none">New!</Badge>
                         <Navbar.Toggle aria-controls="basic-navbar-nav" className="ms-3" />
                     </div>
 
                     <Navbar.Collapse role="" id="basic-navbar-nav">
-                        <Nav className="d-flex d-md-none me-auto text-start border-top border-bottom border-dark-subtle my-2" navbarScroll style={{ maxHeight: '100px' }}>
-                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" ? (
+                        <Nav className="d-flex d-lg-none me-auto text-start border-top border-bottom border-dark-subtle my-2">
+                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer" ? (
                                 <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
                             <Nav.Link href="/map" className="d-flex flex-row align-items-center">
                                 <Icon icon={map} className="d-flex me-1"/>
-                                <span className="me-1">Map</span>
-                                <Badge className="me-2">New!</Badge>
+                                <span className="me-auto">Map</span>
                                 <small>Find merchants accepting lightning!</small>
                             </Nav.Link>
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            <Nav.Link href="/explorer" className="d-flex flex-row align-items-center">
+                                <Icon icon={ic_explore} className="d-flex me-1"/>
+                                <span className="me-1">Explorer</span>
+                                <Badge className="me-2">New!</Badge>
+                            </Nav.Link>
                             {nfcSupported ? (
                                 <div className="nav-link d-flex flex-row align-items-center">
                                     <Icon icon={ic_contactless} className="d-flex me-1"/>
@@ -245,25 +251,31 @@ function WrappedApp() {
                             ) : ""}
                             {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
-                        <Nav className="d-none d-md-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
-                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" ? (
+                        <Nav className="d-none d-lg-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
+                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer" ? (
                                 <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
 
                             <OverlayTrigger placement="bottom" overlay={<Tooltip id="map-tooltip">
                                 Find merchants near you accepting bitcoin lightning!
                             </Tooltip>}>
-                                <Nav.Link href="/map" className="d-flex flex-column align-items-center">
-                                    <div className="d-flex flex-row align-items-center">
-                                        <Icon icon={map} className="d-flex me-1"/>
-                                        <span>Map</span>
-                                    </div>
-                                    <Badge className="newBadge">New!</Badge>
+                                <Nav.Link href="/map" className="d-flex flex-row align-items-center">
+                                    <Icon icon={map} className="d-flex me-1"/>
+                                    <span>Map</span>
                                 </Nav.Link>
                             </OverlayTrigger>
 
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+
+                            <Nav.Link href="/explorer" className="d-flex flex-column align-items-center">
+                                <div className="d-flex flex-row align-items-center">
+                                    <Icon icon={ic_explore} className="d-flex me-1"/>
+                                    <span className="me-1">Explorer</span>
+                                </div>
+                                <Badge className="newBadge">New!</Badge>
+                            </Nav.Link>
+
                             {nfcSupported ? (
                                 <div className="nav-link d-flex flex-row align-items-center">
                                     <Icon icon={ic_contactless} className="d-flex me-1"/>
@@ -306,7 +318,7 @@ function WrappedApp() {
                 }
             }}>
                 <div className="d-flex flex-grow-1 flex-column">
-                    {swapper==null && pathName!=="/about" && pathName!=="/faq" && pathName!=="/map" ? (
+                    {swapper==null && pathName!=="/about" && pathName!=="/faq" && pathName!=="/map" && pathName!=="/explorer" ? (
                         <div className="no-wallet-overlay d-flex align-items-center">
                             <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                 <div className="text-white text-center">
@@ -351,6 +363,7 @@ function WrappedApp() {
                                 <Route path="faq" element={<FAQ/>}/>
                                 <Route path="about" element={<About/>}/>
                                 <Route path="map" element={<Map/>}/>
+                                <Route path="explorer" element={<SwapExplorer/>}/>
                             </Route>
                         </Routes>
                     </BrowserRouter>

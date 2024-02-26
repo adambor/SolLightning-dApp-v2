@@ -19,7 +19,7 @@ export function About(props: {}) {
             </Card>
             <h1 className="section-title mt-5">Advantages</h1>
             <Row>
-                <Col xs={12} sm={12} md={12} lg={4} className="pb-3">
+                <Col xs={12} lg={4} className="pb-3">
                     <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
                         <h3>Fully open-source</h3>
                         <p>
@@ -28,7 +28,7 @@ export function About(props: {}) {
                         </p>
                     </Card>
                 </Col>
-                <Col xs={12} sm={12} md={12} lg={4} className="pb-3">
+                <Col xs={12} lg={4} className="pb-3">
                     <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
                         <h3>Bitcoin lightning</h3>
                         <p>
@@ -36,7 +36,7 @@ export function About(props: {}) {
                         </p>
                     </Card>
                 </Col>
-                <Col xs={12} sm={12} md={12} lg={4} className="pb-3">
+                <Col xs={12} lg={4} className="pb-3">
                     <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
                         <h3>Fast swaps</h3>
                         <p>
