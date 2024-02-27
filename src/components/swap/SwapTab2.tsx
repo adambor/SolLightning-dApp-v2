@@ -47,11 +47,6 @@ const RANDOM_BTC_ADDRESS = bitcoin.payments.p2wsh({
     network: FEConstants.chain==="DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
 }).address;
 
-const USDollar = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-});
-
 export function SwapTab(props: {
     swapper: SolanaSwapper,
     supportedCurrencies: CurrencySpec[]
@@ -626,7 +621,7 @@ export function SwapTab(props: {
                             }}
                             inputId="amount-input"
                             inputClassName="font-weight-500"
-                            floatingLabel={inputValue==null ? null : USDollar.format(inputValue.toNumber())}
+                            floatingLabel={inputValue==null ? null : FEConstants.USDollar.format(inputValue.toNumber())}
                             expectingFloatingLabel={true}
                             step={inCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals))}
                             min={inConstraints.min}
@@ -666,7 +661,7 @@ export function SwapTab(props: {
                                 }}
                                 inputId="amount-output"
                                 inputClassName="font-weight-500"
-                                floatingLabel={outputValue==null ? null : USDollar.format(outputValue.toNumber())}
+                                floatingLabel={outputValue==null ? null : FEConstants.USDollar.format(outputValue.toNumber())}
                                 expectingFloatingLabel={true}
                                 step={outCurrency==null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals))}
                                 min={outConstraints.min}

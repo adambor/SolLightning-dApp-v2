@@ -5,6 +5,8 @@ import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 const solanaRpcUrl = process.env.REACT_APP_SOLANA_RPC_URL;
 const chain = process.env.REACT_APP_SOLANA_NETWORK; //DEVNET or MAINNET
 const btcBlockExplorer = process.env.REACT_APP_BTC_BLOCK_EXPLORER;
+const solBlockExplorer = process.env.REACT_APP_SOL_BLOCK_EXPLORER;
+const statsUrl = process.env.REACT_APP_STATS_URL;
 // const solanaRpcUrl: string = "https://api.devnet.solana.com";
 // const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
 // const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
@@ -25,6 +27,8 @@ export const FEConstants = {
     // url: "http://localhost:4000",
     // customPorts: null,
     btcBlockExplorer,
+    solBlockExplorer,
+    statsUrl,
     solanaChain: chain === "MAINNET" ? WalletAdapterNetwork.Mainnet : WalletAdapterNetwork.Devnet,
     rpcUrl: solanaRpcUrl,
     chain,
@@ -51,5 +55,9 @@ export const FEConstants = {
         }
     },
     url: null,
-    satsPerBitcoin: new BigNumber(100000000)
+    satsPerBitcoin: new BigNumber(100000000),
+    USDollar: new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    })
 };

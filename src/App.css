@@ -49,6 +49,12 @@
   padding-bottom: 2px;
 }
 
+.currency-icon-medium {
+  width: 20px;
+  margin-right: 6px;
+  padding-bottom: 2px;
+}
+
 .currency-icon-small {
   width: 16px;
   margin-right: 4px;
@@ -87,6 +93,9 @@
 }
 .font-medium {
   font-size: 1.125em;
+}
+.font-small {
+  font-size: 0.875em;
 }
 
 .swap-direction-wrapper {

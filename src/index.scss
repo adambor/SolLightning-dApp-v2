@@ -1,7 +1,12 @@
 //$primary: #FF9300;
 //$primary: #a679ff;
 //$primary: #a679ff;
-$primary: #d147a6;
+$atomiq-magenta: #d147a6;
+$atomiq-magenta-lighter: #ff54cd;
+$atomiq-purple: #944afc;
+$atomiq-orange: #fc9626;
+
+$primary: $atomiq-magenta;
 $secondary: #F2F5F9;
 $danger: #F25151;
 $success: #2BDD72;
@@ -10,8 +15,6 @@ $dark: #141414;
 $btn-border-radius-lg: 0.25rem;
 $body-color: #272D33;
 $info: #006CFF;
-$atomiq-purple: #944afc;
-$atomiq-orange: #fc9626;
 
 //$form-invalid-border-color: #ffdb00;
 //$form-invalid-color: #ffdb00;
@@ -141,7 +144,7 @@ code {
 }
 
 a {
-  color: $primary;
+  color: $atomiq-magenta-lighter;
 }
 
 body {
@@ -199,6 +202,13 @@ code {
 
 .card {
   color: #fff;
+}
+
+.tab-accent-nop {
+  @extend .card;
+  @extend .border-0;
+  @extend .bg-black;
+  @extend .bg-opacity-10;
 }
 
 .tab-accent {
@@ -358,4 +368,27 @@ code {
 
 .font-weight-500 {
   font-weight: 500;
+}
+
+.width-fill {
+  width: 100%
+}
+
+.single-line-ellipsis {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.min-width-100 {
+  min-width: 100%;
+}
+
+.min-width-0 {
+  min-width: 0;
+}
+
+.width-300px {
+  width: 300px;
 }
