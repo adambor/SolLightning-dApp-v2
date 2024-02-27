@@ -63,6 +63,12 @@ function SingleColumnTable(props : {
 
     const itemsPerPage = props.itemsPerPage || 10;
 
+    useEffect(() => {
+        setState((val) => {
+            return {...val, page: 0};
+        });
+    }, [props.getPage]);
+
     const renderFunc = () => {
         console.log("Table re-render: ", [state.page, props.getPage]);
 

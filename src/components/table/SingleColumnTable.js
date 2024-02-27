@@ -22,6 +22,11 @@ function SingleColumnTable(props) {
     });
     const loading = props.loading || state.loading;
     const itemsPerPage = props.itemsPerPage || 10;
+    useEffect(() => {
+        setState((val) => {
+            return Object.assign(Object.assign({}, val), { page: 0 });
+        });
+    }, [props.getPage]);
     const renderFunc = () => {
         console.log("Table re-render: ", [state.page, props.getPage]);
         const maybePromise = props.getPage(state.page, itemsPerPage);
