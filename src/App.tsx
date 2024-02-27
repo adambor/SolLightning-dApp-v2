@@ -200,19 +200,19 @@ function WrappedApp() {
         <>
             <Navbar collapseOnSelect expand="lg " bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container className="max-width-100">
-                    <Navbar.Brand href="/" className="d-flex flex-column" style={{marginBottom: "-4px"}}>
+                    <Navbar.Brand href="/" className="d-flex flex-column">
                         <div className="d-flex flex-row" style={{fontSize: "1.5rem"}}>
                             <img src="/icons/atomiq-flask.png" className="logo-img"/>
                             <b>atomiq</b><span style={{fontWeight: 300}}>.exchange</span>
                             {(FEConstants.chain as string)==="DEVNET" ? <Badge className="ms-2 d-flex align-items-center" bg="danger">DEVNET</Badge> : ""}
                         </div>
-                        {(FEConstants.chain as string)==="MAINNET" ? (
-                            <div className="d-flex flex-row align-items-end justify-content-center" style={{fontSize: "0.75rem", marginTop: "-8px", marginBottom: "-8px", marginLeft: "40px"}}>
-                                <small>formerly</small>
-                                <img src="/icons/logoicon.png" className="logo-img-small"/>
-                                <span>SolLightning</span>
-                            </div>
-                        ) : ""}
+                        {/*{(FEConstants.chain as string)==="MAINNET" ? (*/}
+                            {/*<div className="d-flex flex-row align-items-end justify-content-center" style={{fontSize: "0.75rem", marginTop: "-8px", marginBottom: "-8px", marginLeft: "40px"}}>*/}
+                                {/*<small>formerly</small>*/}
+                                {/*<img src="/icons/logoicon.png" className="logo-img-small"/>*/}
+                                {/*<span>SolLightning</span>*/}
+                            {/*</div>*/}
+                        {/*) : ""}*/}
                     </Navbar.Brand>
 
                     <div className="d-flex flex-column">
