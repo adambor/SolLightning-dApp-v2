@@ -5,6 +5,10 @@ import {FromBTCLNQuoteSummary} from "./frombtc/FromBTCLNQuoteSummary";
 import {FromBTCQuoteSummary} from "./frombtc/FromBTCQuoteSummary";
 import * as React from "react";
 import * as BN from "bn.js";
+import {useEffect, useState} from "react";
+
+//The getBalance automatically discounts the WSOL ATA deposit + commit fee (including deposit for EscrowState)
+const minNativeTokenBalance = new BN(500000);
 
 export function QuoteSummary(props: {
     swapper: Swapper<any, any, any, any>,
@@ -17,6 +21,21 @@ export function QuoteSummary(props: {
     autoContinue?: boolean
 }) {
 
+    const [notEnoughForGas, setNotEnoughForGas] = useState<boolean>(false);
+
+    useEffect(() => {
+        setNotEnoughForGas(false);
+
+        //Check if the user has enough lamports to cover solana transaction fees
+        const swapContract = props.swapper.swapContract;
+        swapContract.getBalance(swapContract.getNativeCurrencyAddress(), false).then(balance => {
+            console.log("NATIVE balance: ", balance.toString(10));
+            if(balance.lt(minNativeTokenBalance)) {
+                setNotEnoughForGas(true);
+            }
+        });
+    }, [props.quote]);
+
     if(props.quote instanceof IToBTCSwap) return <ToBTCQuoteSummary
         type={props.type}
         setAmountLock={props.setAmountLock}
@@ -24,6 +43,7 @@ export function QuoteSummary(props: {
         refreshQuote={props.refreshQuote}
         balance={props.balance}
         autoContinue={props.autoContinue}
+        notEnoughForGas={notEnoughForGas}
     />;
     if(props.quote instanceof IFromBTCSwap) {
         if(props.quote instanceof FromBTCLNSwap) {
@@ -34,6 +54,7 @@ export function QuoteSummary(props: {
                     quote={props.quote}
                     refreshQuote={props.refreshQuote}
                     autoContinue={props.autoContinue}
+                    notEnoughForGas={notEnoughForGas}
                 />;
             } else {
                 return <FromBTCLNQuoteSummary
@@ -43,6 +64,7 @@ export function QuoteSummary(props: {
                     quote={props.quote}
                     refreshQuote={props.refreshQuote}
                     abortSwap={props.abortSwap}
+                    notEnoughForGas={notEnoughForGas}
                 />;
             }
         }
@@ -52,6 +74,7 @@ export function QuoteSummary(props: {
             quote={props.quote}
             refreshQuote={props.refreshQuote}
             abortSwap={props.abortSwap}
+            notEnoughForGas={notEnoughForGas}
         />;
     }
 

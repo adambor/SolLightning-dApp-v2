@@ -15,6 +15,10 @@ const tabs = [
     {
         name: "Pending",
         path: "/history"
+    },
+    {
+        name: "Gas",
+        path: "/gas"
     }
 ];
 
@@ -32,6 +36,7 @@ export function Topbar(props: {
             <ButtonGroup className="bg-dark bg-opacity-25">
                 {tabs.map((val, index) => {
                     if(index===2 && context.actionableSwaps.length===0) return;
+                    if(index===3 && props.selected!==index) return;
                     return (
                         <Button
                             onClick={() => {

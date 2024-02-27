@@ -1,14 +1,19 @@
 import * as React from "react";
 import {Accordion, Card} from "react-bootstrap";
+import {useLocation} from "react-router-dom";
 
 
 export function FAQ(props: {}) {
+
+    const {search} = useLocation() as {search: string};
+    const params = new URLSearchParams(search);
+    const tabOpen = params.get("tabOpen");
 
     return (
         <div className="flex-fill text-white container mt-5 text-start">
             <h1 className="section-title">FAQ</h1>
             <div className="mb-3 border-0">
-                <Accordion>
+                <Accordion defaultActiveKey={tabOpen}>
                     <Accordion.Item eventKey="10">
                         <Accordion.Header><span className="faq-number">1</span>Where is SolLightning?</Accordion.Header>
                         <Accordion.Body>
@@ -84,6 +89,7 @@ export function FAQ(props: {}) {
                                     <li>Select the <a href="/scan">"Swap" function</a></li>
                                     <li>Select the desired input asset (bitcoin on-chain or lightning) and output asset (SOL or USDC) - you can click on the arrow to reverse asset selection</li>
                                     <li>Fill in the amount you want to send/receive</li>
+                                    <li>(new solana wallets only) In case you have 0 SOL balance, you will be prompted to use the swap for gas feature first (this for now only accepts bitcoin lightning), so you can then cover the transaction fee for a trustless swap</li>
                                     <li>You are presented with the quote, summarizing the swap amount & fees, click "Swap" to initiate it</li>
                                     <li>(on-chain only) You will be prompted to approve the transaction in your wallet, approve it there</li>
                                     <li>Send a BTC payment from a BTC wallet to generated bitcoin/lightning network address</li>
@@ -161,8 +167,18 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
+                    <Accordion.Item eventKey="11">
+                        <Accordion.Header><span className="faq-number">7</span>What is swap for gas?</Accordion.Header>
+                        <Accordion.Body>
+                            <p>
+                                For our swaps to work in a fully trustless way the user needs to be able to cover the gas/transaction fees on Solana.
+                                This means that users new Solana users with 0 SOL balance are unable to use atomiq, even for BTC -&gt; SOL swaps - to solve this we run a trusted <b>swap for gas</b> service, allowing users to swap small amounts of BTC (lightning network) to SOL,
+                                allowing them to then trustlessly use atomiq, even when starting with 0 SOL balance.
+                            </p>
+                        </Accordion.Body>
+                    </Accordion.Item>
                     <Accordion.Item eventKey="5">
-                        <Accordion.Header><span className="faq-number">7</span>Where can I reach you?</Accordion.Header>
+                        <Accordion.Header><span className="faq-number">8</span>Where can I reach you?</Accordion.Header>
                         <Accordion.Body>
                             <p>
                                 In case you have any questions or issues feel free to bring them up in our <a target="_blank" href="https://t.me/+_MQNtlBXQ2Q1MGEy">Telegram group</a>

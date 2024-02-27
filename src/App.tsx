@@ -29,6 +29,7 @@ import * as BN from "bn.js";
 import {LNNFCReader, LNNFCStartResult} from './components/lnnfc/LNNFCReader';
 import {ic_contactless} from 'react-icons-kit/md/ic_contactless';
 import {BitcoinWalletButton} from "./components/wallet/BitcoinWalletButton";
+import {SwapForGasScreen} from "./components/swapforgas/SwapForGasScreen";
 import {SwapExplorer} from "./components/explorer/SwapExplorer";
 import {ic_explore} from 'react-icons-kit/md/ic_explore';
 
@@ -63,6 +64,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+            // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
 
             console.log("Created swapper options: ", options);
 
@@ -360,6 +362,7 @@ function WrappedApp() {
                                     <Route path="2" element={<Step2Screen swapper={swapper}/>}/>
                                 </Route>
                                 <Route path="history" element={<HistoryScreen swapper={swapper}/>}/>
+                                <Route path="gas" element={<SwapForGasScreen swapper={swapper}/>}/>
                                 <Route path="faq" element={<FAQ/>}/>
                                 <Route path="about" element={<About/>}/>
                                 <Route path="map" element={<Map/>}/>

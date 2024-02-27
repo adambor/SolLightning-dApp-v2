@@ -26,8 +26,10 @@ import { exchange } from 'react-icons-kit/fa/exchange';
 import Icon from "react-icons-kit";
 import { LNNFCReader, LNNFCStartResult } from './components/lnnfc/LNNFCReader';
 import { ic_contactless } from 'react-icons-kit/md/ic_contactless';
+import { SwapForGasScreen } from "./components/swapforgas/SwapForGasScreen";
 import { SwapExplorer } from "./components/explorer/SwapExplorer";
 import { ic_explore } from 'react-icons-kit/md/ic_explore';
+
 require('@solana/wallet-adapter-react-ui/styles.css');
 // export type BtcConnectionState = {
 //     declined: boolean,
@@ -53,6 +55,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+            // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);
             await swapper.init();

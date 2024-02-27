@@ -7,7 +7,8 @@ export function LNURLWithdrawQuoteSummary(props: {
     refreshQuote: () => void,
     setAmountLock: (isLocked: boolean) => void,
     type?: "payment" | "swap",
-    autoContinue?: boolean
+    autoContinue?: boolean,
+    notEnoughForGas: boolean
 }) {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();

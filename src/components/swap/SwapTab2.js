@@ -325,7 +325,6 @@ export function SwapTab(props) {
                 }
                 setQuoteLoading(false);
                 setQuote(swap);
-                //TODO: Check if the user has enough lamports to cover solana transaction fees
             }).catch(e => {
                 let doSetError = true;
                 if (e.min != null && e.max != null) {

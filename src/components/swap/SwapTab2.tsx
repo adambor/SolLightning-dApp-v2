@@ -10,7 +10,7 @@ import {
     SwapType,
     ToBTCSwap
 } from "sollightning-sdk";
-import {Accordion, Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
+import {Alert, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {useEffect, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -23,7 +23,7 @@ import {
     toHumanReadable, toHumanReadableString
 } from "../../utils/Currencies";
 import {CurrencyDropdown} from "../CurrencyDropdown";
-import {FeePart, SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
+import {SimpleFeeSummaryScreen} from "../SimpleFeeScreen";
 import {QuoteSummary} from "../quotes/QuoteSummary";
 import {Topbar} from "../Topbar";
 import {useLocation, useNavigate} from "react-router-dom";
@@ -408,7 +408,6 @@ export function SwapTab(props: {
                 }
                 setQuoteLoading(false);
                 setQuote(swap);
-                //TODO: Check if the user has enough lamports to cover solana transaction fees
             }).catch(e => {
                 let doSetError = true;
                 if(e.min!=null && e.max!=null) {

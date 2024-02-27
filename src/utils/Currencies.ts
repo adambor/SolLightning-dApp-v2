@@ -26,14 +26,16 @@ export const btcCurrency: CurrencySpec = {
     icon: "/icons/crypto/BTC.svg"
 };
 
+export const nativeCurrency: CurrencySpec = {
+    name: "Solana",
+    ticker: "SOL",
+    decimals: 9,
+    address: new PublicKey(FEConstants.wsolToken),
+    icon: "/icons/crypto/SOL.svg"
+}
+
 export const smartChainCurrencies: CurrencySpec[] = [
-    {
-        name: "Solana",
-        ticker: "SOL",
-        decimals: 9,
-        address: new PublicKey(FEConstants.wsolToken),
-        icon: "/icons/crypto/SOL.svg"
-    },
+    nativeCurrency,
     {
         name: "USD Circle",
         ticker: "USDC",
