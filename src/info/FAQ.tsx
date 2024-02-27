@@ -172,7 +172,7 @@ export function FAQ(props: {}) {
                         <Accordion.Body>
                             <p>
                                 For our swaps to work in a fully trustless way the user needs to be able to cover the gas/transaction fees on Solana.
-                                This means that users new Solana users with 0 SOL balance are unable to use atomiq, even for BTC -&gt; SOL swaps - to solve this we run a trusted <b>swap for gas</b> service, allowing users to swap small amounts of BTC (lightning network) to SOL,
+                                This means that new Solana users with 0 SOL balance were unable to use atomiq, even for BTC -&gt; SOL swaps - to solve this we run a trusted <b>swap for gas</b> service, allowing users to swap small amounts of BTC (lightning network) to SOL,
                                 allowing them to then trustlessly use atomiq, even when starting with 0 SOL balance.
                             </p>
                         </Accordion.Body>
