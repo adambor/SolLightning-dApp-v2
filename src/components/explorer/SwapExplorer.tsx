@@ -212,10 +212,10 @@ export function SwapExplorer(props: {}) {
                                             </Col>
                                             <Col xl={0} lg={2} md={1} xs={0}>
                                             </Col>
-                                            <Col xl={12} lg={2} md={3} xs={5}>
+                                            <Col xl={12} lg={2} md={3} xs={6}>
                                                 <small className="">{new Date(row.timestampInit*1000).toLocaleString()}</small>
                                             </Col>
-                                            <Col xl={12} md={2} xs={4}>
+                                            <Col xl={12} md={2} xs={3}>
                                                 <small className="">{getTimeDeltaText(row.timestampInit*1000)} ago</small>
                                             </Col>
                                             <Col xl={12} md={2} xs={3} className="text-end">
