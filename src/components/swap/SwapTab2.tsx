@@ -35,6 +35,7 @@ import {randomBytes} from "crypto-browserify";
 import {FEConstants} from "../../FEConstants";
 import * as BN from "bn.js";
 import {ic_qr_code_scanner} from 'react-icons-kit/md/ic_qr_code_scanner';
+import {lock} from 'react-icons-kit/fa/lock';
 import {QRScannerModal} from "../qr/QRScannerModal";
 
 const defaultConstraints = {
@@ -587,7 +588,7 @@ export function SwapTab(props: {
 
             }} show={qrScanning} onHide={() => setQrScanning(false)}/>
 
-            <div className="d-flex flex-column flex-fill align-items-center text-white">
+            <div className="d-flex flex-column align-items-center text-white">
                 <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
                     <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => setQuoteError(null)} dismissible closeVariant="white">
@@ -756,6 +757,14 @@ export function SwapTab(props: {
                         </>
                     ) : ""}
                 </Card>
+            </div>
+
+            <div className="text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center">
+                <div className="cursor-pointer d-flex align-items-center justify-content-center" onClick={() => navigate("/faq?tabOpen=6")}>
+                    <Icon size={18} icon={lock} style={{marginTop: "-0.5rem"}}/>
+                    <small>Audited by</small>
+                    <img className="opacity-50 d-block ms-1" height={18} src="/ackee_blockchain.svg" style={{marginTop: "-0.125rem"}}/>
+                </div>
             </div>
         </>
     )

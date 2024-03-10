@@ -16,6 +16,7 @@ import * as bitcoin from "bitcoinjs-lib";
 import { randomBytes } from "crypto-browserify";
 import { FEConstants } from "../../FEConstants";
 import { ic_qr_code_scanner } from 'react-icons-kit/md/ic_qr_code_scanner';
+import { lock } from 'react-icons-kit/fa/lock';
 import { QRScannerModal } from "../qr/QRScannerModal";
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -482,7 +483,7 @@ export function SwapTab(props) {
                         setExactIn(false);
                     }
                     setQrScanning(false);
-                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", Object.assign({ className: "d-flex flex-column flex-fill align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsxs(Card, Object.assign({ className: "d-flex flex-column tab-accent-p3 pt-2" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx("small", Object.assign({ className: "text-light text-opacity-75 me-auto" }, { children: "You pay" })) })), _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
+                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", Object.assign({ className: "d-flex flex-column align-items-center text-white" }, { children: _jsxs(Card, Object.assign({ className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0" }, { children: [_jsxs(Alert, Object.assign({ className: "text-center", show: quoteError != null, variant: "danger", onClose: () => setQuoteError(null), dismissible: true, closeVariant: "white" }, { children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] })), _jsxs(Card, Object.assign({ className: "d-flex flex-column tab-accent-p3 pt-2" }, { children: [_jsx("div", Object.assign({ className: "d-flex flex-row" }, { children: _jsx("small", Object.assign({ className: "text-light text-opacity-75 me-auto" }, { children: "You pay" })) })), _jsx(ValidatedInput, { disabled: locked || disabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
                                         setAmount(val);
                                         setExactIn(true);
                                     }, inputId: "amount-input", inputClassName: "font-weight-500", floatingLabel: inputValue == null ? null : FEConstants.USDollar.format(inputValue.toNumber()), expectingFloatingLabel: true, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: inConstraints.max, onValidate: (val) => {
@@ -528,5 +529,5 @@ export function SwapTab(props) {
                                             setLocked(false);
                                             setQuote(null);
                                             setAmount("");
-                                        } }) }))) : ""] })) : ""] })) }))] }));
+                                        } }) }))) : ""] })) : ""] })) })), _jsx("div", Object.assign({ className: "text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center" }, { children: _jsxs("div", Object.assign({ className: "cursor-pointer d-flex align-items-center justify-content-center", onClick: () => navigate("/faq?tabOpen=6") }, { children: [_jsx(Icon, { size: 18, icon: lock, style: { marginTop: "-0.5rem" } }), _jsx("small", { children: "Audited by" }), _jsx("img", { className: "opacity-50 d-block ms-1", height: 18, src: "/ackee_blockchain.svg", style: { marginTop: "-0.125rem" } })] })) }))] }));
 }
