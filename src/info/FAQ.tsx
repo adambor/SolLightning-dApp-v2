@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Accordion, Card} from "react-bootstrap";
 import {useLocation} from "react-router-dom";
+import {useEffect} from "react";
 
 
 export function FAQ(props: {}) {
@@ -9,12 +10,19 @@ export function FAQ(props: {}) {
     const params = new URLSearchParams(search);
     const tabOpen = params.get("tabOpen");
 
+    useEffect(() => {
+        if(tabOpen!=null) {
+            const element = document.getElementById(tabOpen);
+            if(element!=null) element.scrollIntoView();
+        }
+    }, [tabOpen]);
+
     return (
         <div className="flex-fill text-white container mt-5 text-start">
             <h1 className="section-title">FAQ</h1>
             <div className="mb-3 border-0">
                 <Accordion defaultActiveKey={tabOpen}>
-                    <Accordion.Item eventKey="10">
+                    <Accordion.Item eventKey="10" id="10">
                         <Accordion.Header><span className="faq-number">1</span>Where is SolLightning?</Accordion.Header>
                         <Accordion.Body>
                             <p>
@@ -29,7 +37,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="0">
+                    <Accordion.Item eventKey="0" id="0">
                         <Accordion.Header><span className="faq-number">2</span>What is atomiq.exchange?</Accordion.Header>
                         <Accordion.Body>
                             <p>
@@ -44,7 +52,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="2">
+                    <Accordion.Item eventKey="2" id="2">
                         <Accordion.Header><span className="faq-number">3</span>How does it work?</Accordion.Header>
                         <Accordion.Body>
                             <h4>Connect your Solana wallet</h4>
@@ -99,7 +107,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="1">
+                    <Accordion.Item eventKey="1" id="1">
                         <Accordion.Header><span className="faq-number">4</span>Do I have to trust anyone?</Accordion.Header>
                         <Accordion.Body>
                             <p>
@@ -121,7 +129,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="3">
+                    <Accordion.Item eventKey="3" id="3">
                         <Accordion.Header><span className="faq-number">5</span>Why should you use atomiq.exchange?</Accordion.Header>
                         <Accordion.Body>
                             <h4>
@@ -156,7 +164,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="4">
+                    <Accordion.Item eventKey="4" id="4">
                         <Accordion.Header><span className="faq-number">6</span>Where can I learn more?</Accordion.Header>
                         <Accordion.Body>
                             <p>
@@ -167,7 +175,7 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="11">
+                    <Accordion.Item eventKey="11" id="11">
                         <Accordion.Header><span className="faq-number">7</span>What is swap for gas?</Accordion.Header>
                         <Accordion.Body>
                             <p>
@@ -177,11 +185,19 @@ export function FAQ(props: {}) {
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
-                    <Accordion.Item eventKey="5">
+                    <Accordion.Item eventKey="5" id="5">
                         <Accordion.Header><span className="faq-number">8</span>Where can I reach you?</Accordion.Header>
                         <Accordion.Body>
                             <p>
                                 In case you have any questions or issues feel free to bring them up in our <a target="_blank" href="https://t.me/+_MQNtlBXQ2Q1MGEy">Telegram group</a>
+                            </p>
+                        </Accordion.Body>
+                    </Accordion.Item>
+                    <Accordion.Item eventKey="6" id="6">
+                        <Accordion.Header><span className="faq-number">9</span>Are you audited?</Accordion.Header>
+                        <Accordion.Body>
+                            <p>
+                                Our smart contracts were audited by an independent security auditor <a target="_blank" href="https://ackeeblockchain.com/">Ackee Blockchain Security a.s.</a>, which found no exploitable issues in atomiq's (previously SolLightning's) smart contracts, full audit report is publicly available here: <a target="_blank" href="https://github.com/adambor/SolLightning-readme/blob/main/audits/ackee-blockchain-sollightning-report.pdf">Ackee Blockchain, SolLightning: Security Audit, 12.1.2024</a>
                             </p>
                         </Accordion.Body>
                     </Accordion.Item>
