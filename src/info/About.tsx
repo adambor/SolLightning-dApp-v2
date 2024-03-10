@@ -24,23 +24,23 @@ export function About(props: {}) {
                         <h3>Fully open-source</h3>
                         <p>
                             <strong>atomiq.exchange</strong> is being build on the principles of OSS and is fully open source (even including this very webapp)! You can review all our code on <a target="_blank" href="https://github.com/adambor/SolLightning-readme">github</a>.
-                            Our smart contracts are fully audited by Ackee Blockchain and are immutably deployed on Solana (with no upgrade authority).
                         </p>
                     </Card>
                 </Col>
                 <Col xs={12} lg={4} className="pb-3">
                     <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
-                        <h3>Bitcoin lightning</h3>
+                        <h3>Secure</h3>
                         <p>
-                            <strong>atomiq.exchange</strong> supports swaps over Bitcoin Lightning Network - a second layer scaling solution on top of Bitcoin enabling instant payment settlement.
+                            <strong>atomiq.exchange</strong> is secured by Bitcoin light client (leveraging bitcoin's proof-of-work) & atomic swaps.
+                            Our smart contracts are <a href="/faq?tabOpen=6">fully audited by Ackee Blockchain</a> and are immutably deployed on Solana (with no upgrade authority).
                         </p>
                     </Card>
                 </Col>
                 <Col xs={12} lg={4} className="pb-3">
                     <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
-                        <h3>Fast swaps</h3>
+                        <h3>Lightning fast</h3>
                         <p>
-                            With Solana & Bitcoin lightning network, you can use <strong>atomiq.exchange</strong> to swap between Solana assets (SOL or USDC) and native bitcoin in seconds! Say goodbye to slow bitcoin on-chain transfers.
+                            With Solana & Bitcoin lightning network supported, you can use <strong>atomiq.exchange</strong> to swap between Solana assets (SOL or USDC) and native bitcoin in seconds! Say goodbye to slow bitcoin on-chain transfers.
                         </p>
                     </Card>
                 </Col>
