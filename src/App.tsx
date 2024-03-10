@@ -32,6 +32,8 @@ import {BitcoinWalletButton} from "./components/wallet/BitcoinWalletButton";
 import {SwapForGasScreen} from "./components/swapforgas/SwapForGasScreen";
 import {SwapExplorer} from "./components/explorer/SwapExplorer";
 import {ic_explore} from 'react-icons-kit/md/ic_explore';
+import {AffiliateScreen} from "./components/affiliate/AffiliateScreen";
+import {gift} from 'react-icons-kit/fa/gift';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -41,6 +43,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 //     getBalance?: () => Promise<BN>,
 //     sendTransaction?: (address: string, amount: BN) => Promise<void>
 // };
+
+const noWalletPaths = new Set(["/about", "/faq", "/map", "/explorer"]);
 
 function WrappedApp() {
     const wallet: any = useAnchorWallet();
@@ -54,6 +58,11 @@ function WrappedApp() {
 
     // @ts-ignore
     const pathName = window.location.pathname;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    if(searchParams.has("affiliate")) {
+        window.localStorage.setItem("atomiq-affiliate", searchParams.get("affiliate"));
+    }
 
     const loadSwapper = async(_provider: AnchorProvider) => {
         setSwapperLoadingError(null);
@@ -148,7 +157,7 @@ function WrappedApp() {
 
     React.useEffect(() => {
 
-        if(pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer") return;
+        if(noWalletPaths.has(pathName)) return;
 
         if(wallet==null) {
             setSwapper(null);
@@ -224,7 +233,7 @@ function WrappedApp() {
 
                     <Navbar.Collapse role="" id="basic-navbar-nav">
                         <Nav className="d-flex d-lg-none me-auto text-start border-top border-bottom border-dark-subtle my-2">
-                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer" ? (
+                            {noWalletPaths.has(pathName) || pathName==="/affiliate" ? (
                                 <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
                             <Nav.Link href="/map" className="d-flex flex-row align-items-center">
@@ -234,9 +243,10 @@ function WrappedApp() {
                             </Nav.Link>
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
-                            <Nav.Link href="/explorer" className="d-flex flex-row align-items-center">
-                                <Icon icon={ic_explore} className="d-flex me-1"/>
-                                <span className="me-1">Explorer</span>
+                            <Nav.Link href="/explorer" className="d-flex flex-row align-items-center"><Icon icon={ic_explore} className="d-flex me-1"/><span>Explorer</span></Nav.Link>
+                            <Nav.Link href="/affiliate" className="d-flex flex-row align-items-center">
+                                <Icon icon={gift} className="d-flex me-1"/>
+                                <span className="me-1">Affiliate</span>
                                 <Badge className="me-2">New!</Badge>
                             </Nav.Link>
                             {nfcSupported ? (
@@ -254,7 +264,7 @@ function WrappedApp() {
                             {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
                         <Nav className="d-none d-lg-flex me-auto text-start" navbarScroll style={{ maxHeight: '100px' }}>
-                            {pathName==="/about" || pathName==="/faq" || pathName==="/map" || pathName==="/explorer" ? (
+                            {noWalletPaths.has(pathName) || pathName==="/affiliate" ? (
                                 <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
 
@@ -269,11 +279,12 @@ function WrappedApp() {
 
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
+                            <Nav.Link href="/explorer" className="d-flex flex-row align-items-center"><Icon icon={ic_explore} className="d-flex me-1"/><span>Explorer</span></Nav.Link>
 
-                            <Nav.Link href="/explorer" className="d-flex flex-column align-items-center">
+                            <Nav.Link href="/affiliate" className="d-flex flex-column align-items-center">
                                 <div className="d-flex flex-row align-items-center">
-                                    <Icon icon={ic_explore} className="d-flex me-1"/>
-                                    <span className="me-1">Explorer</span>
+                                    <Icon icon={gift} className="d-flex me-1"/>
+                                    <span className="me-1">Affiliate</span>
                                 </div>
                                 <Badge className="newBadge">New!</Badge>
                             </Nav.Link>
@@ -320,7 +331,7 @@ function WrappedApp() {
                 }
             }}>
                 <div className="d-flex flex-grow-1 flex-column">
-                    {swapper==null && pathName!=="/about" && pathName!=="/faq" && pathName!=="/map" && pathName!=="/explorer" ? (
+                    {swapper==null && !noWalletPaths.has(pathName) ? (
                         <div className="no-wallet-overlay d-flex align-items-center">
                             <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                 <div className="text-white text-center">
@@ -367,6 +378,7 @@ function WrappedApp() {
                                 <Route path="about" element={<About/>}/>
                                 <Route path="map" element={<Map/>}/>
                                 <Route path="explorer" element={<SwapExplorer/>}/>
+                                <Route path="affiliate" element={<AffiliateScreen swapper={swapper}/>}/>
                             </Route>
                         </Routes>
                     </BrowserRouter>

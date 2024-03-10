@@ -8,6 +8,7 @@ import { angleRight } from 'react-icons-kit/fa/angleRight';
 import { angleLeft } from 'react-icons-kit/fa/angleLeft';
 import { angleDoubleRight } from 'react-icons-kit/fa/angleDoubleRight';
 import { angleDoubleLeft } from 'react-icons-kit/fa/angleDoubleLeft';
+import { ic_not_interested } from 'react-icons-kit/md/ic_not_interested';
 function PaginationButton(props) {
     return (_jsx(Button, Object.assign({ onClick: () => { props.onClick(props.page); }, variant: props.currentPage === props.page ? "light" : "outline-light", disabled: props.disabled, className: "px-3", size: "lg" }, { children: props.page + 1 }), "page-" + props.page));
 }
@@ -55,6 +56,9 @@ function SingleColumnTable(props) {
         if (obj != null)
             tbody.push((_jsx(ListGroup.Item, Object.assign({ className: "bg-dark bg-opacity-25 border-light border-opacity-25 text-white" }, { children: props.column.renderer(obj) }))));
     }
+    if (tbody.length === 0) {
+        tbody.push((_jsx(ListGroup.Item, Object.assign({ className: "bg-dark bg-opacity-25 border-light border-opacity-25 text-white" }, { children: _jsxs("div", Object.assign({ className: "d-flex align-items-center justify-content-center text-light text-opacity-75" }, { children: [_jsx(Icon, { size: 24, className: "pb-1 me-2", icon: ic_not_interested }), _jsx("h4", Object.assign({ className: "my-3" }, { children: "No data" }))] })) }))));
+    }
     const numPageButtons = props.numPageButtons || 5;
     const buttons = [];
     const numPages = state.maxPages;
@@ -91,6 +95,16 @@ function SingleColumnTable(props) {
         buttons.push((_jsx(Button, Object.assign({ variant: "outline-light px-2", size: "lg" }, { children: "..." }), "ellipsis2")));
     }
     return (_jsxs("div", { children: [_jsxs("div", Object.assign({ className: "position-relative" }, { children: [_jsx(Card, Object.assign({ className: "bg-transparent border-0" }, { children: _jsx(ListGroup, Object.assign({ variant: "flush" }, { children: tbody })) })), loading ? (_jsxs("div", Object.assign({ className: "table-loading-pane d-flex align-items-center justify-content-center flex-column" }, { children: [_jsx(Spinner, { animation: "border", role: "status" }), _jsx("span", { children: "Loading..." })] }))) : ""] })), _jsx("div", Object.assign({ className: "d-flex align-items-center justify-content-center mt-2 mb-4" }, { children: _jsxs(ButtonGroup, Object.assign({ className: "bg-dark bg-opacity-25", "aria-label": "Second group" }, { children: [_jsx(Button, Object.assign({ variant: "outline-light px-2", onClick: () => handlePageClick(0), size: "lg", disabled: loading }, { children: _jsx(Icon, { size: 20, style: { marginTop: "-8px" }, icon: angleDoubleLeft }) })), _jsx(Button, Object.assign({ variant: "outline-light px-2", onClick: () => handlePageClick(state.page - 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { size: 20, style: { marginTop: "-8px" }, icon: angleLeft }) })), buttons, _jsx(Button, Object.assign({ variant: "outline-light px-2", onClick: () => handlePageClick(state.page + 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { size: 20, style: { marginTop: "-8px" }, icon: angleRight }) })), _jsx(Button, Object.assign({ variant: "outline-light px-2", onClick: () => handlePageClick(numPages - 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { size: 20, style: { marginTop: "-8px" }, icon: angleDoubleRight }) }))] })) }))] }));
+}
+export function SingleColumnStaticTable(props) {
+    const pageCbk = useCallback(async (page, pageSize) => {
+        await new Promise((resolve) => { setTimeout(resolve, 250); });
+        return {
+            data: props.data.slice(page * pageSize, (page + 1) * pageSize),
+            maxPages: Math.ceil(props.data.length / pageSize)
+        };
+    }, [props.data]);
+    return (_jsx(SingleColumnTable, Object.assign({ getPage: pageCbk, refresh: props.refreshFunc }, props)));
 }
 export function SingleColumnBackendTable(props) {
     const abortSignal = useRef(null);

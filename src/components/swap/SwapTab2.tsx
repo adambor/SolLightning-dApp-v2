@@ -368,6 +368,15 @@ export function SwapTab(props: {
                 return;
             }
             setQuoteLoading(true);
+
+            let additionalParam: Record<string, any>;
+            const affiliate = window.localStorage.getItem("atomiq-affiliate");
+            if(affiliate!=null && props.swapper.swapContract.isValidAddress(affiliate)) {
+                additionalParam = {
+                    affiliate
+                };
+            }
+
             let promise: Promise<ISwap>;
             let tokenCurrency: CurrencySpec;
             let quoteCurrency: CurrencySpec;
@@ -376,30 +385,30 @@ export function SwapTab(props: {
                 setDoValidate(true);
                 tokenCurrency = outCurrency;
                 quoteCurrency = exactIn ? inCurrency : outCurrency;
-                promise = props.swapper.createFromBTCSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn);
+                promise = props.swapper.createFromBTCSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn, additionalParam);
             }
             if(inCurrency?.ticker==="BTC-LN") {
                 setOutConstraintsOverride(null);
                 setDoValidate(true);
                 tokenCurrency = outCurrency;
                 quoteCurrency = exactIn ? inCurrency : outCurrency;
-                promise = props.swapper.createFromBTCLNSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn);
+                promise = props.swapper.createFromBTCLNSwap(outCurrency.address, fromHumanReadableString(amount, quoteCurrency), !exactIn, null, additionalParam);
             }
             if(outCurrency?.ticker==="BTC") {
                 setOutConstraintsOverride(null);
                 setDoValidate(true);
                 tokenCurrency = inCurrency;
                 quoteCurrency = exactIn ? inCurrency : outCurrency;
-                promise = props.swapper.createToBTCSwap(inCurrency.address, useAddress, fromHumanReadableString(amount, quoteCurrency), null, null, exactIn);
+                promise = props.swapper.createToBTCSwap(inCurrency.address, useAddress, fromHumanReadableString(amount, quoteCurrency), null, null, exactIn, additionalParam);
             }
             if(outCurrency?.ticker==="BTC-LN") {
                 tokenCurrency = inCurrency;
                 quoteCurrency = outCurrency;
                 if(dataLNURL!=null) {
                     quoteCurrency = exactIn ? inCurrency : outCurrency;
-                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null, 5*24*60*60, null, null, exactIn);
+                    promise = props.swapper.createToBTCLNSwapViaLNURL(inCurrency.address, dataLNURL, fromHumanReadableString(amount, quoteCurrency), null, 5*24*60*60, null, null, exactIn, additionalParam);
                 } else {
-                    promise = props.swapper.createToBTCLNSwap(inCurrency.address, useAddress, 5*24*60*60);
+                    promise = props.swapper.createToBTCLNSwap(inCurrency.address, useAddress, 5*24*60*60, null, null, additionalParam);
                 }
             }
             currentQuotation.current = promise.then((swap) => {

@@ -10,6 +10,7 @@ import {angleRight} from 'react-icons-kit/fa/angleRight';
 import {angleLeft} from 'react-icons-kit/fa/angleLeft';
 import {angleDoubleRight} from 'react-icons-kit/fa/angleDoubleRight';
 import {angleDoubleLeft} from 'react-icons-kit/fa/angleDoubleLeft';
+import {ic_not_interested} from 'react-icons-kit/md/ic_not_interested';
 
 function PaginationButton(props : {
     page: number,
@@ -23,8 +24,8 @@ function PaginationButton(props : {
     );
 }
 
-type TableColumn = {
-    renderer?: (any) => string | JSX.Element,
+type TableColumn<T> = {
+    renderer?: (row: T) => string | JSX.Element,
 };
 
 type GetPageResponse = {
@@ -32,11 +33,11 @@ type GetPageResponse = {
     maxPages: number
 }
 
-function SingleColumnTable(props : {
+function SingleColumnTable<T>(props : {
     className?: any,
     getPage: (page: number, pageSize: number) => (Promise<GetPageResponse> | GetPageResponse),
     itemsPerPage?: number,
-    column: TableColumn,
+    column: TableColumn<T>,
     numPageButtons?: number,
     loading?: boolean,
     getTdProps?: (row: any, column: string) => any,
@@ -100,6 +101,17 @@ function SingleColumnTable(props : {
         const obj = state.pageData[i];
         if(obj!=null) tbody.push((
             <ListGroup.Item className="bg-dark bg-opacity-25 border-light border-opacity-25 text-white">{props.column.renderer(obj)}</ListGroup.Item>
+        ));
+    }
+
+    if(tbody.length===0) {
+        tbody.push((
+            <ListGroup.Item className="bg-dark bg-opacity-25 border-light border-opacity-25 text-white">
+                <div className="d-flex align-items-center justify-content-center text-light text-opacity-75">
+                    <Icon size={24} className="pb-1 me-2" icon={ic_not_interested}/>
+                    <h4 className="my-3">No data</h4>
+                </div>
+            </ListGroup.Item>
         ));
     }
 
@@ -183,10 +195,37 @@ function SingleColumnTable(props : {
 
 }
 
-export function SingleColumnBackendTable(props: {
+export function SingleColumnStaticTable<T>(props: {
     className?: any,
     itemsPerPage?: number,
-    column: TableColumn,
+    column: TableColumn<T>,
+    numPageButtons?: number,
+
+    data?: T[],
+    loading?: boolean
+    refreshFunc?: MutableRefObject<() => void>
+}) {
+
+    const pageCbk = useCallback(async (page: number, pageSize: number) => {
+
+        await new Promise((resolve) => {setTimeout(resolve, 250)});
+
+        return {
+            data: props.data.slice(page*pageSize, (page+1)*pageSize),
+            maxPages: Math.ceil(props.data.length/pageSize)
+        };
+
+    }, [props.data]);
+
+    return (
+        <SingleColumnTable<T> getPage={pageCbk} refresh={props.refreshFunc} {...props}/>
+    )
+}
+
+export function SingleColumnBackendTable<T>(props: {
+    className?: any,
+    itemsPerPage?: number,
+    column: TableColumn<T>,
     numPageButtons?: number,
 
     endpoint: string,
@@ -290,6 +329,6 @@ export function SingleColumnBackendTable(props: {
     }, [props.endpoint, props.additionalData, props.dataPostProcessor]);
 
     return (
-        <SingleColumnTable getPage={memoizedGetter} refresh={tableRefreshRef} {...props}/>
+        <SingleColumnTable<T> getPage={memoizedGetter} refresh={tableRefreshRef} {...props}/>
     )
 }
