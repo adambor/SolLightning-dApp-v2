@@ -214,13 +214,13 @@ function ValidatedInput(props : {
                             placement="top"
                             overlay={<Tooltip id="copy-tooltip">Copy</Tooltip>}
                         >
-                            <a href="#" onClick={(e) => {
+                            <a href="#" className="d-flex align-items-center justify-content-center" onClick={(e) => {
                                 e.preventDefault();
                                 refObj.input.current.select();
                                 refObj.input.current.setSelectionRange(0, 99999);
                                 // @ts-ignore
                                 navigator.clipboard.writeText(refObj.input.current.value);
-                            }}><Icon icon={copy}/></a>
+                            }}><Icon style={{marginTop: "-4px"}} icon={copy}/></a>
                         </OverlayTrigger>
                     </InputGroup.Text>
                 ) : ""}

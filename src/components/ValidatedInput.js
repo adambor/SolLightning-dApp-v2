@@ -103,13 +103,13 @@ function ValidatedInput(props) {
                     setState(obj);
                     if (props.onChange != null)
                         props.onChange(evnt.target.value);
-                }, min: props.min != null ? props.min.toString(10) : null, max: props.max != null ? props.max.toString(10) : null, step: props.step != null ? props.step.toString(10) : null, value: props.value == null ? state.value : props.value, className: inputClassName }), props.copyEnabled ? (_jsx(InputGroup.Text, { children: _jsx(OverlayTrigger, Object.assign({ placement: "top", overlay: _jsx(Tooltip, Object.assign({ id: "copy-tooltip" }, { children: "Copy" })) }, { children: _jsx("a", Object.assign({ href: "#", onClick: (e) => {
+                }, min: props.min != null ? props.min.toString(10) : null, max: props.max != null ? props.max.toString(10) : null, step: props.step != null ? props.step.toString(10) : null, value: props.value == null ? state.value : props.value, className: inputClassName }), props.copyEnabled ? (_jsx(InputGroup.Text, { children: _jsx(OverlayTrigger, Object.assign({ placement: "top", overlay: _jsx(Tooltip, Object.assign({ id: "copy-tooltip" }, { children: "Copy" })) }, { children: _jsx("a", Object.assign({ href: "#", className: "d-flex align-items-center justify-content-center", onClick: (e) => {
                             e.preventDefault();
                             refObj.input.current.select();
                             refObj.input.current.setSelectionRange(0, 99999);
                             // @ts-ignore
                             navigator.clipboard.writeText(refObj.input.current.value);
-                        } }, { children: _jsx(Icon, { icon: copy }) })) })) })) : ""] }));
+                        } }, { children: _jsx(Icon, { style: { marginTop: "-4px" }, icon: copy }) })) })) })) : ""] }));
     return (_jsx(Form, Object.assign({ className: props.className, onSubmit: (evnt) => {
             evnt.preventDefault();
             if (props.onSubmit != null)

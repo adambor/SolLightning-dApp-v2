@@ -244,9 +244,9 @@ function WrappedApp() {
                             <Nav.Link href="/about" className="d-flex flex-row align-items-center"><Icon icon={info} className="d-flex me-1"/><span>About</span></Nav.Link>
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
                             <Nav.Link href="/explorer" className="d-flex flex-row align-items-center"><Icon icon={ic_explore} className="d-flex me-1"/><span>Explorer</span></Nav.Link>
-                            <Nav.Link href="/affiliate" className="d-flex flex-row align-items-center">
+                            <Nav.Link href="/referral" className="d-flex flex-row align-items-center">
                                 <Icon icon={gift} className="d-flex me-1"/>
-                                <span className="me-1">Affiliate</span>
+                                <span className="me-1">Referral</span>
                                 <Badge className="me-2">New!</Badge>
                             </Nav.Link>
                             {nfcSupported ? (
@@ -281,10 +281,10 @@ function WrappedApp() {
                             <Nav.Link href="/faq" className="d-flex flex-row align-items-center"><Icon icon={question} className="d-flex me-1"/><span>FAQ</span></Nav.Link>
                             <Nav.Link href="/explorer" className="d-flex flex-row align-items-center"><Icon icon={ic_explore} className="d-flex me-1"/><span>Explorer</span></Nav.Link>
 
-                            <Nav.Link href="/affiliate" className="d-flex flex-column align-items-center">
+                            <Nav.Link href="/referral" className="d-flex flex-column align-items-center">
                                 <div className="d-flex flex-row align-items-center">
                                     <Icon icon={gift} className="d-flex me-1"/>
-                                    <span className="me-1">Affiliate</span>
+                                    <span className="me-1">Referral</span>
                                 </div>
                                 <Badge className="newBadge">New!</Badge>
                             </Nav.Link>
@@ -378,16 +378,12 @@ function WrappedApp() {
                                 <Route path="about" element={<About/>}/>
                                 <Route path="map" element={<Map/>}/>
                                 <Route path="explorer" element={<SwapExplorer/>}/>
-                                <Route path="affiliate" element={<AffiliateScreen swapper={swapper}/>}/>
+                                <Route path="referral" element={<AffiliateScreen swapper={swapper}/>}/>
                             </Route>
                         </Routes>
                     </BrowserRouter>
                 </div>
             </SwapsContext.Provider>
-            {/*<Button onClick={() => {*/}
-                {/*const nfcReader = new LNNFCReader();*/}
-                {/*nfcReader.start().then(result => console.log("Scan started success: ", result));*/}
-            {/*}}>NFC read</Button>*/}
         </>
     )
 }

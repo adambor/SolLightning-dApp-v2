@@ -1,36 +1,26 @@
-import {Topbar} from "../Topbar";
-import {FromBTCSwapState, SolanaSwapper} from "sollightning-sdk/dist";
 import {
     Alert,
     Badge,
-    Button,
     Card,
     Col,
     Form,
-    ListGroup,
-    OverlayTrigger,
     Placeholder,
     Row,
-    Spinner, Tooltip
 } from "react-bootstrap";
-import {FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, ToBTCSwap} from "sollightning-sdk";
+import {FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, ToBTCSwap, FromBTCSwapState, SolanaSwapper} from "sollightning-sdk";
 import {
-    bitcoinCurrencies, btcCurrency,
+    bitcoinCurrencies,
     CurrencySpec,
     getCurrencySpec,
-    smartChainCurrencies,
     toHumanReadableString
 } from "../../utils/Currencies";
-import {useContext, useEffect, useState} from "react";
-import {SwapsContext} from "../context/SwapsContext";
-import {useNavigate} from "react-router-dom";
+import {useEffect, useState} from "react";
 import * as React from "react";
 import ValidatedInput from "../ValidatedInput";
-import Icon from "react-icons-kit";
 import {clipboard} from "react-icons-kit/fa/*";
 import {FEConstants} from "../../FEConstants";
 import * as BN from "bn.js";
-import {SingleColumnBackendTable, SingleColumnStaticTable} from "../table/SingleColumnTable";
+import {SingleColumnStaticTable} from "../table/SingleColumnTable";
 import {ic_arrow_downward, ic_arrow_forward} from "react-icons-kit/md/*";
 import {getTimeDeltaText} from "../../utils/Utils";
 
@@ -98,21 +88,21 @@ export function AffiliateScreen(props: {
     return (
         <>
             <div className="flex-fill text-white container mt-5 text-start">
-                <h1 className="section-title">Affiliate</h1>
+                <h1 className="section-title">Referral</h1>
                 <Card className="px-3 pt-3 bg-dark bg-opacity-25 mb-3 border-0">
                     <h3>How does it work?</h3>
                     <p>
                         Invite your friends to use atomiq via your invite link, they can enjoy reduced <strong>0.2%</strong> fee rate (instead of regular 0.3%), and you get a kickback for <strong>0.1%</strong> of their swap volume.
                     </p>
                     <p>
-                        Your kickback is accrued in BTC and payed out automatically to your Solana wallet address in {data?.token==null ? null : getCurrencySpec(data?.token)?.ticker} every week (minimum payable amount is {toHumanReadableString(new BN(data?.minPayoutSats), bitcoinCurrencies[0])} BTC).
+                        Your kickback is accrued in BTC and payed out automatically to your Solana wallet address in {data?.token==null ? null : getCurrencySpec(data?.token)?.ticker} every day (minimum amount for payout is <strong>{toHumanReadableString(new BN(data?.minPayoutSats), bitcoinCurrencies[0])} BTC</strong>).
                     </p>
                     <p>
                         Next payout: <strong>{new Date(data?.nextPayoutTimestamp).toLocaleString()}</strong> (in {getTimeDeltaText(data?.nextPayoutTimestamp || 0, true)})
                     </p>
                 </Card>
                 <Card className="px-3 pt-3 bg-dark bg-opacity-25 mb-3 pb-3 border-0">
-                    <h3>Your affiliate link</h3>
+                    <h3>Your referral link</h3>
                     {loading ? (
                         <Placeholder xs={12} as={Form.Control}/>
                     ) : (
@@ -126,7 +116,7 @@ export function AffiliateScreen(props: {
                 <Row>
                     <Col xs={12} lg={4} className="pb-3">
                         <Card className="px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0">
-                            <span className="">Affiliate swap volume</span>
+                            <span className="">Referral swap volume</span>
                             <h4 className="mb-0">{loading ? (
                                 <Placeholder xs={6} />
                             ) : (
@@ -135,7 +125,7 @@ export function AffiliateScreen(props: {
                                     {toHumanReadableString(new BN(data?.stats?.totalVolumeSats), bitcoinCurrencies[0])+" BTC"}
                                 </>
                             )}</h4>
-                            <small className="mb-2">{loading || currencySpec==null ? (
+                            <small className="mb-2" style={{marginTop: "-6px"}}>{loading || currencySpec==null ? (
                                 <Placeholder xs={6} />
                             ) : "across "+data?.stats?.totalSwapCount+" swaps"}</small>
                         </Card>
