@@ -8,6 +8,8 @@ const chain: "DEVNET" | "MAINNET" = process.env.REACT_APP_SOLANA_NETWORK as ("DE
 const btcBlockExplorer: string = process.env.REACT_APP_BTC_BLOCK_EXPLORER;
 const solBlockExplorer: string = process.env.REACT_APP_SOL_BLOCK_EXPLORER;
 const statsUrl: string = process.env.REACT_APP_STATS_URL;
+const dappUrl: string = process.env.REACT_APP_DAPP_URL;
+const affiliateUrl: string = process.env.REACT_APP_AFFILIATE_URL;
 // const solanaRpcUrl: string = "https://api.devnet.solana.com";
 // const chain: "DEVNET" | "MAINNET" = "DEVNET"; //DEVNET or MAINNET
 // const btcBlockExplorer: string = "https://mempool.space/testnet/tx/";
@@ -62,5 +64,7 @@ export const FEConstants = {
     USDollar: new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
-    })
+    }),
+    dappUrl,
+    affiliateUrl
 };

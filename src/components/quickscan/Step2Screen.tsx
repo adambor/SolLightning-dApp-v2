@@ -283,20 +283,29 @@ export function Step2Screen(props: {
                     return;
                 }
                 setQuoteLoading(true);
+
+                let additionalParam: Record<string, any>;
+                const affiliate = window.localStorage.getItem("atomiq-affiliate");
+                if(affiliate!=null && props.swapper.swapContract.isValidAddress(affiliate)) {
+                    additionalParam = {
+                        affiliate
+                    };
+                }
+
                 let swapPromise;
                 if(type==="send") {
                     if(network==="btc") {
-                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency));
+                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, null, null, additionalParam);
                     }
                     if(network==="ln") {
                         if(isLnurl) {
-                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLPay, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60);
+                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLPay, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60, null, null, null, additionalParam);
                         } else {
-                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60);
+                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60, null, null, additionalParam);
                         }
                     }
                 } else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLWithdraw, fromHumanReadable(new BigNumber(amount), btcCurrency), true);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLWithdraw, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {

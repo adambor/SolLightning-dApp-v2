@@ -9,33 +9,8 @@ import Icon from "react-icons-kit";
 import {ic_arrow_forward} from 'react-icons-kit/md/ic_arrow_forward';
 import {ic_arrow_downward} from 'react-icons-kit/md/ic_arrow_downward';
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
-
-function getTimeDeltaText(timestamp: number): string {
-    const delta = Date.now()-timestamp;
-    const deltaSeconds = Math.floor(delta/1000);
-    console.log("delta seconds: ", deltaSeconds);
-    if(deltaSeconds<60) {
-        return deltaSeconds+" "+(deltaSeconds===1 ? "second" : "seconds");
-    }
-    if(deltaSeconds<60*60) {
-        const deltaMinutes = Math.floor(deltaSeconds/(60));
-        return deltaMinutes+" "+(deltaMinutes===1 ? "minute" : "minutes");
-    }
-    if(deltaSeconds<60*60*24) {
-        const deltaHours = Math.floor(deltaSeconds/(60*60));
-        return deltaHours+" "+(deltaHours===1 ? "hour" : "hours");
-    }
-    if(deltaSeconds<60*60*24*30) {
-        const deltaDays = Math.floor(deltaSeconds/(60*60*24));
-        return deltaDays+" "+(deltaDays===1 ? "day" : "days");
-    }
-    if(deltaSeconds<60*60*24*30*12) {
-        const deltaMonths = Math.floor(deltaSeconds/(60*60*24*30));
-        return deltaMonths+" "+(deltaMonths===1 ? "month" : "months");
-    }
-    const deltaYears = Math.floor(deltaSeconds/(60*60*24*30*12));
-    return deltaYears+" "+(deltaYears===1 ? "year" : "years");
-}
+import {ChainSwapType} from "sollightning-sdk";
+import {getTimeDeltaText} from "../../utils/Utils";
 
 export function SwapExplorer(props: {}) {
 
@@ -131,7 +106,48 @@ export function SwapExplorer(props: {}) {
             </div>
 
             <div>
-                <SingleColumnBackendTable
+                <SingleColumnBackendTable<{
+                    paymentHash: string,
+
+                    timestampInit: number,
+                    timestampFinish: number,
+
+                    type: "LN" | "CHAIN",
+                    direction: "ToBTC" | "FromBTC",
+                    kind: ChainSwapType,
+                    nonce: string,
+
+                    lpWallet: string,
+                    clientWallet: string,
+
+                    token: string,
+                    tokenName: string,
+                    tokenAmount: string,
+                    rawAmount: string,
+
+                    txInit: string,
+                    txFinish: string,
+
+                    btcTx: string,
+                    btcOutput?: number,
+                    btcAddress?: string,
+                    btcAmount?: string,
+                    btcRawAmount?: string,
+                    btcInAddresses?: string[],
+
+                    success: boolean,
+                    finished: boolean,
+
+                    price: string,
+                    usdValue: string,
+
+                    id: string,
+                    _tokenAmount: number,
+                    _rawAmount: number,
+                    _usdValue: number,
+                    _btcRawAmount: number,
+                    _btcAmount: number
+                }>
                     column={{
                         renderer: (row) => {
                             let inputAmount: BN;
@@ -169,7 +185,7 @@ export function SwapExplorer(props: {}) {
                                 inputAddress = row.clientWallet;
                                 if(row.type==="CHAIN") outputAddress = row.btcAddress || "Unknown";
                             } else {
-                                outputAmount = row.rawAmount;
+                                outputAmount = new BN(row.rawAmount);
                                 outputCurrency = getCurrencySpec(row.token);
                                 inputAmount = row.btcRawAmount==null ? null : new BN(row.btcRawAmount);
                                 inputCurrency = row.type==="CHAIN" ? bitcoinCurrencies[0] : bitcoinCurrencies[1];
