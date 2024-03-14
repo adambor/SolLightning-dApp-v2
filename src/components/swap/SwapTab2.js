@@ -287,7 +287,7 @@ export function SwapTab(props) {
             setQuoteLoading(true);
             let additionalParam;
             const affiliate = window.localStorage.getItem("atomiq-affiliate");
-            if (affiliate != null && props.swapper.swapContract.isValidAddress(affiliate)) {
+            if (affiliate != null) {
                 additionalParam = {
                     affiliate
                 };

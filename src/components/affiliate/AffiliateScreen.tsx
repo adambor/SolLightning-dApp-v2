@@ -40,6 +40,7 @@ export function AffiliateScreen(props: {
     const [data, setData] = useState<{
         stats: {
             address: string,
+            identifier: string,
             totalSwapCount: number,
             totalVolumeSats: string,
             totalFeeSats: string,
@@ -108,7 +109,7 @@ export function AffiliateScreen(props: {
                     ) : (
                         <ValidatedInput
                             type={"text"}
-                            value={data?.stats?.address==null ? "" : FEConstants.dappUrl+"?affiliate="+encodeURIComponent(data.stats.address)}
+                            value={data?.stats?.address==null ? "" : FEConstants.dappUrl+"?affiliate="+encodeURIComponent(data.stats.identifier)}
                             copyEnabled={true}
                         />
                     )}
