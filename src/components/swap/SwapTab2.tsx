@@ -768,7 +768,7 @@ export function SwapTab(props: {
                 </Card>
             </div>
 
-            <div className="text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center">
+            <div className="text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center mb-3">
                 <div className="cursor-pointer d-flex align-items-center justify-content-center" onClick={() => navigate("/faq?tabOpen=6")}>
                     <Icon size={18} icon={lock} style={{marginTop: "-0.5rem"}}/>
                     <small>Audited by</small>
