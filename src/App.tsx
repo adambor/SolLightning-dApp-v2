@@ -34,6 +34,8 @@ import {SwapExplorer} from "./components/explorer/SwapExplorer";
 import {ic_explore} from 'react-icons-kit/md/ic_explore';
 import {AffiliateScreen} from "./components/affiliate/AffiliateScreen";
 import {gift} from 'react-icons-kit/fa/gift';
+import {BitcoinWallet} from './components/wallet/BitcoinWallet';
+import {BitcoinWalletContext} from './components/context/BitcoinWalletContext';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -207,8 +209,13 @@ function WrappedApp() {
 
     console.log("nfcDisabled: ", nfcEnabled);
 
+    const [bitcoinWallet, setBitcoinWallet] = React.useState<BitcoinWallet>();
+
     return (
-        <>
+        <BitcoinWalletContext.Provider value={{
+            bitcoinWallet: bitcoinWallet,
+            setBitcoinWallet: setBitcoinWallet
+        }}>
             <Navbar collapseOnSelect expand="lg " bg="dark" variant="dark" className="bg-dark bg-opacity-50" style={{zIndex: 1000, minHeight: "64px"}}>
                 <Container className="max-width-100">
                     <Navbar.Brand href="/" className="d-flex flex-column">
@@ -309,7 +316,7 @@ function WrappedApp() {
                                 <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
                                 <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
                                 {swapper!=null ? (<div className="d-flex ms-auto">
-                                    {/*<BitcoinWalletButton/>*/}
+                                    <BitcoinWalletButton/>
                                     <WalletMultiButton className="bg-primary"/>
                                 </div>) : ""}
                             </div>
@@ -384,7 +391,7 @@ function WrappedApp() {
                     </BrowserRouter>
                 </div>
             </SwapsContext.Provider>
-        </>
+        </BitcoinWalletContext.Provider>
     )
 }
 

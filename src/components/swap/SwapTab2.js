@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { FromBTCSwap, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap } from "sollightning-sdk";
 import { Alert, Button, Card, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
 import BigNumber from "bignumber.js";
 import { bitcoinCurrencies, btcCurrency, fromHumanReadableString, getCurrencySpec, smartChainCurrencies, toHumanReadable, toHumanReadableString } from "../../utils/Currencies";
@@ -18,6 +18,7 @@ import { FEConstants } from "../../FEConstants";
 import { ic_qr_code_scanner } from 'react-icons-kit/md/ic_qr_code_scanner';
 import { lock } from 'react-icons-kit/fa/lock';
 import { QRScannerModal } from "../qr/QRScannerModal";
+import { BitcoinWalletContext } from "../context/BitcoinWalletContext";
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
     max: null
@@ -27,6 +28,7 @@ const RANDOM_BTC_ADDRESS = bitcoin.payments.p2wsh({
     network: FEConstants.chain === "DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
 }).address;
 export function SwapTab(props) {
+    const { bitcoinWallet } = useContext(BitcoinWalletContext);
     const [qrScanning, setQrScanning] = useState(false);
     const [inCurrency, setInCurrency] = useState(btcCurrency);
     const [outCurrency, setOutCurrency] = useState(smartChainCurrencies[0]);
@@ -184,6 +186,13 @@ export function SwapTab(props) {
         setBtcAmountConstraints(constraints);
         setDoValidate(true);
     }, [props.swapper]);
+    useEffect(() => {
+        if (bitcoinWallet == null)
+            return;
+        if (outCurrency.ticker === "BTC") {
+            _setAddress(bitcoinWallet.getReceiveAddress());
+        }
+    }, [bitcoinWallet, outCurrency]);
     const changeDirection = () => {
         if (locked)
             return;
