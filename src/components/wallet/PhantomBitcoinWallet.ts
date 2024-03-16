@@ -74,6 +74,10 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
     async sendTransaction(address: string, amount: BN): Promise<string> {
         const psbt = await super._getPsbt(this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType], address, amount.toNumber());
 
+        if(psbt==null) {
+            throw new Error("Not enough balance!");
+        }
+
         const psbtHex = psbt.toBuffer();
 
         const resultSignedPsbtHex = await this.provider.signPSBT(psbtHex, {

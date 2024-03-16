@@ -20,13 +20,11 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
         this.account = account;
     }
     static isInstalled() {
-        var _a, _b;
-        const isPhantomInstalled = (_b = (_a = window === null || window === void 0 ? void 0 : window.phantom) === null || _a === void 0 ? void 0 : _a.bitcoin) === null || _b === void 0 ? void 0 : _b.isPhantom;
+        const isPhantomInstalled = window?.phantom?.bitcoin?.isPhantom;
         return Promise.resolve(isPhantomInstalled);
     }
     static async init() {
-        var _a;
-        const provider = (_a = window === null || window === void 0 ? void 0 : window.phantom) === null || _a === void 0 ? void 0 : _a.bitcoin;
+        const provider = window?.phantom?.bitcoin;
         if (provider == null)
             throw new Error("Phantom bitcoin wallet not found");
         if (provider.isPhantom == null)
@@ -46,6 +44,9 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
     }
     async sendTransaction(address, amount) {
         const psbt = await super._getPsbt(this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType], address, amount.toNumber());
+        if (psbt == null) {
+            throw new Error("Not enough balance!");
+        }
         const psbtHex = psbt.toBuffer();
         const resultSignedPsbtHex = await this.provider.signPSBT(psbtHex, {
             inputsToSign: [{

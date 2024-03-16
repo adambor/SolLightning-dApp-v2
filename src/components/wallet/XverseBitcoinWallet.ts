@@ -82,7 +82,19 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         return this.account.address;
     }
 
+    toBigInt(num: number): bigint {
+        let sum: bigint = 0n;
+        for(let i=0n;i<53n;i++) {
+            if((num & 0b1)===0b1) {
+                sum |= 1n << i;
+            }
+            num = Math.floor(num/2);
+        }
+        return sum;
+    }
+
     async sendTransaction(address: string, amount: BN): Promise<string> {
+        console.log("XVERSE recipient: "+address+" amount: ", amount.toNumber());
         let txId: string = null;
         let cancelled: boolean = false;
         await sendBtcTransaction({
@@ -93,7 +105,7 @@ export class XverseBitcoinWallet extends BitcoinWallet {
                 recipients: [
                     {
                         address,
-                        amountSats: amount.toNumber() as any
+                        amountSats: this.toBigInt(amount.toNumber())
                     }
                 ],
                 senderAddress: this.account.address

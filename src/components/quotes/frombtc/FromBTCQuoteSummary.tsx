@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import {btcCurrency, toHumanReadableString} from "../../../utils/Currencies";
@@ -10,6 +10,7 @@ import {LNNFCReader} from "../../lnnfc/LNNFCReader";
 import * as React from "react";
 import {useLocation} from "react-router-dom";
 import {useNavigate} from "react-router-dom";
+import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -19,6 +20,10 @@ export function FromBTCQuoteSummary(props: {
     abortSwap?: () => void,
     notEnoughForGas: boolean
 }) {
+    const {bitcoinWallet, setBitcoinWallet} = useContext(BitcoinWalletContext);
+    const [bitcoinError, setBitcoinError] = useState<string>(null);
+    const [sendTransactionLoading, setSendTransactionLoading] = useState<boolean>(false);
+    const [transactionSent, setTransactionSent] = useState<string>(null);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -57,6 +62,24 @@ export function FromBTCQuoteSummary(props: {
         confirmations: number,
         confTarget: number
     }>(null);
+
+    const sendBitcoinTransaction = () => {
+        if(sendTransactionLoading) return;
+        setSendTransactionLoading(true);
+        setBitcoinError(null);
+        bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount()).then(txId => {
+            setSendTransactionLoading(false);
+            setTransactionSent(txId);
+        }).catch(e => {
+            setSendTransactionLoading(false);
+            console.error(e);
+            setBitcoinError(e.message);
+        });
+    };
+
+    useEffect(() => {
+        setBitcoinError(null);
+    }, [bitcoinWallet]);
 
     useEffect(() => {
 
@@ -97,6 +120,11 @@ export function FromBTCQuoteSummary(props: {
         const stateChange = (state: FromBTCSwapState) => {
             setState(state);
             if(state===FromBTCSwapState.CLAIM_COMMITED) {
+                props.quote.getBitcoinPayment().then(resp => {
+                    if(resp==null && bitcoinWallet!=null) {
+                        sendBitcoinTransaction();
+                    }
+                });
                 if(!paymentSubscribed) {
                     props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number) => {
                         setTxData({
@@ -249,37 +277,68 @@ export function FromBTCQuoteSummary(props: {
                 <>
                     {quoteTimeRemaining===0 ? "" : (
                         <div className="mb-3 tab-accent">
-                            <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
-                                {(props) => (
-                                    <Tooltip id="overlay-example" {...props}>
-                                        Address copied to clipboard!
-                                    </Tooltip>
-                                )}
-                            </Overlay>
-                            <div ref={qrCodeRef}>
-                                <QRCodeSVG
-                                    value={props.quote.getQrData()}
-                                    size={300}
-                                    includeMargin={true}
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        copy(2);
-                                    }}
-                                />
-                            </div>
-                            <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
-                            <ValidatedInput
-                                type={"text"}
-                                value={props.quote.getAddress()}
-                                textEnd={(
-                                    <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
-                                        copy(1);
-                                    }}>
-                                        <Icon icon={clipboard}/>
-                                    </a>
-                                )}
-                                inputRef={textFieldRef}
-                            />
+                            {bitcoinWallet!=null ? (
+                                <>
+                                    {bitcoinError!=null ? (
+                                        <Alert variant="danger" className="mb-2">
+                                            <strong>Btc TX failed</strong>
+                                            <label>{bitcoinError}</label>
+                                        </Alert>
+                                    ) : ""}
+                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                        {transactionSent!=null ? (
+                                            <div className="d-flex flex-column align-items-center tab-accent">
+                                                <Spinner/>
+                                                <label>Sending Bitcoin transaction...</label>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Button variant="light" className="d-flex flex-row align-items-center" disabled={sendTransactionLoading} onClick={sendBitcoinTransaction}>
+                                                    {sendTransactionLoading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                                                    Pay with
+                                                    <img width={20} height={20} src={bitcoinWallet.getIcon()} className="ms-2 me-1"/>
+                                                    {bitcoinWallet.getName()}
+                                                </Button>
+                                                <small className="mt-2"><a href="javascript:void(0);" onClick={() => setBitcoinWallet(null)}>Or use a QR code/wallet address</a></small>
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                        {(props) => (
+                                            <Tooltip id="overlay-example" {...props}>
+                                                Address copied to clipboard!
+                                            </Tooltip>
+                                        )}
+                                    </Overlay>
+                                    <div ref={qrCodeRef}>
+                                        <QRCodeSVG
+                                            value={props.quote.getQrData()}
+                                            size={300}
+                                            includeMargin={true}
+                                            className="cursor-pointer"
+                                            onClick={() => {
+                                                copy(2);
+                                            }}
+                                        />
+                                    </div>
+                                    <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
+                                    <ValidatedInput
+                                        type={"text"}
+                                        value={props.quote.getAddress()}
+                                        textEnd={(
+                                            <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
+                                                copy(1);
+                                            }}>
+                                                <Icon icon={clipboard}/>
+                                            </a>
+                                        )}
+                                        inputRef={textFieldRef}
+                                    />
+                                </>
+                            )}
                         </div>
                     )}
                     <div className="d-flex flex-column mb-3 tab-accent">

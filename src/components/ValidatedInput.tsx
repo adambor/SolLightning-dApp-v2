@@ -69,7 +69,8 @@ function ValidatedInput(props : {
 
     disabled?: boolean,
     validated?: string,
-    readOnly?: boolean
+    readOnly?: boolean,
+    successFeedback?: string
 }) {
 
     const [state, setState] = React.useState<{value: string, validated: string}>({
@@ -114,6 +115,7 @@ function ValidatedInput(props : {
             <Form.Select
                 disabled={props.disabled}
                 isInvalid={!!(props.validated || state.validated)}
+                isValid={!!props.successFeedback}
                 defaultValue={props.defaultValue}
                 size={props.size}
                 id={props.inputId}
@@ -141,6 +143,7 @@ function ValidatedInput(props : {
                     ref={inputTextAreaRef}
                     size={props.size}
                     isInvalid={!!(props.validated || state.validated)}
+                    isValid={!!props.successFeedback}
                     type={props.type || "text"}
                     as={"textarea"}
                     placeholder={props.placeholder}
@@ -186,6 +189,7 @@ function ValidatedInput(props : {
                     ref={inputRef}
                     size={props.size}
                     isInvalid={!!(props.validated || state.validated)}
+                    isValid={!!props.successFeedback}
                     type={props.type || "text"}
                     placeholder={props.placeholder}
                     defaultValue={props.defaultValue}
@@ -240,6 +244,7 @@ function ValidatedInput(props : {
                             disabled={props.disabled}
                             ref={inputRef}
                             isInvalid={!!(props.validated || state.validated)}
+                            isValid={!!props.successFeedback}
                             type={"checkbox"}
                             readOnly={props.readOnly}
                             label={props.placeholder}
@@ -274,10 +279,10 @@ function ValidatedInput(props : {
                             ) : ""}
                         </>
                     )}
-                    <Form.Control.Feedback type="invalid">
+                    <Form.Control.Feedback type={props.successFeedback ? "valid" : "invalid"}>
                         <div className="d-flex align-items-center">
-                            <Icon className="mb-1 me-1" icon={exclamationTriangle}/>
-                            <span>{props.validated || state.validated}</span>
+                            {props.successFeedback==null ? (<Icon className="mb-1 me-1" icon={exclamationTriangle}/>) : ""}
+                            <span>{props.successFeedback || props.validated || state.validated}</span>
                         </div>
                     </Form.Control.Feedback>
                 </InputGroup>

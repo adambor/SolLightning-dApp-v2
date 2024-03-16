@@ -1,5 +1,5 @@
 import * as React from "react";
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {Alert, Badge, Button, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
@@ -8,6 +8,8 @@ import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
 import {LNNFCReader, LNNFCStartResult} from "../../lnnfc/LNNFCReader";
 import {useLocation, useNavigate} from "react-router-dom";
+import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
+import {WebLNContext} from "../../context/WebLNContext";
 
 export function FromBTCLNQuoteSummary(props: {
     swapper: Swapper<any, any, any, any>,
@@ -18,6 +20,9 @@ export function FromBTCLNQuoteSummary(props: {
     abortSwap?: () => void,
     notEnoughForGas: boolean
 }) {
+    const {lnWallet, setLnWallet} = useContext(WebLNContext);
+    const [bitcoinError, setBitcoinError] = useState<string>(null);
+    const [sendTransactionLoading, setSendTransactionLoading] = useState<boolean>(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -74,6 +79,23 @@ export function FromBTCLNQuoteSummary(props: {
         };
     }, []);
 
+    const sendBitcoinTransaction = () => {
+        if(sendTransactionLoading) return;
+        setSendTransactionLoading(true);
+        setBitcoinError(null);
+        lnWallet.sendPayment(props.quote.getAddress()).then(resp => {
+            setSendTransactionLoading(false);
+        }).catch(e => {
+            setSendTransactionLoading(false);
+            console.error(e);
+            setBitcoinError(e.message);
+        });
+    };
+
+    useEffect(() => {
+        setBitcoinError(null);
+    }, [lnWallet]);
+
     useEffect(() => {
 
         const config = window.localStorage.getItem("crossLightning-autoClaim");
@@ -95,6 +117,9 @@ export function FromBTCLNQuoteSummary(props: {
             setError(e.toString());
             if(props.setAmountLock!=null) props.setAmountLock(false);
         });
+        if(lnWallet!=null) {
+            sendBitcoinTransaction();
+        }
     };
 
     const onClaim = async (skipChecks?: boolean) => {
@@ -190,7 +215,7 @@ export function FromBTCLNQuoteSummary(props: {
 
     useEffect(() => {
         if(state===FromBTCLNSwapState.PR_PAID) {
-            if(autoClaim) onClaim(true);
+            if(autoClaim || lnWallet!=null) onClaim(true);
         }
     }, [state, autoClaim]);
 
@@ -274,6 +299,24 @@ export function FromBTCLNQuoteSummary(props: {
                                     <Spinner animation="border" />
                                     Paying via NFC card...
                                 </div>
+                            ) : lnWallet!=null ? (
+                                <>
+                                    {bitcoinError!=null ? (
+                                        <Alert variant="danger" className="mb-2">
+                                            <strong>Lightning TX failed</strong>
+                                            <label>{bitcoinError}</label>
+                                        </Alert>
+                                    ) : ""}
+                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                        <Button variant="light" className="d-flex flex-row align-items-center" disabled={sendTransactionLoading} onClick={sendBitcoinTransaction}>
+                                            {sendTransactionLoading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                                            Pay with
+                                            <img width={20} height={20} src="/wallets/WebLN.png" className="ms-2 me-1"/>
+                                            WebLN
+                                        </Button>
+                                        <small className="mt-2"><a href="javascript:void(0);" onClick={() => setLnWallet(null)}>Or use a QR code/LN invoice</a></small>
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
@@ -317,20 +360,23 @@ export function FromBTCLNQuoteSummary(props: {
                                 </>
                             )}
 
-                            <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-3">
-                                <Form.Check // prettier-ignore
-                                    id="autoclaim"
-                                    type="switch"
-                                    onChange={(val) => setAndSaveAutoClaim(val.target.checked)}
-                                    checked={autoClaim}
-                                />
-                                <label title="" htmlFor="autoclaim" className="form-check-label me-2">Auto-claim</label>
-                                <OverlayTrigger overlay={<Tooltip id="autoclaim-pay-tooltip">
-                                    Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives.
-                                </Tooltip>}>
-                                    <Badge bg="primary" className="pill-round" pill>?</Badge>
-                                </OverlayTrigger>
-                            </Form>
+                            {lnWallet==null ? (
+                                <Form className="text-start d-flex align-items-center justify-content-center font-bigger mt-3">
+                                    <Form.Check // prettier-ignore
+                                        id="autoclaim"
+                                        type="switch"
+                                        onChange={(val) => setAndSaveAutoClaim(val.target.checked)}
+                                        checked={autoClaim}
+                                    />
+                                    <label title="" htmlFor="autoclaim" className="form-check-label me-2">Auto-claim</label>
+                                    <OverlayTrigger overlay={<Tooltip id="autoclaim-pay-tooltip">
+                                        Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives.
+                                    </Tooltip>}>
+                                        <Badge bg="primary" className="pill-round" pill>?</Badge>
+                                    </OverlayTrigger>
+                                </Form>
+                            ) : ""}
+
                         </div>
                     )}
 

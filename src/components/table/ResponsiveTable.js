@@ -11,7 +11,7 @@ import { angleLeft } from 'react-icons-kit/fa/angleLeft';
 import { angleDoubleRight } from 'react-icons-kit/fa/angleDoubleRight';
 import { angleDoubleLeft } from 'react-icons-kit/fa/angleDoubleLeft';
 function PaginationButton(props) {
-    return (_jsx(Button, Object.assign({ onClick: () => { props.onClick(props.page); }, variant: props.currentPage === props.page ? "info" : "outline-secondary", disabled: props.disabled, className: "px-3 " + (props.currentPage === props.page ? "text-white" : "text-dark"), size: "lg" }, { children: props.page + 1 }), "page-" + props.page));
+    return (_jsx(Button, { onClick: () => { props.onClick(props.page); }, variant: props.currentPage === props.page ? "info" : "outline-secondary", disabled: props.disabled, className: "px-3 " + (props.currentPage === props.page ? "text-white" : "text-dark"), size: "lg", children: props.page + 1 }, "page-" + props.page));
 }
 function ResponsiveTable(props) {
     const [state, setState] = React.useState({
@@ -31,17 +31,17 @@ function ResponsiveTable(props) {
         const maybePromise = props.getPage(state.page, itemsPerPage, sortBy, sortDescending);
         if (maybePromise instanceof Promise) {
             setState((val) => {
-                return Object.assign(Object.assign({}, val), { loading: true });
+                return { ...val, loading: true };
             });
             maybePromise.then((obj) => {
                 setState((val) => {
-                    return Object.assign(Object.assign({}, val), { maxPages: obj.maxPages, pageData: obj.data, loading: false });
+                    return { ...val, maxPages: obj.maxPages, pageData: obj.data, loading: false };
                 });
             });
         }
         else {
             setState((val) => {
-                return Object.assign(Object.assign({}, val), { maxPages: maybePromise.maxPages, pageData: maybePromise.data });
+                return { ...val, maxPages: maybePromise.maxPages, pageData: maybePromise.data };
             });
         }
     };
@@ -51,7 +51,7 @@ function ResponsiveTable(props) {
     const thead = [];
     for (let column of props.columns) {
         if (column.sortable) {
-            thead.push((_jsx("th", Object.assign({ style: {
+            thead.push((_jsx("th", { style: {
                     width: column.minWidth,
                     maxWidth: column.maxWidth
                 }, className: "px-3 py-2 cursor-pointer", onClick: () => {
@@ -59,25 +59,25 @@ function ResponsiveTable(props) {
                         const sortBy = state.sortedBy || props.defaultSortedBy;
                         const sortDescending = state.sortedBy == null ? props.defaultSortedDescending : state.sortedDescending;
                         if (sortBy === column.accessor) {
-                            return Object.assign(Object.assign({}, val), { sortedBy: column.accessor, sortedDescending: !sortDescending, page: 0 });
+                            return { ...val, sortedBy: column.accessor, sortedDescending: !sortDescending, page: 0 };
                         }
                         else {
-                            return Object.assign(Object.assign({}, val), { sortedBy: column.accessor, sortedDescending: false, page: 0 });
+                            return { ...val, sortedBy: column.accessor, sortedDescending: false, page: 0 };
                         }
                     });
-                } }, { children: _jsxs("div", Object.assign({ className: "d-flex align-items-center" }, { children: [column.header, _jsxs("div", Object.assign({ className: "d-inline-flex flex-column ms-auto" }, { children: [_jsx(Icon, { icon: caretUp, className: (sortBy === column.accessor && !sortDescending ? "text-primary" : "") + " square16", style: {
+                }, children: _jsxs("div", { className: "d-flex align-items-center", children: [column.header, _jsxs("div", { className: "d-inline-flex flex-column ms-auto", children: [_jsx(Icon, { icon: caretUp, className: (sortBy === column.accessor && !sortDescending ? "text-primary" : "") + " square16", style: {
                                         marginBottom: "-4px",
                                         marginTop: "-4px"
                                     } }), _jsx(Icon, { icon: caretDown, className: (sortBy === column.accessor && sortDescending ? "text-primary" : "") + " square16", style: {
                                         marginBottom: "0px",
                                         marginTop: "-4px"
-                                    } })] }))] })) }), column.accessor)));
+                                    } })] })] }) }, column.accessor)));
         }
         else {
-            thead.push((_jsx("th", Object.assign({ className: "px-3 py-2", style: {
+            thead.push((_jsx("th", { className: "px-3 py-2", style: {
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth
-                } }, { children: column.header }), column.accessor)));
+                }, children: column.header }, column.accessor)));
         }
     }
     const tbody = [];
@@ -91,10 +91,10 @@ function ResponsiveTable(props) {
                 if (addProps != null)
                     additionalProps = addProps;
             }
-            row.push((_jsx("td", Object.assign({ className: "px-3 py-2", style: {
+            row.push((_jsx("td", { className: "px-3 py-2", style: {
                     minWidth: column.minWidth,
                     maxWidth: column.maxWidth
-                } }, additionalProps, { children: obj == null ? "" : column.renderer != null ? column.renderer(obj) : obj[column.accessor] }), column.accessor)));
+                }, ...additionalProps, children: obj == null ? "" : column.renderer != null ? column.renderer(obj) : obj[column.accessor] }, column.accessor)));
         }
         tbody.push((_jsx("tr", { children: row }, i)));
     }
@@ -106,7 +106,7 @@ function ResponsiveTable(props) {
             return;
         if (page > numPages - 1)
             return;
-        setState((val) => { return Object.assign(Object.assign({}, val), { page: page }); });
+        setState((val) => { return { ...val, page: page }; });
     };
     if (numPages <= numPageButtons) {
         for (let i = 0; i < numPages; i++) {
@@ -117,23 +117,23 @@ function ResponsiveTable(props) {
         for (let i = 0; i < (numPageButtons / 2) + 1; i++) {
             buttons.push((_jsx(PaginationButton, { page: i, currentPage: state.page, onClick: handlePageClick, disabled: loading }, "page" + i)));
         }
-        buttons.push((_jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", size: "lg" }, { children: "..." }), "ellipsis2")));
+        buttons.push((_jsx(Button, { variant: "outline-secondary text-dark px-3", size: "lg", children: "..." }, "ellipsis2")));
     }
     else if ((numPages - state.page - 1) < (numPageButtons / 2)) {
         for (let i = 0; i < (numPageButtons / 2) + 1; i++) {
             buttons.push((_jsx(PaginationButton, { page: numPages - i - 1, currentPage: state.page, onClick: handlePageClick, disabled: loading }, "page" + (numPages - i - 1))));
         }
-        buttons.push((_jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", size: "lg" }, { children: "..." }), "ellipsis1")));
+        buttons.push((_jsx(Button, { variant: "outline-secondary text-dark px-3", size: "lg", children: "..." }, "ellipsis1")));
         buttons.reverse();
     }
     else {
-        buttons.push((_jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", size: "lg" }, { children: "..." }), "ellipsis1")));
+        buttons.push((_jsx(Button, { variant: "outline-secondary text-dark px-3", size: "lg", children: "..." }, "ellipsis1")));
         for (let i = state.page - 1; i <= state.page + 1; i++) {
             buttons.push((_jsx(PaginationButton, { page: i, currentPage: state.page, onClick: handlePageClick, disabled: loading }, "page" + i)));
         }
-        buttons.push((_jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", size: "lg" }, { children: "..." }), "ellipsis2")));
+        buttons.push((_jsx(Button, { variant: "outline-secondary text-dark px-3", size: "lg", children: "..." }, "ellipsis2")));
     }
-    return (_jsxs("div", { children: [_jsxs("div", Object.assign({ className: "position-relative" }, { children: [_jsxs(Table, Object.assign({ responsive: true, className: "hopa-table" }, { children: [_jsx("thead", { children: _jsx("tr", { children: thead }) }), _jsx("tbody", Object.assign({ className: "" }, { children: tbody }))] })), loading ? (_jsxs("div", Object.assign({ className: "table-loading-pane d-flex align-items-center justify-content-center flex-column text-black" }, { children: [_jsx(Spinner, { animation: "border", role: "status" }), _jsx("span", { children: "Loading..." })] }))) : ""] })), _jsx("div", Object.assign({ className: "d-flex" }, { children: _jsxs(ButtonGroup, Object.assign({ className: "ms-auto ", "aria-label": "Second group" }, { children: [_jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(0), size: "lg", disabled: loading }, { children: _jsx(Icon, { icon: angleDoubleLeft }) })), _jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(state.page - 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { icon: angleLeft }) })), buttons, _jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(state.page + 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { icon: angleRight }) })), _jsx(Button, Object.assign({ variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(numPages - 1), size: "lg", disabled: loading }, { children: _jsx(Icon, { icon: angleDoubleRight }) }))] })) }))] }));
+    return (_jsxs("div", { children: [_jsxs("div", { className: "position-relative", children: [_jsxs(Table, { responsive: true, className: "hopa-table", children: [_jsx("thead", { children: _jsx("tr", { children: thead }) }), _jsx("tbody", { className: "", children: tbody })] }), loading ? (_jsxs("div", { className: "table-loading-pane d-flex align-items-center justify-content-center flex-column text-black", children: [_jsx(Spinner, { animation: "border", role: "status" }), _jsx("span", { children: "Loading..." })] })) : ""] }), _jsx("div", { className: "d-flex", children: _jsxs(ButtonGroup, { className: "ms-auto ", "aria-label": "Second group", children: [_jsx(Button, { variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(0), size: "lg", disabled: loading, children: _jsx(Icon, { icon: angleDoubleLeft }) }), _jsx(Button, { variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(state.page - 1), size: "lg", disabled: loading, children: _jsx(Icon, { icon: angleLeft }) }), buttons, _jsx(Button, { variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(state.page + 1), size: "lg", disabled: loading, children: _jsx(Icon, { icon: angleRight }) }), _jsx(Button, { variant: "outline-secondary text-dark px-3", onClick: () => handlePageClick(numPages - 1), size: "lg", disabled: loading, children: _jsx(Icon, { icon: angleDoubleRight }) })] }) })] }));
 }
 export function StaticDataTable(props) {
     const sortedData = useRef(null);
@@ -171,7 +171,7 @@ export function StaticDataTable(props) {
             maxPages: Math.ceil(sortedData.current.data.length / pageSize)
         };
     }, [props.data]);
-    return (_jsx(ResponsiveTable, Object.assign({ getPage: pageCbk }, props)));
+    return (_jsx(ResponsiveTable, { getPage: pageCbk, ...props }));
 }
 export function BackendDataTable(props) {
     const abortSignal = useRef(null);
@@ -264,5 +264,5 @@ export function BackendDataTable(props) {
             maxPages: 1
         };
     }, [props.endpoint, props.additionalData, props.dataPostProcessor]);
-    return (_jsx(ResponsiveTable, Object.assign({ getPage: memoizedGetter, refresh: tableRefreshRef }, props)));
+    return (_jsx(ResponsiveTable, { getPage: memoizedGetter, refresh: tableRefreshRef, ...props }));
 }

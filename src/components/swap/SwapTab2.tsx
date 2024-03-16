@@ -38,6 +38,9 @@ import {ic_qr_code_scanner} from 'react-icons-kit/md/ic_qr_code_scanner';
 import {lock} from 'react-icons-kit/fa/lock';
 import {QRScannerModal} from "../qr/QRScannerModal";
 import {BitcoinWalletContext} from "../context/BitcoinWalletContext";
+import {BitcoinWalletAnchor} from "../wallet/BitcoinWalletButton";
+import {WebLNContext} from "../context/WebLNContext";
+import {WebLNAnchor} from "../wallet/WebLNButton";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -55,6 +58,7 @@ export function SwapTab(props: {
 }) {
 
     const {bitcoinWallet} = useContext(BitcoinWalletContext);
+    const {lnWallet} = useContext(WebLNContext);
 
     const [qrScanning, setQrScanning] = useState<boolean>(false);
     const [inCurrency, setInCurrency] = useState<CurrencySpec>(btcCurrency);
@@ -264,6 +268,15 @@ export function SwapTab(props: {
             _setAddress(bitcoinWallet.getReceiveAddress());
         }
     }, [bitcoinWallet, outCurrency]);
+
+    useEffect(() => {
+        if(lnWallet==null) return;
+        if(outCurrency.ticker==="BTC-LN") {
+            lnWallet.makeInvoice(1000).then(res => {
+                _setAddress(res.paymentRequest);
+            });
+        }
+    }, [lnWallet, outCurrency]);
 
     const changeDirection = () => {
         if(locked) return;
@@ -619,6 +632,16 @@ export function SwapTab(props: {
                         <div className="d-flex flex-row">
                             <small className="text-light text-opacity-75 me-auto">You pay</small>
 
+                            {inCurrency.ticker==="BTC" ? (
+                                <small>
+                                    <BitcoinWalletAnchor/>
+                                </small>
+                            ) : ""}
+                            {inCurrency.ticker==="BTC-LN" ? (
+                                <small>
+                                    <WebLNAnchor/>
+                                </small>
+                            ) : ""}
                             {/*<Icon size={16} icon={ic_account_balance_wallet_outline} style={{marginTop: "-0.3125rem"}} className=""/>*/}
                             {/*<small className="text-light text-opacity-75 ms-1 me-2">0.00018372 BTC</small>*/}
 
@@ -663,7 +686,20 @@ export function SwapTab(props: {
                         </Button>
                     </div>
                     <Card className="tab-accent-p3 pt-2">
-                        <small className="text-light text-opacity-75">You receive</small>
+                        <div className="d-flex flex-row">
+                            <small className="text-light text-opacity-75 me-auto">You receive</small>
+
+                            {outCurrency.ticker==="BTC" ? (
+                                <small>
+                                    <BitcoinWalletAnchor/>
+                                </small>
+                            ) : ""}
+                            {outCurrency.ticker==="BTC-LN" ? (
+                                <small>
+                                    <WebLNAnchor/>
+                                </small>
+                            ) : ""}
+                        </div>
                         <div className="d-flex flex-row">
                             <ValidatedInput
                                 disabled={locked || disabled}
@@ -737,6 +773,7 @@ export function SwapTab(props: {
                                             }}><Icon size={24} icon={ic_qr_code_scanner}/></a>
                                         </OverlayTrigger>
                                     )}
+                                    successFeedback={bitcoinWallet!=null && address===bitcoinWallet.getReceiveAddress() ? "Address fetched from your "+bitcoinWallet.getName()+" wallet!" : null}
                                 />
                                 {outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (
                                     <Alert variant={"success"} className="mt-3 mb-0 text-center">
