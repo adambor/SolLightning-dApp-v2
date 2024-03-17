@@ -51,15 +51,26 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
         return Promise.resolve(isPhantomInstalled);
     }
 
-    static async init(): Promise<PhantomBitcoinWallet> {
+    static async init(_data?: any): Promise<PhantomBitcoinWallet> {
         const provider: PhantomBtcProvider = (window as any)?.phantom?.bitcoin;
+
+        if(_data!=null) {
+            const data: {
+                account: PhantomBtcAccount
+            } = _data;
+
+            return new PhantomBitcoinWallet(provider, data.account);
+        }
+
         if(provider==null) throw new Error("Phantom bitcoin wallet not found");
         if(provider.isPhantom==null) throw new Error("Provider is not Phantom wallet");
         const accounts: PhantomBtcAccount[] = await provider.requestAccounts();
         const paymentAccounts = accounts.filter(e => e.purpose==="payment");
         if(paymentAccounts.length===0) throw new Error("No valid payment account found");
         paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);
-
+        BitcoinWallet.saveState(PhantomBitcoinWallet.walletName, {
+            account: paymentAccounts[0]
+        });
         return new PhantomBitcoinWallet(provider, paymentAccounts[0]);
     }
 

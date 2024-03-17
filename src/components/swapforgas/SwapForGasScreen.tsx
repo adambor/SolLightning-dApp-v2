@@ -16,6 +16,9 @@ import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import {QRCodeSVG} from "qrcode.react";
 import {clipboard} from "react-icons-kit/fa/clipboard";
 import {ic_south} from 'react-icons-kit/md/ic_south'
+import {useContext} from "react";
+import {WebLNContext} from "../context/WebLNContext";
+import {WebLNAnchor, WebLNButton} from "../wallet/WebLNButton";
 
 const swapAmount = 7500000;
 const swapAmountSol = swapAmount/1000000000;
@@ -26,6 +29,10 @@ export function SwapForGasScreen(props: {
     const navigate = useNavigate();
 
     const {search, state} = useLocation() as {search: string, state: {returnPath?: string}};
+
+    const {lnWallet, setLnWallet} = useContext(WebLNContext);
+    const [bitcoinError, setBitcoinError] = useState<string>(null);
+    const [sendTransactionLoading, setSendTransactionLoading] = useState<boolean>(false);
 
     const [swapData, setSwapData] = useState<LnForGasSwap<SolanaSwapData>>(null);
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>(0);
@@ -57,6 +64,19 @@ export function SwapForGasScreen(props: {
             clearTimeout(timeout);
         }
     }, [showCopyOverlay]);
+
+    const sendBitcoinTransaction = () => {
+        if(sendTransactionLoading) return;
+        setSendTransactionLoading(true);
+        setBitcoinError(null);
+        lnWallet.sendPayment(swapData.getAddress()).then(resp => {
+            setSendTransactionLoading(false);
+        }).catch(e => {
+            setSendTransactionLoading(false);
+            console.error(e);
+            setBitcoinError(e.message);
+        });
+    };
 
     const createSwap = () => {
         setLoading(true);
@@ -162,7 +182,7 @@ export function SwapForGasScreen(props: {
                         <Alert className="text-center mb-3 d-flex align-items-center flex-column" show={swapData!=null && !success && !error} variant="success" closeVariant="white">
                             <label>
                                 Swap for gas is a trusted service allowing you to swap BTC-LN to SOL, so you can then cover the gas fees of a trustless atomiq swap.
-                                Note that this is a trusted service and is therefore only used for very small amounts! You can read more about it in our <a href="/faq?tabOpen=11">FAQ</a>.
+                                Note that this is a trusted service and is therefore only used for very small amounts! You can read more about it in our <a href="javascript:void(0);" onClick={() => navigate("/faq?tabOpen=11")}>FAQ</a>.
                             </label>
                         </Alert>
 
@@ -211,37 +231,60 @@ export function SwapForGasScreen(props: {
 
                         {quoteTimeRemaining===0 || success ? "" : (
                             <div className="mb-3 tab-accent">
-                                <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
-                                    {(props) => (
-                                        <Tooltip id="overlay-example" {...props}>
-                                            Address copied to clipboard!
-                                        </Tooltip>
-                                    )}
-                                </Overlay>
-                                <div ref={qrCodeRef}>
-                                    <QRCodeSVG
-                                        value={swapData.getQrData()}
-                                        size={300}
-                                        includeMargin={true}
-                                        className="cursor-pointer"
-                                        onClick={() => {
-                                            copy(2);
-                                        }}
-                                    />
-                                </div>
-                                <label>Please pay this lightning network invoice</label>
-                                <ValidatedInput
-                                    type={"text"}
-                                    value={swapData.getAddress()}
-                                    textEnd={(
-                                        <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
-                                            copy(1);
-                                        }}>
-                                            <Icon icon={clipboard}/>
-                                        </a>
-                                    )}
-                                    inputRef={textFieldRef}
-                                />
+                                {lnWallet!=null ? (
+                                    <>
+                                        {bitcoinError!=null ? (
+                                            <Alert variant="danger" className="mb-2">
+                                                <strong>Lightning TX failed</strong>
+                                                <label>{bitcoinError}</label>
+                                            </Alert>
+                                        ) : ""}
+                                        <div className="d-flex flex-column align-items-center justify-content-center">
+                                            <Button variant="light" className="d-flex flex-row align-items-center" disabled={sendTransactionLoading} onClick={sendBitcoinTransaction}>
+                                                {sendTransactionLoading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                                                Pay with
+                                                <img width={20} height={20} src="/wallets/WebLN.png" className="ms-2 me-1"/>
+                                                WebLN
+                                            </Button>
+                                            <small className="mt-2"><a href="javascript:void(0);" onClick={() => setLnWallet(null)}>Or use a QR code/LN invoice</a></small>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                            {(props) => (
+                                                <Tooltip id="overlay-example" {...props}>
+                                                    Address copied to clipboard!
+                                                </Tooltip>
+                                            )}
+                                        </Overlay>
+                                        <div ref={qrCodeRef}>
+                                            <QRCodeSVG
+                                                value={swapData.getQrData()}
+                                                size={300}
+                                                includeMargin={true}
+                                                className="cursor-pointer"
+                                                onClick={() => {
+                                                    copy(2);
+                                                }}
+                                            />
+                                        </div>
+                                        <label>Please pay this lightning network invoice</label>
+                                        <ValidatedInput
+                                            type={"text"}
+                                            value={swapData.getAddress()}
+                                            textEnd={(
+                                                <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
+                                                    copy(1);
+                                                }}>
+                                                    <Icon icon={clipboard}/>
+                                                </a>
+                                            )}
+                                            inputRef={textFieldRef}
+                                        />
+                                        <small className="mt-2"><WebLNAnchor/></small>
+                                    </>
+                                )}
                             </div>
                         )}
 

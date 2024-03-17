@@ -4,6 +4,7 @@ import {CoinselectAddressTypes} from "./coinselect2/utils";
 import {coinSelect} from "./coinselect2";
 import * as bitcoin from "bitcoinjs-lib";
 import {ChainUtils} from "sollightning-sdk";
+import local = chrome.storage.local;
 
 export abstract class BitcoinWallet {
 
@@ -35,7 +36,7 @@ export abstract class BitcoinWallet {
             totalSpendable += value;
             return {
                 vout: utxo.vout,
-                txId: utxo.txId,
+                txId: utxo.txid,
                 value: value,
                 type: sendingAddressType,
                 outputScript: outputScript,
@@ -60,6 +61,8 @@ export abstract class BitcoinWallet {
         }
 
         const psbt = new bitcoin.Psbt();
+
+        console.log("Inputs: ", coinselectResult.inputs);
 
         psbt.addInputs(coinselectResult.inputs.map(input => {
             return {
@@ -86,6 +89,28 @@ export abstract class BitcoinWallet {
         }
 
         return psbt;
+    }
+
+    static loadState(): {name: string, data?: any} {
+        const txt = localStorage.getItem("btc-wallet");
+        if(txt==null) return null;
+        try {
+            return JSON.parse(localStorage.getItem("btc-wallet"));
+        } catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+
+    static saveState(name: string, data?: any) {
+        localStorage.setItem("btc-wallet", JSON.stringify({
+            name,
+            data
+        }));
+    }
+
+    static clearState() {
+        localStorage.removeItem("btc-wallet");
     }
 
     abstract sendTransaction(address: string, amount: BN): Promise<string>;

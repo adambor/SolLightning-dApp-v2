@@ -56,6 +56,7 @@ function WrappedApp() {
     const [provider, setProvider] = React.useState<AnchorProvider>();
     const [swapper, setSwapper] = React.useState<SolanaSwapper>();
     const [swapperLoadingError, setSwapperLoadingError] = React.useState<string>();
+    const [swapperLoading, setSwapperLoading] = React.useState<boolean>(false);
     const [actionableSwaps, setActionableSwaps] = React.useState<ISwap[]>([]);
 
     // const [btcConnectionState, setBtcConnectionState] = React.useState<BtcConnectionState>(null);
@@ -70,6 +71,7 @@ function WrappedApp() {
 
     const loadSwapper = async(_provider: AnchorProvider) => {
         setSwapperLoadingError(null);
+        setSwapperLoading(true);
         try {
             console.log("init start");
 
@@ -96,6 +98,8 @@ function WrappedApp() {
             setActionableSwaps(actionableSwaps);
 
             console.log("Initialized");
+
+            setSwapperLoading(false);
         } catch (e) {
             setSwapperLoadingError(e.toString());
             console.error(e)
@@ -109,7 +113,7 @@ function WrappedApp() {
         if(noWalletPaths.has(pathName)) return;
 
         if(wallet==null) {
-            setSwapper(null);
+            // setSwapper(null);
             setProvider(null);
             setActionableSwaps([]);
             return;
@@ -162,7 +166,10 @@ function WrappedApp() {
     return (
         <BitcoinWalletContext.Provider value={{
             bitcoinWallet: bitcoinWallet,
-            setBitcoinWallet: setBitcoinWallet
+            setBitcoinWallet: (wallet: BitcoinWallet) => {
+                if(wallet==null) BitcoinWallet.clearState();
+                setBitcoinWallet(wallet);
+            }
         }}>
             <WebLNContext.Provider value={{
                 lnWallet: webLNWallet,
@@ -260,7 +267,7 @@ function WrappedApp() {
                                     <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
                                     <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
                                     <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
-                                    {swapper!=null ? (<div className="d-flex ms-auto">
+                                    {provider!=null ? (<div className="d-flex ms-auto">
                                         <WalletMultiButton className="bg-primary"/>
                                     </div>) : ""}
                                 </div>
@@ -282,11 +289,11 @@ function WrappedApp() {
                     }
                 }}>
                     <div className="d-flex flex-grow-1 flex-column">
-                        {swapper==null && !noWalletPaths.has(pathName) ? (
+                        {(provider==null || swapperLoading) && !noWalletPaths.has(pathName) ? (
                             <div className="no-wallet-overlay d-flex align-items-center">
                                 <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                     <div className="text-white text-center">
-                                        {provider!=null && swapper==null ? (
+                                        {swapperLoading ? (
                                             <>
                                                 {swapperLoadingError==null ? (
                                                     <>

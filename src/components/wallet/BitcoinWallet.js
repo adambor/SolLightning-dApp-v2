@@ -14,7 +14,7 @@ export class BitcoinWallet {
             totalSpendable += value;
             return {
                 vout: utxo.vout,
-                txId: utxo.txId,
+                txId: utxo.txid,
                 value: value,
                 type: sendingAddressType,
                 outputScript: outputScript,
@@ -34,6 +34,7 @@ export class BitcoinWallet {
             return null;
         }
         const psbt = new bitcoin.Psbt();
+        console.log("Inputs: ", coinselectResult.inputs);
         psbt.addInputs(coinselectResult.inputs.map(input => {
             return {
                 hash: input.txId,
@@ -56,5 +57,26 @@ export class BitcoinWallet {
             });
         }
         return psbt;
+    }
+    static loadState() {
+        const txt = localStorage.getItem("btc-wallet");
+        if (txt == null)
+            return null;
+        try {
+            return JSON.parse(localStorage.getItem("btc-wallet"));
+        }
+        catch (e) {
+            console.error(e);
+            return null;
+        }
+    }
+    static saveState(name, data) {
+        localStorage.setItem("btc-wallet", JSON.stringify({
+            name,
+            data
+        }));
+    }
+    static clearState() {
+        localStorage.removeItem("btc-wallet");
     }
 }

@@ -22,7 +22,7 @@ export function useWebLNWalletChooser() {
         }).catch(e => console.error(e));
     };
 
-    return {isInstalled, lnWallet, connectWallet};
+    return {isInstalled, lnWallet, connectWallet, setLnWallet};
 }
 
 export function WebLNButton(props: {}) {
@@ -47,9 +47,17 @@ export function WebLNButton(props: {}) {
     );
 }
 
+const WebLNConnectedWallet = React.forwardRef<any, any>(({ onClick }, ref) => (
+    <div className={"d-flex flex-row align-items-center cursor-pointer"} onClick={onClick}>
+        <Icon className="text-success d-flex align-items-center me-1" icon={ic_brightness_1} size={12}/>
+        <img width={16} height={16} src="/wallets/WebLN.png" className="me-1"/>
+        WebLN
+    </div>
+));
+
 export function WebLNAnchor(props: {className?: string}) {
 
-    const {isInstalled, lnWallet, connectWallet} = useWebLNWalletChooser();
+    const {isInstalled, lnWallet, connectWallet, setLnWallet} = useWebLNWalletChooser();
 
     if(!isInstalled && lnWallet==null) return <></>;
 
@@ -60,11 +68,17 @@ export function WebLNAnchor(props: {className?: string}) {
                     Connect BTC-LN wallet
                 </a>
             ) : (
-                <div className={"d-flex flex-row align-items-center "+props.className}>
-                    <Icon className="text-success d-flex align-items-center me-1" icon={ic_brightness_1} size={12}/>
-                    <img width={16} height={16} src="/wallets/WebLN.png" className="me-1"/>
-                    WebLN
-                </div>
+                <Dropdown align={{md: "start"}}>
+                    <Dropdown.Toggle as={WebLNConnectedWallet} id="dropdown-custom-components" className={props.className}>
+                        Custom toggle
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                        <Dropdown.Item eventKey="1" onClick={() => {
+                            setLnWallet(null)
+                        }}>Disconnect</Dropdown.Item>
+                    </Dropdown.Menu>
+                </Dropdown>
             )}
         </>
     );

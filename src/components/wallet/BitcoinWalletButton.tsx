@@ -1,4 +1,4 @@
-import {Button, CloseButton, Dropdown, ListGroup, Modal} from "react-bootstrap";
+import {Alert, Button, CloseButton, Dropdown, ListGroup, Modal} from "react-bootstrap";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import * as React from "react";
 import {BitcoinNetworkType, getAddress, getCapabilities} from "sats-connect";
@@ -16,12 +16,18 @@ export function useBitcoinWalletChooser() {
     const [modalOpened, setModalOpened] = useState<boolean>(false);
     const [usableWallets, setUsableWallets] = useState<BitcoinWalletType[]>([]);
 
-    useEffect(() => {
-        if(bitcoinWallet!=null) return;
+    const [error, setError] = useState<string>();
 
+    useEffect(() => {
         setLoading(true);
-        getInstalledBitcoinWallets().then(wallets => {
-            setUsableWallets(wallets);
+        getInstalledBitcoinWallets().then(resp => {
+            setUsableWallets(resp.installed);
+            if(resp.active!=null && bitcoinWallet==null) {
+                resp.active().then(wallet => setBitcoinWallet(wallet)).catch(e => {
+                    console.error(e);
+                    setError(e.message);
+                });
+            }
             setLoading(false);
         }).catch(e => console.error(e));
     },[bitcoinWallet==null]);
@@ -31,19 +37,25 @@ export function useBitcoinWalletChooser() {
             wallet.use().then(result => {
                 setBitcoinWallet(result);
                 setModalOpened(false);
-            }).catch(e => console.error(e));
+            }).catch(e => {
+                console.error(e);
+                setError(e.message);
+            });
             return;
         }
         if(usableWallets.length===1) {
             usableWallets[0].use().then(result => {
                 setBitcoinWallet(result);
-            }).catch(e => console.error(e));
+            }).catch(e => {
+                console.error(e);
+                setError(e.message);
+            });
         } else {
             setModalOpened(true);
         }
     };
 
-    return {loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet};
+    return {loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet, setBitcoinWallet, error};
 }
 
 export function BitcoinWalletModal(props: {
@@ -105,9 +117,17 @@ export function BitcoinWalletButton(props: {}) {
     );
 }
 
+const BitcoinConnectedWallet = React.forwardRef<any, any>(({ bitcoinWallet, onClick }, ref) => (
+    <div className={"d-flex flex-row align-items-center cursor-pointer"} onClick={onClick}>
+        <Icon className="text-success d-flex align-items-center me-1" icon={ic_brightness_1} size={12}/>
+        <img width={16} height={16} src={bitcoinWallet.getIcon()} className="me-1"/>
+        {bitcoinWallet.getName()}
+    </div>
+));
+
 export function BitcoinWalletAnchor(props: {className?: string}) {
 
-    const {loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet} = useBitcoinWalletChooser();
+    const {loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet, setBitcoinWallet, error} = useBitcoinWalletChooser();
 
     if(usableWallets.length===0 && bitcoinWallet==null) return <></>;
 
@@ -125,12 +145,27 @@ export function BitcoinWalletAnchor(props: {className?: string}) {
                     Connect BTC wallet
                 </a>
             ) : (
-                <div className={"d-flex flex-row align-items-center "+props.className}>
-                    <Icon className="text-success d-flex align-items-center me-1" icon={ic_brightness_1} size={12}/>
-                    <img width={16} height={16} src={bitcoinWallet.getIcon()} className="me-1"/>
-                    {bitcoinWallet.getName()}
-                </div>
+                <Dropdown align={{md: "start"}}>
+                    <Dropdown.Toggle as={BitcoinConnectedWallet} id="dropdown-custom-components" className={props.className} bitcoinWallet={bitcoinWallet}>
+                        Custom toggle
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                        <Dropdown.Item eventKey="1" onClick={() => {
+                            setBitcoinWallet(null)
+                        }}>Disconnect</Dropdown.Item>
+                        {usableWallets!=null && usableWallets.length>1 ? (
+                            <Dropdown.Item eventKey="2" onClick={() => {
+                                connectWallet();
+                            }}>Change wallet</Dropdown.Item>
+                        ) : ""}
+                    </Dropdown.Menu>
+                </Dropdown>
             )}
+
+            {error!=null ? (
+                <Alert>{error}</Alert>
+            ) : ""}
         </>
     );
 }

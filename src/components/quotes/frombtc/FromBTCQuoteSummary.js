@@ -14,6 +14,7 @@ export function FromBTCQuoteSummary(props) {
     const { bitcoinWallet, setBitcoinWallet } = useContext(BitcoinWalletContext);
     const [bitcoinError, setBitcoinError] = useState(null);
     const [sendTransactionLoading, setSendTransactionLoading] = useState(false);
+    const txLoading = useRef(false);
     const [transactionSent, setTransactionSent] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -41,15 +42,19 @@ export function FromBTCQuoteSummary(props) {
     }, [showCopyOverlay]);
     const [txData, setTxData] = useState(null);
     const sendBitcoinTransaction = () => {
-        if (sendTransactionLoading)
+        console.log("Send bitcoin transaction called!");
+        if (txLoading.current)
             return;
         setSendTransactionLoading(true);
+        txLoading.current = true;
         setBitcoinError(null);
         bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount()).then(txId => {
             setSendTransactionLoading(false);
+            txLoading.current = false;
             setTransactionSent(txId);
         }).catch(e => {
             setSendTransactionLoading(false);
+            txLoading.current = false;
             console.error(e);
             setBitcoinError(e.message);
         });

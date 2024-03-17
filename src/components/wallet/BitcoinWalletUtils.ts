@@ -7,7 +7,7 @@ export type BitcoinWalletType = {
     iconUrl: string,
     name: string,
     detect: () => Promise<boolean>,
-    use: () => Promise<BitcoinWallet>
+    use: (data?: any) => Promise<BitcoinWallet>
 };
 
 const bitcoinWalletList: BitcoinWalletType[] = [
@@ -27,14 +27,32 @@ const bitcoinWalletList: BitcoinWalletType[] = [
 
 let installedBitcoinWallets: BitcoinWalletType[];
 
-export async function getInstalledBitcoinWallets(): Promise<BitcoinWalletType[]> {
-    if(installedBitcoinWallets!=null) return installedBitcoinWallets;
+export async function getInstalledBitcoinWallets(): Promise<{
+    installed: BitcoinWalletType[],
+    active: () => Promise<BitcoinWallet>
+}> {
+    if(installedBitcoinWallets==null) {
+        const resultArr: BitcoinWalletType[] = [];
+        for(let wallet of bitcoinWalletList) {
+            if (await wallet.detect()) {
+                resultArr.push(wallet);
+            }
+        }
+        installedBitcoinWallets = resultArr;
+    }
 
-    const resultArr: BitcoinWalletType[] = [];
-    for(let wallet of bitcoinWalletList) {
-        if(await wallet.detect()) {
-            resultArr.push(wallet);
+    let active: () => Promise<BitcoinWallet> = null;
+
+    const activeWallet = BitcoinWallet.loadState();
+    if(activeWallet!=null) {
+        const walletType = bitcoinWalletList.find(e => e.name===activeWallet.name);
+        if(walletType!=null) {
+            active = () => walletType.use(activeWallet.data);
         }
     }
-    return installedBitcoinWallets = resultArr;
+
+    return {
+        installed: installedBitcoinWallets,
+        active
+    }
 }

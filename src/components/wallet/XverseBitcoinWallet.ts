@@ -47,7 +47,15 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         return success;
     }
 
-    static async init(): Promise<XverseBitcoinWallet> {
+    static async init(_data?: any): Promise<XverseBitcoinWallet> {
+        if(_data!=null) {
+            const data: {
+                account: Address
+            } = _data;
+
+            return new XverseBitcoinWallet(data.account);
+        }
+
         let result: GetAddressResponse = null;
         let cancelled: boolean = false;
         await getAddress({
@@ -70,6 +78,10 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         const accounts: Address[] = result.addresses;
         const paymentAccounts = accounts.filter(e => e.purpose===AddressPurpose.Payment);
         if(paymentAccounts.length===0) throw new Error("No valid payment account found");
+
+        BitcoinWallet.saveState(XverseBitcoinWallet.walletName, {
+            account: paymentAccounts[0]
+        });
 
         return new XverseBitcoinWallet(paymentAccounts[0]);
     }
