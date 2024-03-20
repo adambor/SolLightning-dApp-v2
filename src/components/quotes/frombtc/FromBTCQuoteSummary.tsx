@@ -12,6 +12,8 @@ import {useLocation} from "react-router-dom";
 import {useNavigate} from "react-router-dom";
 import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import * as BN from "bn.js";
+import {externalLink} from 'react-icons-kit/fa/externalLink';
+import {elementInViewport} from "../../../utils/Utils";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -140,7 +142,7 @@ export function FromBTCQuoteSummary(props: {
                             confirmations,
                             confTarget: confirmationTarget
                         });
-                    });
+                    }).catch(e => console.error(e));
                     let paymentInterval;
                     paymentInterval = setInterval(() => {
                         if(abortController.signal.aborted) {
@@ -210,8 +212,40 @@ export function FromBTCQuoteSummary(props: {
 
     useEffect(() => {
         if(state===FromBTCSwapState.CLAIM_COMMITED) {
-            // @ts-ignore
-            window.scrollBy(0,99999);
+            let lastScrollTime: number = 0;
+            let scrollListener = () => {
+                lastScrollTime = Date.now();
+            };
+            window.addEventListener("scroll", scrollListener);
+
+            const isScrolling = () => lastScrollTime && Date.now() < lastScrollTime + 100;
+
+            let interval;
+            interval = setInterval(() => {
+                const anchorElement = document.getElementById("scrollAnchor");
+                if(anchorElement==null) return;
+
+                if(elementInViewport(anchorElement)) {
+                    clearInterval(interval);
+                    window.removeEventListener("scroll", scrollListener);
+                    scrollListener = null;
+                    interval = null;
+                    return;
+                }
+
+                if(!isScrolling()) {
+                    // @ts-ignore
+                    window.scrollBy({
+                        left: 0,
+                        top: 99999
+                    });
+                }
+            }, 100);
+
+            return () => {
+                if(interval!=null) clearInterval(interval);
+                if(scrollListener!=null) window.removeEventListener("scroll", scrollListener);
+            }
         }
     }, [state]);
 
@@ -323,7 +357,10 @@ export function FromBTCQuoteSummary(props: {
                                             </Tooltip>
                                         )}
                                     </Overlay>
-                                    <div ref={qrCodeRef}>
+                                    <Alert variant="warning" className="mb-3">
+                                        <label>Please make sure that you send an <b><u>EXACT</u></b> amount in BTC, different amount wouldn't be accepted and you might loose funds!</label>
+                                    </Alert>
+                                    <div ref={qrCodeRef} className="mb-2">
                                         <QRCodeSVG
                                             value={props.quote.getQrData()}
                                             size={300}
@@ -334,7 +371,7 @@ export function FromBTCQuoteSummary(props: {
                                             }}
                                         />
                                     </div>
-                                    <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
+                                    <label>Please send exactly <strong>{toHumanReadableString(props.quote.getInAmount(), btcCurrency)}</strong> {btcCurrency.ticker} to the address</label>
                                     <ValidatedInput
                                         type={"text"}
                                         value={props.quote.getAddress()}
@@ -347,6 +384,13 @@ export function FromBTCQuoteSummary(props: {
                                         )}
                                         inputRef={textFieldRef}
                                     />
+                                    <div className="d-flex justify-content-center mt-2">
+                                        <Button variant="light" className="d-flex flex-row align-items-center justify-content-center" onClick={() => {
+                                            window.location.href = props.quote.getQrData();
+                                        }}>
+                                            <Icon icon={externalLink} className="d-flex align-items-center me-2"/> Open in BTC wallet app
+                                        </Button>
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -398,6 +442,8 @@ export function FromBTCQuoteSummary(props: {
                     <label>Swap was concluded successfully</label>
                 </Alert>
             ) : ""}
+
+            <div id="scrollAnchor"></div>
 
         </>
     )

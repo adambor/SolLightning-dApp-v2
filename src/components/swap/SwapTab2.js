@@ -207,7 +207,6 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
             return;
         quoteUpdates.current++;
         const updateNum = quoteUpdates.current;
-        setQuote(null);
         setQuoteError(null);
         if (!isLNURL) {
             setQuoteAddressError(null);
@@ -504,7 +503,7 @@ export function SwapTab(props) {
                 }
                 setDoValidate(true);
             }
-            navigate("/");
+            // navigate("/");
         });
     }, [propSwapId, props.swapper]);
     const [doValidate, setDoValidate] = useState();
@@ -633,9 +632,15 @@ export function SwapTab(props) {
                                                         lnWallet.makeInvoice(fromHumanReadableString(amount, outCurrency).toNumber()).then(res => {
                                                             setAddress(res.paymentRequest);
                                                         }).catch(e => console.error(e));
-                                                    }, children: "Fetch invoice from WebLN" }) })) : "" })) : "", lnWallet == null && outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, { variant: "success", className: "mt-3 mb-0 text-center", children: _jsx("label", { children: "Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount." }) })) : ""] })) : ""] }), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "mt-3", children: _jsx(SimpleFeeSummaryScreen, { swap: quote, btcFeeRate: inCurrency.ticker === "BTC" ? maxSpendable?.feeRate : null }) }), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", { className: "mt-3 d-flex flex-column text-white", children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, balance: maxSpendable?.amount, refreshQuote: refreshQuote, setAmountLock: setLocked, abortSwap: () => {
+                                                    }, children: "Fetch invoice from WebLN" }) })) : "" })) : "", lnWallet == null && outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, { variant: "success", className: "mt-3 mb-0 text-center", children: _jsx("label", { children: "Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount." }) })) : ""] })) : ""] }), quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "mt-3", children: _jsx(SimpleFeeSummaryScreen, { swap: quote, btcFeeRate: inCurrency.ticker === "BTC" ? maxSpendable?.feeRate : null }) }), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", { className: "mt-3 d-flex flex-column text-white", children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, balance: maxSpendable?.amount, refreshQuote: refreshQuote, setAmountLock: (val) => {
+                                            setLocked(val);
+                                            if (!val && propSwapId != null)
+                                                navigate("/");
+                                        }, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
+                                            if (propSwapId != null)
+                                                navigate("/");
                                             setAmount("");
                                         }, feeRate: maxSpendable?.feeRate }) })) : ""] })) : ""] }) }), _jsx("div", { className: "text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center mb-3", children: _jsxs("div", { className: "cursor-pointer d-flex align-items-center justify-content-center", onClick: () => navigate("/faq?tabOpen=6"), children: [_jsx(Icon, { size: 18, icon: lock, style: { marginTop: "-0.5rem" } }), _jsx("small", { children: "Audited by" }), _jsx("img", { className: "opacity-50 d-block ms-1", height: 18, src: "/ackee_blockchain.svg", style: { marginTop: "-0.125rem" } })] }) })] }));
 }
