@@ -1,6 +1,17 @@
 import * as React from "react";
 import {useContext, useEffect, useRef, useState} from "react";
-import {Alert, Badge, Button, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
+import {
+    Alert,
+    Badge,
+    Button,
+    CloseButton,
+    Form,
+    Overlay,
+    OverlayTrigger,
+    ProgressBar,
+    Spinner,
+    Tooltip
+} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
 import {FromBTCLNSwap, FromBTCLNSwapState, LNURLPay, LNURLWithdraw, Swapper} from "sollightning-sdk";
@@ -10,6 +21,10 @@ import {LNNFCReader, LNNFCStartResult} from "../../lnnfc/LNNFCReader";
 import {useLocation, useNavigate} from "react-router-dom";
 import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import {WebLNContext} from "../../context/WebLNContext";
+import {externalLink} from 'react-icons-kit/fa/externalLink';
+import {Modal} from "react-bootstrap";
+import {info} from 'react-icons-kit/fa/info';
+import {elementInViewport} from "../../../utils/Utils";
 
 export function FromBTCLNQuoteSummary(props: {
     swapper: Swapper<any, any, any, any>,
@@ -124,6 +139,7 @@ export function FromBTCLNQuoteSummary(props: {
 
     const onClaim = async (skipChecks?: boolean) => {
         setLoading(true);
+        setError(null);
         try {
             await props.quote.commitAndClaim(null, skipChecks);
             setSuccess(true);
@@ -221,8 +237,40 @@ export function FromBTCLNQuoteSummary(props: {
 
     useEffect(() => {
         if(isStarted) {
-            // @ts-ignore
-            window.scrollBy(0,99999);
+            let lastScrollTime: number = 0;
+            let scrollListener = () => {
+                lastScrollTime = Date.now();
+            };
+            window.addEventListener("scroll", scrollListener);
+
+            const isScrolling = () => lastScrollTime && Date.now() < lastScrollTime + 100;
+
+            let interval;
+            interval = setInterval(() => {
+                const anchorElement = document.getElementById("scrollAnchor");
+                if(anchorElement==null) return;
+
+                if(elementInViewport(anchorElement)) {
+                    clearInterval(interval);
+                    window.removeEventListener("scroll", scrollListener);
+                    scrollListener = null;
+                    interval = null;
+                    return;
+                }
+
+                if(!isScrolling()) {
+                    // @ts-ignore
+                    window.scrollBy({
+                        left: 0,
+                        top: 99999
+                    });
+                }
+            }, 100);
+
+            return () => {
+                if(interval!=null) clearInterval(interval);
+                if(scrollListener!=null) window.removeEventListener("scroll", scrollListener);
+            }
         }
     }, [isStarted]);
 
@@ -248,8 +296,30 @@ export function FromBTCLNQuoteSummary(props: {
         setShowCopyOverlay(num);
     };
 
+    const [openAppModalOpened, setOpenAppModalOpened] = useState<boolean>(false);
+
     return (
         <>
+            <Modal contentClassName="text-white bg-dark" size="sm" centered show={openAppModalOpened} onHide={() => setOpenAppModalOpened(false)} dialogClassName="min-width-400px">
+                <Modal.Header className="border-0">
+                    <Modal.Title id="contained-modal-title-vcenter" className="d-flex flex-grow-1">
+                        <Icon icon={info} className="d-flex align-items-center me-2"/> Important notice
+                        <CloseButton className="ms-auto" variant="white" onClick={() => setOpenAppModalOpened(false)}/>
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>Please make sure that you return back to this dApp once you inititated a Lightning Network payment from your wallet app. <b>The Lightning Network payment will only succeed/confirm once you come back to the dApp and claim the funds on the Solana side!</b></p>
+                </Modal.Body>
+                <Modal.Footer className="border-0 d-flex">
+                    <Button variant="primary" className="flex-grow-1" onClick={() => {
+                        window.location.href = props.quote.getQrData();
+                        setOpenAppModalOpened(false);
+                    }}>
+                        Understood, continue
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
             {error!=null ? (
                 <Alert variant="danger" className="mb-3">
                     <strong>Swap failed</strong>
@@ -327,7 +397,7 @@ export function FromBTCLNQuoteSummary(props: {
                                         )}
                                     </Overlay>
 
-                                    <div ref={qrCodeRef}>
+                                    <div ref={qrCodeRef} className="mb-2">
                                         <QRCodeSVG
                                             value={props.quote.getQrData()}
                                             size={300}
@@ -357,6 +427,13 @@ export function FromBTCLNQuoteSummary(props: {
                                         )}
                                         inputRef={textFieldRef}
                                     />
+                                    <div className="d-flex justify-content-center mt-2">
+                                        <Button variant="light" className="d-flex flex-row align-items-center justify-content-center" onClick={() => {
+                                            setOpenAppModalOpened(true);
+                                        }}>
+                                            <Icon icon={externalLink} className="d-flex align-items-center me-2"/> Open in Lightning wallet app
+                                        </Button>
+                                    </div>
                                 </>
                             )}
 
@@ -441,6 +518,8 @@ export function FromBTCLNQuoteSummary(props: {
                     <label>Swap was concluded successfully</label>
                 </Alert>
             ) : ""}
+
+            <div id="scrollAnchor"></div>
 
         </>
     )
