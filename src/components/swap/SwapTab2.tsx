@@ -293,7 +293,6 @@ function useQuote(
         quoteUpdates.current++;
         const updateNum = quoteUpdates.current;
 
-        setQuote(null);
         setQuoteError(null);
 
         if(!isLNURL) {
@@ -632,7 +631,7 @@ export function SwapTab(props: {
                 }
                 setDoValidate(true);
             }
-            navigate("/");
+            // navigate("/");
         });
     }, [propSwapId, props.swapper]);
 
@@ -920,9 +919,13 @@ export function SwapTab(props: {
                             </div>
                             {quote.getAddress()!==RANDOM_BTC_ADDRESS ? (
                                 <div className="mt-3 d-flex flex-column text-white">
-                                    <QuoteSummary type="swap" swapper={props.swapper} quote={quote} balance={maxSpendable?.amount} refreshQuote={refreshQuote} setAmountLock={setLocked} abortSwap={() => {
+                                    <QuoteSummary type="swap" swapper={props.swapper} quote={quote} balance={maxSpendable?.amount} refreshQuote={refreshQuote} setAmountLock={(val) => {
+                                        setLocked(val);
+                                        if(!val && propSwapId!=null) navigate("/");
+                                    }} abortSwap={() => {
                                         setLocked(false);
                                         setQuote(null);
+                                        if(propSwapId!=null) navigate("/");
                                         setAmount("");
                                     }} feeRate={maxSpendable?.feeRate}/>
                                 </div>
