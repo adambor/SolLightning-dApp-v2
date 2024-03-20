@@ -19,6 +19,7 @@ import {ic_south} from 'react-icons-kit/md/ic_south'
 import {useContext} from "react";
 import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor, WebLNButton} from "../wallet/WebLNButton";
+import {externalLink} from 'react-icons-kit/fa/externalLink';
 
 const swapAmount = 7500000;
 const swapAmountSol = swapAmount/1000000000;
@@ -258,7 +259,7 @@ export function SwapForGasScreen(props: {
                                                 </Tooltip>
                                             )}
                                         </Overlay>
-                                        <div ref={qrCodeRef}>
+                                        <div ref={qrCodeRef} className="mb-2">
                                             <QRCodeSVG
                                                 value={swapData.getQrData()}
                                                 size={300}
@@ -282,6 +283,15 @@ export function SwapForGasScreen(props: {
                                             )}
                                             inputRef={textFieldRef}
                                         />
+
+                                        <div className="d-flex justify-content-center mt-2">
+                                            <Button variant="light" className="d-flex flex-row align-items-center justify-content-center" onClick={() => {
+                                                window.location.href = swapData.getQrData();
+                                            }}>
+                                                <Icon icon={externalLink} className="d-flex align-items-center me-2"/> Open in Lightning wallet app
+                                            </Button>
+                                        </div>
+
                                         <small className="mt-2"><WebLNAnchor/></small>
                                     </>
                                 )}
