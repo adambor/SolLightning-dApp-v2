@@ -7,6 +7,8 @@ import {
     toHumanReadableString
 } from "../utils/Currencies";
 import * as BN from "bn.js";
+import {BitcoinWalletContext} from "./context/BitcoinWalletContext";
+import {useContext, useEffect, useState} from "react";
 
 export function FeePart(props: {
     bold?: boolean,
@@ -36,8 +38,31 @@ export function FeePart(props: {
 
 export function SimpleFeeSummaryScreen(props: {
     swap: ISwap,
+    btcFeeRate?: number,
     className?: string
 }) {
+    const {bitcoinWallet} = useContext(BitcoinWalletContext);
+
+    const [btcTxFee, setBtcTxFee] = useState<BN>();
+    const [btcTxFeeLoading, setBtcTxFeeLoading] = useState<boolean>(false);
+    useEffect(() => {
+        setBtcTxFee(null);
+        if(bitcoinWallet==null || props.btcFeeRate==null || props.btcFeeRate==0 || props.swap==null || !(props.swap instanceof FromBTCSwap)) return;
+        setBtcTxFeeLoading(true);
+        let cancelled = false;
+        bitcoinWallet.getTransactionFee(props.swap.address, props.swap.getInAmount(), props.btcFeeRate).then(txFee => {
+            if(cancelled) return;
+            if(txFee!=null) setBtcTxFee(new BN(txFee));
+            setBtcTxFeeLoading(false);
+        }).catch((e) => {
+            if(cancelled) return;
+            console.error(e);
+            setBtcTxFeeLoading(false);
+        });
+        return () => {
+            cancelled = true;
+        }
+    }, [bitcoinWallet, props.btcFeeRate, props.swap]);
 
     let className: string;
 
@@ -70,8 +95,12 @@ export function SimpleFeeSummaryScreen(props: {
         const currency = getCurrencySpec(props.swap.getToken());
         const fee = props.swap.getFee();
         const btcFee = fee.mul(props.swap.getInAmount()).div(props.swap.getOutAmountWithoutFee());
+        const btcNetworkFeeInToken = btcTxFee!=null ? btcTxFee.mul(props.swap.getOutAmountWithoutFee()).div(props.swap.getInAmount()) : null;
 
         return (<div className={className}>
+            {btcTxFee!=null ? (
+                <FeePart text={"Network fee:"} currency1={bitcoinCurrencies[0]} amount1={btcTxFee} currency2={currency} amount2={btcNetworkFeeInToken}/>
+            ) : ""}
             <FeePart className="border-bottom border-light pb-2" text={"Swap fee:"} currency1={bitcoinCurrencies[0]} amount1={btcFee} currency2={currency} amount2={fee}/>
             <div className="d-flex font-medium py-2 mt-2">
                 <span>Watchtower fee:</span>

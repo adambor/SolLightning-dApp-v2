@@ -52,7 +52,7 @@ function WrappedApp() {
     const [actionableSwaps, setActionableSwaps] = React.useState([]);
     // const [btcConnectionState, setBtcConnectionState] = React.useState<BtcConnectionState>(null);
     // @ts-ignore
-    const pathName = window.location.pathname;
+    const pathName = window.location.pathname.split("?")[0];
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.has("affiliate")) {
         window.localStorage.setItem("atomiq-affiliate", searchParams.get("affiliate"));

@@ -18,7 +18,8 @@ export function QuoteSummary(props: {
     type?: "payment" | "swap",
     abortSwap?: () => void,
     balance?: BN,
-    autoContinue?: boolean
+    autoContinue?: boolean,
+    feeRate?: number
 }) {
 
     const [notEnoughForGas, setNotEnoughForGas] = useState<boolean>(false);
@@ -75,6 +76,8 @@ export function QuoteSummary(props: {
             refreshQuote={props.refreshQuote}
             abortSwap={props.abortSwap}
             notEnoughForGas={notEnoughForGas}
+            balance={props.balance}
+            feeRate={props.feeRate}
         />;
     }
 

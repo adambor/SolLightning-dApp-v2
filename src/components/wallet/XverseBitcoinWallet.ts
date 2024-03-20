@@ -3,9 +3,49 @@ import {Address, AddressPurpose, BitcoinNetworkType, GetAddressResponse, getCapa
 import {BitcoinWallet} from "./BitcoinWallet";
 import {FEConstants} from "../../FEConstants";
 import {ChainUtils} from "sollightning-sdk";
-import {sendBtcTransaction} from "sats-connect/dist";
+import {sendBtcTransaction, signTransaction} from "sats-connect/dist";
+import {CoinselectAddressTypes} from "./coinselect2/utils";
+import * as bitcoin from "bitcoinjs-lib";
 
 const network = FEConstants.chain==="DEVNET" ? BitcoinNetworkType.Testnet : BitcoinNetworkType.Mainnet;
+const bitcoinNetwork = FEConstants.chain==="DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+
+function identifyAddressType(pubkey: string, address: string): CoinselectAddressTypes {
+    const pubkeyBuffer = Buffer.from(pubkey, "hex");
+    try {
+        if(
+            bitcoin.payments.p2pkh({
+                pubkey: pubkeyBuffer,
+                network: bitcoinNetwork
+            }).address===address
+        ) return "p2pkh";
+    } catch (e) {console.error(e)}
+    try {
+        if(
+            bitcoin.payments.p2wpkh({
+                pubkey: pubkeyBuffer,
+                network: bitcoinNetwork
+            }).address===address
+        ) return "p2wpkh";
+    } catch (e) {console.error(e)}
+    try {
+        if(
+            bitcoin.payments.p2tr({
+                pubkey: pubkeyBuffer,
+                network: bitcoinNetwork
+            }).address===address
+        ) return "p2tr";
+    } catch (e) {console.error(e)}
+    try {
+        if(
+            bitcoin.payments.p2sh({
+                redeem: bitcoin.payments.p2wpkh({ pubkey: pubkeyBuffer, network: bitcoinNetwork}),
+                network: bitcoinNetwork
+            }).address===address
+        ) return "p2sh-p2wpkh";
+    } catch (e) {console.error(e)}
+    return null;
+}
 
 export class XverseBitcoinWallet extends BitcoinWallet {
 
@@ -13,10 +53,12 @@ export class XverseBitcoinWallet extends BitcoinWallet {
     static walletName: string = "Xverse";
 
     readonly account: Address;
+    readonly addressType: CoinselectAddressTypes;
 
     constructor(account: Address) {
         super();
         this.account = account;
+        this.addressType = identifyAddressType(account.publicKey, account.address);
     }
 
     static async isInstalled(): Promise<boolean> {
@@ -94,6 +136,14 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         return this.account.address;
     }
 
+    getSpendableBalance(): Promise<{
+        balance: BN,
+        feeRate: number,
+        totalFee: number
+    }> {
+        return this._getSpendableBalance(this.account.address, this.addressType);
+    }
+
     toBigInt(num: number): bigint {
         let sum: bigint = 0n;
         for(let i=0n;i<53n;i++) {
@@ -105,24 +155,35 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         return sum;
     }
 
-    async sendTransaction(address: string, amount: BN): Promise<string> {
-        console.log("XVERSE recipient: "+address+" amount: ", amount.toNumber());
+    async getTransactionFee(address: string, amount: BN, feeRate?: number): Promise<number> {
+        const {psbt, fee} = await super._getPsbt(this.account.publicKey, this.account.address, this.addressType, address, amount.toNumber(), feeRate);
+        if(psbt==null) return null;
+        return fee;
+    }
+
+    async sendTransaction(address: string, amount: BN, feeRate?: number): Promise<string> {
+        const {psbt} = await super._getPsbt(this.account.publicKey, this.account.address, this.addressType, address, amount.toNumber(), feeRate);
+
+        if(psbt==null) {
+            throw new Error("Not enough balance!");
+        }
+
         let txId: string = null;
         let cancelled: boolean = false;
-        await sendBtcTransaction({
+        await signTransaction({
             payload: {
                 network: {
                     type: network
                 },
-                recipients: [
-                    {
-                        address,
-                        amountSats: this.toBigInt(amount.toNumber())
-                    }
-                ],
-                senderAddress: this.account.address
+                message: "Send a swap transaction",
+                psbtBase64: psbt.toBase64(),
+                broadcast: true,
+                inputsToSign: [{
+                    address: this.account.address,
+                    signingIndexes: psbt.txInputs.map(e => e.index)
+                }]
             },
-            onFinish: (_txId: string) => {txId = _txId},
+            onFinish: (resp: {txId?: string}) => {txId = resp.txId},
             onCancel: () => {cancelled = true}
         });
 

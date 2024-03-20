@@ -117,15 +117,15 @@ export function BitcoinWalletButton(props: {}) {
     );
 }
 
-const BitcoinConnectedWallet = React.forwardRef<any, any>(({ bitcoinWallet, onClick }, ref) => (
+const BitcoinConnectedWallet = React.forwardRef<any, any>(({ bitcoinWallet, onClick, noText }, ref) => (
     <div className={"d-flex flex-row align-items-center cursor-pointer"} onClick={onClick}>
         <Icon className="text-success d-flex align-items-center me-1" icon={ic_brightness_1} size={12}/>
         <img width={16} height={16} src={bitcoinWallet.getIcon()} className="me-1"/>
-        {bitcoinWallet.getName()}
+        {!noText ? bitcoinWallet.getName() : ""}
     </div>
 ));
 
-export function BitcoinWalletAnchor(props: {className?: string}) {
+export function BitcoinWalletAnchor(props: {className?: string, noText?: boolean}) {
 
     const {loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet, setBitcoinWallet, error} = useBitcoinWalletChooser();
 
@@ -146,7 +146,7 @@ export function BitcoinWalletAnchor(props: {className?: string}) {
                 </a>
             ) : (
                 <Dropdown align={{md: "start"}}>
-                    <Dropdown.Toggle as={BitcoinConnectedWallet} id="dropdown-custom-components" className={props.className} bitcoinWallet={bitcoinWallet}>
+                    <Dropdown.Toggle as={BitcoinConnectedWallet} id="dropdown-custom-components" className={props.className} bitcoinWallet={bitcoinWallet} noText={props.noText}>
                         Custom toggle
                     </Dropdown.Toggle>
 

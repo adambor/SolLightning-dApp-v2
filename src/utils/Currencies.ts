@@ -4,13 +4,16 @@ import * as BN from "bn.js";
 import BigNumber from "bignumber.js";
 import {smart} from "@babel/template";
 
+
+export const btcCurrency: CurrencySpec = {
+    name: "Bitcoin (on-chain)",
+    ticker: "BTC",
+    decimals: 8,
+    icon: "/icons/crypto/BTC.svg"
+};
+
 export const bitcoinCurrencies: CurrencySpec[] = [
-    {
-        name: "Bitcoin (on-chain)",
-        ticker: "BTC",
-        decimals: 8,
-        icon: "/icons/crypto/BTC.svg"
-    },
+    btcCurrency,
     {
         name: "Bitcoin (lightning)",
         ticker: "BTC-LN",
@@ -18,13 +21,6 @@ export const bitcoinCurrencies: CurrencySpec[] = [
         icon: "/icons/crypto/BTC.svg"
     }
 ];
-
-export const btcCurrency: CurrencySpec = {
-    name: "Bitcoin",
-    ticker: "BTC",
-    decimals: 8,
-    icon: "/icons/crypto/BTC.svg"
-};
 
 export const nativeCurrency: CurrencySpec = {
     name: "Solana",
@@ -56,7 +52,8 @@ export type CurrencySpec = {
     ticker: string,
     decimals: number,
     icon: string,
-    address?: any
+    address?: any,
+    minBalance?: BN
 }
 
 export function isCurrencySpec(val: any) {
@@ -105,6 +102,7 @@ export function fromHumanReadable(amount: BigNumber, currencySpec: CurrencySpec 
 }
 
 export function fromHumanReadableString(amount: string, currencySpec: CurrencySpec | PublicKey | string): BN {
+    if(amount==="") return null;
     let spec: CurrencySpec;
     if(!isCurrencySpec(currencySpec)) {
         spec = scCurrencyMap[currencySpec.toString()];

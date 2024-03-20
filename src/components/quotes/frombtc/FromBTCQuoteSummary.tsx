@@ -11,6 +11,7 @@ import * as React from "react";
 import {useLocation} from "react-router-dom";
 import {useNavigate} from "react-router-dom";
 import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
+import * as BN from "bn.js";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -18,7 +19,9 @@ export function FromBTCQuoteSummary(props: {
     setAmountLock: (isLocked: boolean) => void,
     type?: "payment" | "swap",
     abortSwap?: () => void,
-    notEnoughForGas: boolean
+    notEnoughForGas: boolean,
+    feeRate?: number,
+    balance?: BN
 }) {
     const {bitcoinWallet, setBitcoinWallet} = useContext(BitcoinWalletContext);
     const [bitcoinError, setBitcoinError] = useState<string>(null);
@@ -70,7 +73,7 @@ export function FromBTCQuoteSummary(props: {
         setSendTransactionLoading(true);
         txLoading.current = true;
         setBitcoinError(null);
-        bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount()).then(txId => {
+        bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount(), props.feeRate!=null && props.feeRate!==0 ? props.feeRate : null).then(txId => {
             setSendTransactionLoading(false);
             txLoading.current = false;
             setTransactionSent(txId);
@@ -234,6 +237,8 @@ export function FromBTCQuoteSummary(props: {
         setShowCopyOverlay(num);
     };
 
+    const hasEnoughBalance = props.balance==null || props.quote==null ? true : props.balance.gte(props.quote.getInAmount());
+
     return (
         <>
             {error!=null ? (
@@ -270,7 +275,7 @@ export function FromBTCQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas} size="lg">
+                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg">
                             {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                             Initiate swap
                         </Button>

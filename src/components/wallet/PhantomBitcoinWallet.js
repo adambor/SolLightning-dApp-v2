@@ -49,8 +49,17 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
     getReceiveAddress() {
         return this.account.address;
     }
-    async sendTransaction(address, amount) {
-        const psbt = await super._getPsbt(this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType], address, amount.toNumber());
+    getSpendableBalance() {
+        return this._getSpendableBalance(this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType]);
+    }
+    async getTransactionFee(address, amount, feeRate) {
+        const { psbt, fee } = await super._getPsbt(this.account.publicKey, this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType], address, amount.toNumber(), feeRate);
+        if (psbt == null)
+            return null;
+        return fee;
+    }
+    async sendTransaction(address, amount, feeRate) {
+        const { psbt } = await super._getPsbt(this.account.publicKey, this.account.address, ADDRESS_FORMAT_MAP[this.account.addressType], address, amount.toNumber(), feeRate);
         if (psbt == null) {
             throw new Error("Not enough balance!");
         }

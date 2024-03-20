@@ -71,7 +71,7 @@ function outputBytes (output: {
   return TX_OUTPUT_BASE + (output.script ? output.script.length : OUTPUT_BYTES[output.type]);
 }
 
-const DUST_THRESHOLDS = {
+export const DUST_THRESHOLDS = {
     "p2sh-p2wpkh": 540,
     "p2wpkh": 294,
     "p2tr": 330,

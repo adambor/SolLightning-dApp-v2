@@ -1,6 +1,6 @@
 import {FloatingLabel, Form, InputGroup, OverlayTrigger, Tooltip} from "react-bootstrap";
 import * as React from "react";
-import {useRef} from "react";
+import {useEffect, useRef} from "react";
 import BigNumber from "bignumber.js";
 
 import {copy} from 'react-icons-kit/fa/copy';
@@ -31,6 +31,13 @@ const numberValidator = (value, props) => {
         }
     }
 };
+
+function bnEqual(a: BigNumber, b: BigNumber) {
+    if(a==null && b==null) return true;
+    if(a!=null && b==null) return false;
+    if(a==null && b!=null) return false;
+    return a.eq(b);
+}
 
 function ValidatedInput(props : {
     className?: any,
@@ -78,6 +85,8 @@ function ValidatedInput(props : {
         validated: null
     });
 
+    const value = props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value;
+
     const inputRef = useRef<HTMLInputElement>(null);
     const inputTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -98,10 +107,20 @@ function ValidatedInput(props : {
 
         },
         getValue: () => {
-            return props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value;
+            return value;
         },
         input: props.type==="textarea" ? inputTextAreaRef : inputRef
     };
+
+    const minMaxRef = useRef<{min: BigNumber, max: BigNumber}>(null);
+    useEffect(() => {
+        if(minMaxRef.current!=null && bnEqual(minMaxRef.current.min, props.min) && bnEqual(minMaxRef.current.max, props.max)) return;
+        refObj.validate();
+        minMaxRef.current = {min: props.min, max: props.max};
+    }, [props.min, props.max]);
+    useEffect(() => {
+        refObj.validate();
+    }, [value]);
 
     if(props.inputRef!=null) {
         props.inputRef.current = refObj;
@@ -128,7 +147,7 @@ function ValidatedInput(props : {
                     setState(obj);
                     if(props.onChange!=null) props.onChange(evnt.target.value);
                 }}
-                value={props.value==null ? state.value : props.value}
+                value={value}
                 className={inputClassName}
             >
                 {props.options==null ? "" : props.options.map((e) => {
@@ -161,7 +180,7 @@ function ValidatedInput(props : {
                         setState(obj);
                         if(props.onChange!=null) props.onChange(evnt.target.value);
                     }}
-                    value={props.value==null ? state.value : props.value}
+                    value={value}
                     className={inputClassName}
                 />
                 {props.copyEnabled ? (
@@ -209,7 +228,7 @@ function ValidatedInput(props : {
                     min={props.min!=null ? props.min.toString(10): null}
                     max={props.max!=null ? props.max.toString(10): null}
                     step={props.step!=null ? props.step.toString(10): null}
-                    value={props.value==null ? state.value : props.value}
+                    value={value}
                     className={inputClassName}
                 />
                 {props.copyEnabled ? (
@@ -259,7 +278,7 @@ function ValidatedInput(props : {
                                 setState(obj);
                                 if(props.onChange!=null) props.onChange(evnt.target.checked);
                             }}
-                            checked={props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value}
+                            checked={value}
                         />
                     ) : (
                         <>

@@ -2,12 +2,59 @@ import { AddressPurpose, BitcoinNetworkType, getCapabilities, getAddress } from 
 import { BitcoinWallet } from "./BitcoinWallet";
 import { FEConstants } from "../../FEConstants";
 import { ChainUtils } from "sollightning-sdk";
-import { sendBtcTransaction } from "sats-connect/dist";
+import { signTransaction } from "sats-connect/dist";
+import * as bitcoin from "bitcoinjs-lib";
 const network = FEConstants.chain === "DEVNET" ? BitcoinNetworkType.Testnet : BitcoinNetworkType.Mainnet;
+const bitcoinNetwork = FEConstants.chain === "DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
+function identifyAddressType(pubkey, address) {
+    const pubkeyBuffer = Buffer.from(pubkey, "hex");
+    try {
+        if (bitcoin.payments.p2pkh({
+            pubkey: pubkeyBuffer,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2pkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2wpkh({
+            pubkey: pubkeyBuffer,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2wpkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2tr({
+            pubkey: pubkeyBuffer,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2tr";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2sh({
+            redeem: bitcoin.payments.p2wpkh({ pubkey: pubkeyBuffer, network: bitcoinNetwork }),
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2sh-p2wpkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    return null;
+}
 export class XverseBitcoinWallet extends BitcoinWallet {
     constructor(account) {
         super();
         this.account = account;
+        this.addressType = identifyAddressType(account.publicKey, account.address);
     }
     static async isInstalled() {
         let success = false;
@@ -76,6 +123,9 @@ export class XverseBitcoinWallet extends BitcoinWallet {
     getReceiveAddress() {
         return this.account.address;
     }
+    getSpendableBalance() {
+        return this._getSpendableBalance(this.account.address, this.addressType);
+    }
     toBigInt(num) {
         let sum = 0n;
         for (let i = 0n; i < 53n; i++) {
@@ -86,24 +136,33 @@ export class XverseBitcoinWallet extends BitcoinWallet {
         }
         return sum;
     }
-    async sendTransaction(address, amount) {
-        console.log("XVERSE recipient: " + address + " amount: ", amount.toNumber());
+    async getTransactionFee(address, amount, feeRate) {
+        const { psbt, fee } = await super._getPsbt(this.account.publicKey, this.account.address, this.addressType, address, amount.toNumber(), feeRate);
+        if (psbt == null)
+            return null;
+        return fee;
+    }
+    async sendTransaction(address, amount, feeRate) {
+        const { psbt } = await super._getPsbt(this.account.publicKey, this.account.address, this.addressType, address, amount.toNumber(), feeRate);
+        if (psbt == null) {
+            throw new Error("Not enough balance!");
+        }
         let txId = null;
         let cancelled = false;
-        await sendBtcTransaction({
+        await signTransaction({
             payload: {
                 network: {
                     type: network
                 },
-                recipients: [
-                    {
-                        address,
-                        amountSats: this.toBigInt(amount.toNumber())
-                    }
-                ],
-                senderAddress: this.account.address
+                message: "Send a swap transaction",
+                psbtBase64: psbt.toBase64(),
+                broadcast: true,
+                inputsToSign: [{
+                        address: this.account.address,
+                        signingIndexes: psbt.txInputs.map(e => e.index)
+                    }]
             },
-            onFinish: (_txId) => { txId = _txId; },
+            onFinish: (resp) => { txId = resp.txId; },
             onCancel: () => { cancelled = true; }
         });
         if (cancelled)
