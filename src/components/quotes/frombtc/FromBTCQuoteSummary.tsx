@@ -323,7 +323,10 @@ export function FromBTCQuoteSummary(props: {
                                             </Tooltip>
                                         )}
                                     </Overlay>
-                                    <div ref={qrCodeRef}>
+                                    <Alert variant="warning" className="mb-3">
+                                        <label>Please make sure that you send an <b><u>EXACT</u></b> amount in BTC, different amount wouldn't be accepted and you might loose funds!</label>
+                                    </Alert>
+                                    <div ref={qrCodeRef} className="mb-2">
                                         <QRCodeSVG
                                             value={props.quote.getQrData()}
                                             size={300}
@@ -334,7 +337,7 @@ export function FromBTCQuoteSummary(props: {
                                             }}
                                         />
                                     </div>
-                                    <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
+                                    <label>Please send exactly <strong>{toHumanReadableString(props.quote.getInAmount(), btcCurrency)}</strong> {btcCurrency.ticker} to the address</label>
                                     <ValidatedInput
                                         type={"text"}
                                         value={props.quote.getAddress()}
