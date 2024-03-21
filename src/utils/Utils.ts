@@ -1,3 +1,6 @@
+import * as BN from "bn.js";
+import {FromBTCLNSwap, FromBTCSwap, ISwap, IToBTCSwap} from "sollightning-sdk";
+
 export function getTimeDeltaText(timestamp: number, forward?: boolean): string {
     const delta = forward ? timestamp-Date.now() : Date.now()-timestamp;
     const deltaSeconds = Math.floor(delta/1000);
@@ -42,4 +45,28 @@ export function elementInViewport(el): boolean {
         (top + height) <= (window.pageYOffset + window.innerHeight) &&
         (left + width) <= (window.pageXOffset + window.innerWidth)
     );
+}
+
+//Workaround to variable returned PPM fee due to referral programme
+export function getFeePPM(swap: ISwap): BN {
+    if(swap instanceof IToBTCSwap) {
+        const fee = swap.getSwapFee();
+        const baseFeeInToken = swap.pricingInfo.satsBaseFee.mul(swap.getInAmountWithoutFee()).div(swap.getOutAmount());
+        const feeWithoutBaseFee = fee.sub(baseFeeInToken);
+        return feeWithoutBaseFee.mul(new BN(1000000)).div(swap.getInAmountWithoutFee());
+    } else if(swap instanceof FromBTCLNSwap) {
+        const fee = swap.getFee();
+        const baseFeeInToken = swap.pricingInfo.satsBaseFee.mul(swap.getOutAmountWithoutFee()).div(swap.getInAmount());
+        const feeWithoutBaseFee = fee.sub(baseFeeInToken);
+        return feeWithoutBaseFee.mul(new BN(1000000)).div(swap.getOutAmountWithoutFee());
+    } else if(swap instanceof FromBTCSwap) {
+        const fee = swap.getFee();
+        const baseFeeInToken = swap.pricingInfo.satsBaseFee.mul(swap.getOutAmountWithoutFee()).div(swap.getInAmount());
+        const feeWithoutBaseFee = fee.sub(baseFeeInToken);
+        return feeWithoutBaseFee.mul(new BN(1000000)).div(swap.getOutAmountWithoutFee());
+    }
+}
+export function getFeePct(swap: ISwap, digits: number): BN {
+    const feePPM = getFeePPM(swap).add(new BN(5).mul(new BN(10).pow(new BN(3-digits))));
+    return feePPM.div(new BN(10).pow(new BN(4-digits))).mul(new BN(10).pow(new BN(4-digits)));
 }

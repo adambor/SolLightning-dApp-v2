@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { Alert, Button, CloseButton, Dropdown, ListGroup, Modal } from "react-bootstrap";
+import { Button, CloseButton, Dropdown, ListGroup, Modal } from "react-bootstrap";
 import * as React from "react";
 import { useContext, useEffect, useState } from "react";
 import { BitcoinWalletContext } from "../context/BitcoinWalletContext";
@@ -70,5 +70,5 @@ export function BitcoinWalletAnchor(props) {
                                     setBitcoinWallet(null);
                                 }, children: "Disconnect" }), usableWallets != null && usableWallets.length > 1 ? (_jsx(Dropdown.Item, { eventKey: "2", onClick: () => {
                                     connectWallet();
-                                }, children: "Change wallet" })) : ""] })] })), error != null ? (_jsx(Alert, { children: error })) : ""] }));
+                                }, children: "Change wallet" })) : ""] })] }))] }));
 }

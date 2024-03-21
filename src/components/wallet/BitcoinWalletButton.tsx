@@ -163,9 +163,9 @@ export function BitcoinWalletAnchor(props: {className?: string, noText?: boolean
                 </Dropdown>
             )}
 
-            {error!=null ? (
-                <Alert>{error}</Alert>
-            ) : ""}
+            {/*{error!=null ? (*/}
+                {/*<Alert>{error}</Alert>*/}
+            {/*) : ""}*/}
         </>
     );
 }

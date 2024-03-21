@@ -215,6 +215,8 @@ export function SwapExplorer(props: {}) {
                                                     <Badge bg="primary" className="width-fill">Pending</Badge>
                                                 ) : row.success ? (
                                                     <Badge bg="success" className="width-fill">Success</Badge>
+                                                ) : row.direction==="FromBTC" ? (
+                                                    <Badge bg="warning" className="width-fill bg-atomiq-orange">Expired</Badge>
                                                 ) : (
                                                     <Badge bg="danger" className="width-fill">Refunded</Badge>
                                                 )}
