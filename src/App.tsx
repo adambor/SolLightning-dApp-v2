@@ -15,7 +15,20 @@ import {SwapsContext} from "./components/context/SwapsContext";
 import {ChainUtils, FromBTCSwap, ISwap} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
-import {Alert, Badge, Button, Container, Form, Nav, Navbar, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
+import {
+    Alert,
+    Badge,
+    Button,
+    Col,
+    Container,
+    Form,
+    Nav,
+    Navbar,
+    OverlayTrigger,
+    Row,
+    Spinner,
+    Tooltip
+} from "react-bootstrap";
 import {FAQ} from "./info/FAQ";
 import {About} from "./info/About";
 import {Map} from "./info/Map";
@@ -34,6 +47,7 @@ import {SwapExplorer} from "./components/explorer/SwapExplorer";
 import {ic_explore} from 'react-icons-kit/md/ic_explore';
 import {AffiliateScreen} from "./components/affiliate/AffiliateScreen";
 import {gift} from 'react-icons-kit/fa/gift';
+import {heart} from 'react-icons-kit/fa/heart';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -63,6 +77,8 @@ function WrappedApp() {
     if(searchParams.has("affiliate")) {
         window.localStorage.setItem("atomiq-affiliate", searchParams.get("affiliate"));
     }
+
+    const affiliateLink = searchParams.get("affiliate") || window.localStorage.getItem("atomiq-affiliate");
 
     const loadSwapper = async(_provider: AnchorProvider) => {
         setSwapperLoadingError(null);
@@ -232,7 +248,7 @@ function WrappedApp() {
                     </div>
 
                     <Navbar.Collapse role="" id="basic-navbar-nav">
-                        <Nav className="d-flex d-lg-none me-auto text-start border-top border-bottom border-dark-subtle my-2">
+                        <Nav className={"d-flex d-lg-none me-auto text-start border-top border-dark-subtle my-2 "+(swapper==null ? "" : "border-bottom")}>
                             {noWalletPaths.has(pathName) || pathName==="/affiliate" ? (
                                 <Nav.Link href="/" className="d-flex flex-row align-items-center"><Icon icon={exchange} className="d-flex me-1"/><span>Swap</span></Nav.Link>
                             ) : ""}
@@ -303,17 +319,14 @@ function WrappedApp() {
                             ) : ""}
                             {/*<Nav.Link href="https://github.com/adambor/SolLightning-sdk" target="_blank">Integrate</Nav.Link>*/}
                         </Nav>
-                        <Nav className="ms-auto">
+                        {swapper!=null ? (<Nav className="ms-auto">
                             <div className="d-flex flex-row align-items-center" style={{height: "3rem"}}>
-                                <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
-                                <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="mx-2"><img className="social-icon" src="/icons/socials/telegram.png"/></a>
-                                <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="ms-2 me-4"><img className="social-icon" src="/icons/socials/github.png"/></a>
-                                {swapper!=null ? (<div className="d-flex ms-auto">
+                                <div className="d-flex ms-auto">
                                     {/*<BitcoinWalletButton/>*/}
                                     <WalletMultiButton className="bg-primary"/>
-                                </div>) : ""}
+                                </div>
                             </div>
-                        </Nav>
+                        </Nav>) : ""}
                     </Navbar.Collapse>
 
                 </Container>
@@ -383,6 +396,32 @@ function WrappedApp() {
                         </Routes>
                     </BrowserRouter>
                 </div>
+                <Row className="mt-auto bg-dark bg-opacity-50 g-0 p-2">
+
+                    <Col className="d-flex flex-row">
+                        <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2 hover-opacity-75 d-flex align-items-center"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
+                        <a href="https://github.com/adambor/SolLightning-readme" target="_blank" className="mx-2 hover-opacity-75 d-flex align-items-center"><img className="social-icon" src="/icons/socials/github.png"/></a>
+                        <a href="https://docs.atomiq.exchange/" target="_blank" className="mx-2 hover-opacity-75 d-flex align-items-center"><img className="social-icon" src="/icons/socials/gitbook.png"/></a>
+                    </Col>
+
+                    {affiliateLink!=null && affiliateLink!=="" ? (
+                        <Col xs={"auto"} className="d-flex justify-content-center">
+                            <OverlayTrigger overlay={<Tooltip id="referral-tooltip">
+                                <span>Swap fee reduced to 0.2%, thanks to being referred to atomiq.exchange!</span>
+                            </Tooltip>}>
+                                <div className="font-small text-white opacity-75 d-flex align-items-center ">
+                                    <Icon icon={heart} className="d-flex align-items-center me-1"/><span className="text-decoration-dotted">Using referral link</span>
+                                </div>
+                            </OverlayTrigger>
+                        </Col>
+                    ) : ""}
+
+                    <Col className="d-flex justify-content-end">
+                        <a href="https://t.me/+_MQNtlBXQ2Q1MGEy" target="_blank" className="ms-auto d-flex flex-row align-items-center text-white text-decoration-none hover-opacity-75 font-small">
+                            <img className="social-icon me-1" src="/icons/socials/telegram.png"/>Talk to us
+                        </a>
+                    </Col>
+                </Row>
             </SwapsContext.Provider>
         </>
     )

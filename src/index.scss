@@ -269,9 +269,9 @@ code {
 }
 
 .social-icon {
-  height: 20px;
-  width: 20px;
-  margin-top: -4px;
+  height: 16px;
+  width: 16px;
+  //margin-top: -4px;
 }
 
 .accordion-button {
@@ -391,4 +391,16 @@ code {
 
 .width-300px {
   width: 300px;
+}
+
+.bg-atomiq-orange {
+  background: $atomiq-orange !important;
+}
+
+.hover-opacity-75 {
+  opacity: 0.75;
+}
+
+.hover-opacity-75:hover{
+  opacity: 1;
 }
