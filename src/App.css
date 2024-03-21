@@ -138,3 +138,5 @@
 .mt-n2 {
   margin-top: -0.5rem !important;
 }
+
+.dottedUnderline { border-bottom: 1px dotted; }

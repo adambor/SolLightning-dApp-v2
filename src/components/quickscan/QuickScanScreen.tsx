@@ -61,7 +61,7 @@ export function QuickScanScreen(props: {
                 <div className="d-flex align-content-center justify-content-center flex-fill" style={{
                     position: "fixed",
                     top: "4rem",
-                    bottom: "4rem",
+                    bottom: "37px",
                     right: "0px",
                     left: "0px",
                     zIndex: 0
