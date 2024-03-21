@@ -1,6 +1,6 @@
 import {FloatingLabel, Form, InputGroup, OverlayTrigger, Tooltip} from "react-bootstrap";
 import * as React from "react";
-import {useRef} from "react";
+import {useEffect, useRef} from "react";
 import BigNumber from "bignumber.js";
 
 import {copy} from 'react-icons-kit/fa/copy';
@@ -31,6 +31,13 @@ const numberValidator = (value, props) => {
         }
     }
 };
+
+function bnEqual(a: BigNumber, b: BigNumber) {
+    if(a==null && b==null) return true;
+    if(a!=null && b==null) return false;
+    if(a==null && b!=null) return false;
+    return a.eq(b);
+}
 
 function ValidatedInput(props : {
     className?: any,
@@ -69,13 +76,16 @@ function ValidatedInput(props : {
 
     disabled?: boolean,
     validated?: string,
-    readOnly?: boolean
+    readOnly?: boolean,
+    successFeedback?: string
 }) {
 
     const [state, setState] = React.useState<{value: string, validated: string}>({
         value: "",
         validated: null
     });
+
+    const value = props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value;
 
     const inputRef = useRef<HTMLInputElement>(null);
     const inputTextAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -97,10 +107,20 @@ function ValidatedInput(props : {
 
         },
         getValue: () => {
-            return props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value;
+            return value;
         },
         input: props.type==="textarea" ? inputTextAreaRef : inputRef
     };
+
+    const minMaxRef = useRef<{min: BigNumber, max: BigNumber}>(null);
+    useEffect(() => {
+        if(minMaxRef.current!=null && bnEqual(minMaxRef.current.min, props.min) && bnEqual(minMaxRef.current.max, props.max)) return;
+        refObj.validate();
+        minMaxRef.current = {min: props.min, max: props.max};
+    }, [props.min, props.max]);
+    useEffect(() => {
+        refObj.validate();
+    }, [value]);
 
     if(props.inputRef!=null) {
         props.inputRef.current = refObj;
@@ -114,6 +134,7 @@ function ValidatedInput(props : {
             <Form.Select
                 disabled={props.disabled}
                 isInvalid={!!(props.validated || state.validated)}
+                isValid={!!props.successFeedback}
                 defaultValue={props.defaultValue}
                 size={props.size}
                 id={props.inputId}
@@ -126,7 +147,7 @@ function ValidatedInput(props : {
                     setState(obj);
                     if(props.onChange!=null) props.onChange(evnt.target.value);
                 }}
-                value={props.value==null ? state.value : props.value}
+                value={value}
                 className={inputClassName}
             >
                 {props.options==null ? "" : props.options.map((e) => {
@@ -141,6 +162,7 @@ function ValidatedInput(props : {
                     ref={inputTextAreaRef}
                     size={props.size}
                     isInvalid={!!(props.validated || state.validated)}
+                    isValid={!!props.successFeedback}
                     type={props.type || "text"}
                     as={"textarea"}
                     placeholder={props.placeholder}
@@ -158,7 +180,7 @@ function ValidatedInput(props : {
                         setState(obj);
                         if(props.onChange!=null) props.onChange(evnt.target.value);
                     }}
-                    value={props.value==null ? state.value : props.value}
+                    value={value}
                     className={inputClassName}
                 />
                 {props.copyEnabled ? (
@@ -186,6 +208,7 @@ function ValidatedInput(props : {
                     ref={inputRef}
                     size={props.size}
                     isInvalid={!!(props.validated || state.validated)}
+                    isValid={!!props.successFeedback}
                     type={props.type || "text"}
                     placeholder={props.placeholder}
                     defaultValue={props.defaultValue}
@@ -205,7 +228,7 @@ function ValidatedInput(props : {
                     min={props.min!=null ? props.min.toString(10): null}
                     max={props.max!=null ? props.max.toString(10): null}
                     step={props.step!=null ? props.step.toString(10): null}
-                    value={props.value==null ? state.value : props.value}
+                    value={value}
                     className={inputClassName}
                 />
                 {props.copyEnabled ? (
@@ -240,6 +263,7 @@ function ValidatedInput(props : {
                             disabled={props.disabled}
                             ref={inputRef}
                             isInvalid={!!(props.validated || state.validated)}
+                            isValid={!!props.successFeedback}
                             type={"checkbox"}
                             readOnly={props.readOnly}
                             label={props.placeholder}
@@ -254,7 +278,7 @@ function ValidatedInput(props : {
                                 setState(obj);
                                 if(props.onChange!=null) props.onChange(evnt.target.checked);
                             }}
-                            checked={props.value==null ? (state.value==="" ? props.defaultValue : state.value) : props.value}
+                            checked={value}
                         />
                     ) : (
                         <>
@@ -274,10 +298,10 @@ function ValidatedInput(props : {
                             ) : ""}
                         </>
                     )}
-                    <Form.Control.Feedback type="invalid">
+                    <Form.Control.Feedback type={props.successFeedback ? "valid" : "invalid"}>
                         <div className="d-flex align-items-center">
-                            <Icon className="mb-1 me-1" icon={exclamationTriangle}/>
-                            <span>{props.validated || state.validated}</span>
+                            {props.successFeedback==null ? (<Icon className="mb-1 me-1" icon={exclamationTriangle}/>) : ""}
+                            <span>{props.successFeedback || props.validated || state.validated}</span>
                         </div>
                     </Form.Control.Feedback>
                 </InputGroup>

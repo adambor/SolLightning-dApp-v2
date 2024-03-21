@@ -97,6 +97,9 @@
 .font-small {
   font-size: 0.875em;
 }
+.font-smallest {
+  font-size: 0.75rem;
+}
 
 .swap-direction-wrapper {
   margin-top: -12px;

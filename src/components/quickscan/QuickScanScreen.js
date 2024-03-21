@@ -41,14 +41,14 @@ export function QuickScanScreen(props) {
         };
     }, []);
     console.log("Currency select: ", selectedCurrency);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: true }), _jsxs("div", Object.assign({ className: "d-flex flex-column flex-grow-1" }, { children: [_jsx("div", Object.assign({ className: "d-flex align-content-center justify-content-center flex-fill", style: {
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: true }), _jsxs("div", { className: "d-flex flex-column flex-grow-1", children: [_jsx("div", { className: "d-flex align-content-center justify-content-center flex-fill", style: {
                             position: "fixed",
                             top: "4rem",
                             bottom: "37px",
                             right: "0px",
                             left: "0px",
                             zIndex: 0
-                        } }, { children: _jsx(QRScanner, { onResult: (result, err) => {
+                        }, children: _jsx(QRScanner, { onResult: (result, err) => {
                                 if (result != null) {
                                     if (props.onScanned != null) {
                                         props.onScanned(result);
@@ -58,12 +58,12 @@ export function QuickScanScreen(props) {
                                         navigate("/scan/2?address=" + encodeURIComponent(result) + (selectedCurrency == null ? "" : "&token=" + encodeURIComponent(selectedCurrency.ticker)));
                                     }
                                 }
-                            }, camera: "environment" }) })), _jsx("div", Object.assign({ className: "pb-5 px-3 mt-auto", style: {
+                            }, camera: "environment" }) }), _jsx("div", { className: "pb-5 px-3 mt-auto", style: {
                             position: "fixed",
                             bottom: "0rem",
                             right: "0px",
                             left: "0px",
-                        } }, { children: _jsxs("div", Object.assign({ className: "d-flex justify-content-center align-items-center flex-column" }, { children: [_jsx("div", Object.assign({ className: "mx-auto " + (NFCScanning === LNNFCStartResult.OK ? "" : "mb-5") }, { children: _jsxs("div", Object.assign({ className: "text-white p-3 position-relative" }, { children: [_jsx("label", { children: "Pay with" }), _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: val => {
+                        }, children: _jsxs("div", { className: "d-flex justify-content-center align-items-center flex-column", children: [_jsx("div", { className: "mx-auto " + (NFCScanning === LNNFCStartResult.OK ? "" : "mb-5"), children: _jsxs("div", { className: "text-white p-3 position-relative", children: [_jsx("label", { children: "Pay with" }), _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: val => {
                                                     setSelectedCurrency(val);
-                                                }, value: selectedCurrency, className: "bg-dark bg-opacity-25 text-white" })] })) })), NFCScanning === LNNFCStartResult.OK ? (_jsxs(Button, Object.assign({ className: "mb-4 p-2 bg-opacity-25 bg-dark border-0 d-flex align-items-center text-white flex-row" }, { children: [_jsx("span", Object.assign({ className: "position-relative me-1", style: { fontSize: "1.25rem" } }, { children: _jsx("b", { children: "NFC" }) })), _jsx(Icon, { size: 32, icon: ic_contactless })] }))) : ""] })) }))] }))] }));
+                                                }, value: selectedCurrency, className: "bg-dark bg-opacity-25 text-white" })] }) }), NFCScanning === LNNFCStartResult.OK ? (_jsxs(Button, { className: "mb-4 p-2 bg-opacity-25 bg-dark border-0 d-flex align-items-center text-white flex-row", children: [_jsx("span", { className: "position-relative me-1", style: { fontSize: "1.25rem" }, children: _jsx("b", { children: "NFC" }) }), _jsx(Icon, { size: 32, icon: ic_contactless })] })) : ""] }) })] })] }));
 }

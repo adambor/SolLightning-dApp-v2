@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Alert, Button, Overlay, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
 import { QRCodeSVG } from "qrcode.react";
 import { btcCurrency, toHumanReadableString } from "../../../utils/Currencies";
@@ -9,7 +9,15 @@ import Icon from "react-icons-kit";
 import { clipboard } from "react-icons-kit/fa/clipboard";
 import { useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { BitcoinWalletContext } from "../../context/BitcoinWalletContext";
+import { externalLink } from 'react-icons-kit/fa/externalLink';
+import { elementInViewport } from "../../../utils/Utils";
 export function FromBTCQuoteSummary(props) {
+    const { bitcoinWallet, setBitcoinWallet } = useContext(BitcoinWalletContext);
+    const [bitcoinError, setBitcoinError] = useState(null);
+    const [sendTransactionLoading, setSendTransactionLoading] = useState(false);
+    const txLoading = useRef(false);
+    const [transactionSent, setTransactionSent] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
     const [state, setState] = useState(null);
@@ -35,6 +43,27 @@ export function FromBTCQuoteSummary(props) {
         };
     }, [showCopyOverlay]);
     const [txData, setTxData] = useState(null);
+    const sendBitcoinTransaction = () => {
+        console.log("Send bitcoin transaction called!");
+        if (txLoading.current)
+            return;
+        setSendTransactionLoading(true);
+        txLoading.current = true;
+        setBitcoinError(null);
+        bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount(), props.feeRate != null && props.feeRate !== 0 ? props.feeRate : null).then(txId => {
+            setSendTransactionLoading(false);
+            txLoading.current = false;
+            setTransactionSent(txId);
+        }).catch(e => {
+            setSendTransactionLoading(false);
+            txLoading.current = false;
+            console.error(e);
+            setBitcoinError(e.message);
+        });
+    };
+    useEffect(() => {
+        setBitcoinError(null);
+    }, [bitcoinWallet]);
     useEffect(() => {
         if (props.quote == null)
             return () => { };
@@ -65,6 +94,11 @@ export function FromBTCQuoteSummary(props) {
         const stateChange = (state) => {
             setState(state);
             if (state === FromBTCSwapState.CLAIM_COMMITED) {
+                props.quote.getBitcoinPayment().then(resp => {
+                    if (resp == null && bitcoinWallet != null) {
+                        sendBitcoinTransaction();
+                    }
+                });
                 if (!paymentSubscribed) {
                     props.quote.waitForPayment(abortController.signal, null, (txId, confirmations, confirmationTarget) => {
                         setTxData({
@@ -72,7 +106,7 @@ export function FromBTCQuoteSummary(props) {
                             confirmations,
                             confTarget: confirmationTarget
                         });
-                    });
+                    }).catch(e => console.error(e));
                     let paymentInterval;
                     paymentInterval = setInterval(() => {
                         if (abortController.signal.aborted) {
@@ -140,8 +174,38 @@ export function FromBTCQuoteSummary(props) {
     };
     useEffect(() => {
         if (state === FromBTCSwapState.CLAIM_COMMITED) {
-            // @ts-ignore
-            window.scrollBy(0, 99999);
+            let lastScrollTime = 0;
+            let scrollListener = () => {
+                lastScrollTime = Date.now();
+            };
+            window.addEventListener("scroll", scrollListener);
+            const isScrolling = () => lastScrollTime && Date.now() < lastScrollTime + 100;
+            let interval;
+            interval = setInterval(() => {
+                const anchorElement = document.getElementById("scrollAnchor");
+                if (anchorElement == null)
+                    return;
+                if (elementInViewport(anchorElement)) {
+                    clearInterval(interval);
+                    window.removeEventListener("scroll", scrollListener);
+                    scrollListener = null;
+                    interval = null;
+                    return;
+                }
+                if (!isScrolling()) {
+                    // @ts-ignore
+                    window.scrollBy({
+                        left: 0,
+                        top: 99999
+                    });
+                }
+            }, 100);
+            return () => {
+                if (interval != null)
+                    clearInterval(interval);
+                if (scrollListener != null)
+                    window.removeEventListener("scroll", scrollListener);
+            };
         }
     }, [state]);
     const copy = (num) => {
@@ -165,15 +229,18 @@ export function FromBTCQuoteSummary(props) {
         }
         setShowCopyOverlay(num);
     };
-    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, Object.assign({ variant: "danger", className: "mb-3" }, { children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] }))) : "", _jsxs(Alert, Object.assign({ className: "text-center mb-3 d-flex align-items-center flex-column", show: props.notEnoughForGas, variant: "danger", closeVariant: "white" }, { children: [_jsx("strong", { children: "Not enough SOL for fees" }), _jsxs("label", { children: ["You need at least 0.005 SOL to pay for fees and refundable deposit! You can use ", _jsx("b", { children: "Bitcoin Lightning" }), " to swap for gas first & then continue swapping here!"] }), _jsx(Button, Object.assign({ className: "mt-2", variant: "secondary", onClick: () => {
+    const hasEnoughBalance = props.balance == null || props.quote == null ? true : props.balance.gte(props.quote.getInAmount());
+    return (_jsxs(_Fragment, { children: [error != null ? (_jsxs(Alert, { variant: "danger", className: "mb-3", children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] })) : "", _jsxs(Alert, { className: "text-center mb-3 d-flex align-items-center flex-column", show: props.notEnoughForGas, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "Not enough SOL for fees" }), _jsxs("label", { children: ["You need at least 0.005 SOL to pay for fees and refundable deposit! You can use ", _jsx("b", { children: "Bitcoin Lightning" }), " to swap for gas first & then continue swapping here!"] }), _jsx(Button, { className: "mt-2", variant: "secondary", onClick: () => {
                             navigate("/gas", {
                                 state: {
                                     returnPath: location.pathname + location.search
                                 }
                             });
-                        } }, { children: "Swap for gas" }))] })), state === FromBTCSwapState.PR_CREATED ? (_jsxs(_Fragment, { children: [_jsxs("div", Object.assign({ className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 && !loading ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsxs(Button, Object.assign({ onClick: onCommit, disabled: loading || props.notEnoughForGas, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] })))] })) : "", state === FromBTCSwapState.CLAIM_COMMITED ? (txData == null ? (_jsxs(_Fragment, { children: [quoteTimeRemaining === 0 ? "" : (_jsxs("div", Object.assign({ className: "mb-3 tab-accent" }, { children: [_jsx(Overlay, Object.assign({ target: showCopyOverlay === 1 ? copyBtnRef.current : (showCopyOverlay === 2 ? qrCodeRef.current : null), show: showCopyOverlay > 0, placement: "top" }, { children: (props) => (_jsx(Tooltip, Object.assign({ id: "overlay-example" }, props, { children: "Address copied to clipboard!" }))) })), _jsx("div", Object.assign({ ref: qrCodeRef }, { children: _jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true, className: "cursor-pointer", onClick: () => {
-                                        copy(2);
-                                    } }) })), _jsxs("label", { children: ["Please send exactly ", toHumanReadableString(props.quote.getInAmount(), btcCurrency), " ", btcCurrency.ticker, " to the address"] }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress(), textEnd: (_jsx("a", Object.assign({ href: "javascript:void(0);", ref: copyBtnRef, onClick: () => {
-                                        copy(1);
-                                    } }, { children: _jsx(Icon, { icon: clipboard }) }))), inputRef: textFieldRef })] }))), _jsxs("div", Object.assign({ className: "d-flex flex-column mb-3 tab-accent" }, { children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap address expired, please do not send any funds!" })) : (_jsxs("label", { children: ["Swap address expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, Object.assign({ onClick: props.refreshQuote, variant: "secondary" }, { children: "New quote" }))) : (_jsx(Button, Object.assign({ onClick: props.abortSwap, variant: "danger" }, { children: "Abort swap" })))] })) : (_jsxs("div", Object.assign({ className: "d-flex flex-column align-items-center tab-accent" }, { children: [_jsx("label", { children: "Transaction successfully received, waiting for confirmations..." }), _jsx(Spinner, {}), _jsxs("label", { children: [txData.confirmations, " / ", txData.confTarget] }), _jsx("label", { children: "Confirmations" })] })))) : "", state === FromBTCSwapState.BTC_TX_CONFIRMED ? (_jsxs(_Fragment, { children: [_jsx("div", Object.assign({ className: "d-flex flex-column align-items-center tab-accent mb-3" }, { children: _jsx("label", { children: "Transaction received & confirmed" }) })), _jsxs(Button, Object.assign({ onClick: onClaim, disabled: loading, size: "lg" }, { children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] }))] })) : "", state === FromBTCSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, Object.assign({ variant: "success", className: "mb-0" }, { children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] }))) : ""] }));
+                        }, children: "Swap for gas" })] }), state === FromBTCSwapState.PR_CREATED ? (_jsxs(_Fragment, { children: [_jsxs("div", { className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] }), quoteTimeRemaining === 0 && !loading ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsxs(Button, { onClick: onCommit, disabled: loading || props.notEnoughForGas || !hasEnoughBalance, size: "lg", children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Initiate swap"] }))] })) : "", state === FromBTCSwapState.CLAIM_COMMITED ? (txData == null ? (_jsxs(_Fragment, { children: [quoteTimeRemaining === 0 ? "" : (_jsx("div", { className: "mb-3 tab-accent", children: bitcoinWallet != null ? (_jsxs(_Fragment, { children: [bitcoinError != null ? (_jsxs(Alert, { variant: "danger", className: "mb-2", children: [_jsx("strong", { children: "Btc TX failed" }), _jsx("label", { children: bitcoinError })] })) : "", _jsx("div", { className: "d-flex flex-column align-items-center justify-content-center", children: transactionSent != null ? (_jsxs("div", { className: "d-flex flex-column align-items-center tab-accent", children: [_jsx(Spinner, {}), _jsx("label", { children: "Sending Bitcoin transaction..." })] })) : (_jsxs(_Fragment, { children: [_jsxs(Button, { variant: "light", className: "d-flex flex-row align-items-center", disabled: sendTransactionLoading, onClick: sendBitcoinTransaction, children: [sendTransactionLoading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Pay with", _jsx("img", { width: 20, height: 20, src: bitcoinWallet.getIcon(), className: "ms-2 me-1" }), bitcoinWallet.getName()] }), _jsx("small", { className: "mt-2", children: _jsx("a", { href: "javascript:void(0);", onClick: () => setBitcoinWallet(null), children: "Or use a QR code/wallet address" }) })] })) })] })) : (_jsxs(_Fragment, { children: [_jsx(Overlay, { target: showCopyOverlay === 1 ? copyBtnRef.current : (showCopyOverlay === 2 ? qrCodeRef.current : null), show: showCopyOverlay > 0, placement: "top", children: (props) => (_jsx(Tooltip, { id: "overlay-example", ...props, children: "Address copied to clipboard!" })) }), _jsx(Alert, { variant: "warning", className: "mb-3", children: _jsxs("label", { children: ["Please make sure that you send an ", _jsx("b", { children: _jsx("u", { children: "EXACT" }) }), " amount in BTC, different amount wouldn't be accepted and you might loose funds!"] }) }), _jsx("div", { ref: qrCodeRef, className: "mb-2", children: _jsx(QRCodeSVG, { value: props.quote.getQrData(), size: 300, includeMargin: true, className: "cursor-pointer", onClick: () => {
+                                            copy(2);
+                                        } }) }), _jsxs("label", { children: ["Please send exactly ", _jsx("strong", { children: toHumanReadableString(props.quote.getInAmount(), btcCurrency) }), " ", btcCurrency.ticker, " to the address"] }), _jsx(ValidatedInput, { type: "text", value: props.quote.getAddress(), textEnd: (_jsx("a", { href: "javascript:void(0);", ref: copyBtnRef, onClick: () => {
+                                            copy(1);
+                                        }, children: _jsx(Icon, { icon: clipboard }) })), inputRef: textFieldRef }), _jsx("div", { className: "d-flex justify-content-center mt-2", children: _jsxs(Button, { variant: "light", className: "d-flex flex-row align-items-center justify-content-center", onClick: () => {
+                                            window.location.href = props.quote.getQrData();
+                                        }, children: [_jsx(Icon, { icon: externalLink, className: "d-flex align-items-center me-2" }), " Open in BTC wallet app"] }) })] })) })), _jsxs("div", { className: "d-flex flex-column mb-3 tab-accent", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap address expired, please do not send any funds!" })) : (_jsxs("label", { children: ["Swap address expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] }), quoteTimeRemaining === 0 ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsx(Button, { onClick: props.abortSwap, variant: "danger", children: "Abort swap" }))] })) : (_jsxs("div", { className: "d-flex flex-column align-items-center tab-accent", children: [_jsx("label", { children: "Transaction successfully received, waiting for confirmations..." }), _jsx(Spinner, {}), _jsxs("label", { children: [txData.confirmations, " / ", txData.confTarget] }), _jsx("label", { children: "Confirmations" })] }))) : "", state === FromBTCSwapState.BTC_TX_CONFIRMED ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "d-flex flex-column align-items-center tab-accent mb-3", children: _jsx("label", { children: "Transaction received & confirmed" }) }), _jsxs(Button, { onClick: onClaim, disabled: loading, size: "lg", children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] })] })) : "", state === FromBTCSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, { variant: "success", className: "mb-0", children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] })) : "", _jsx("div", { id: "scrollAnchor" })] }));
 }

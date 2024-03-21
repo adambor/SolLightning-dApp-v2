@@ -2,13 +2,14 @@ import { PublicKey } from "@solana/web3.js";
 import { FEConstants } from "../FEConstants";
 import * as BN from "bn.js";
 import BigNumber from "bignumber.js";
+export const btcCurrency = {
+    name: "Bitcoin (on-chain)",
+    ticker: "BTC",
+    decimals: 8,
+    icon: "/icons/crypto/BTC.svg"
+};
 export const bitcoinCurrencies = [
-    {
-        name: "Bitcoin (on-chain)",
-        ticker: "BTC",
-        decimals: 8,
-        icon: "/icons/crypto/BTC.svg"
-    },
+    btcCurrency,
     {
         name: "Bitcoin (lightning)",
         ticker: "BTC-LN",
@@ -16,12 +17,6 @@ export const bitcoinCurrencies = [
         icon: "/icons/crypto/BTC.svg"
     }
 ];
-export const btcCurrency = {
-    name: "Bitcoin",
-    ticker: "BTC",
-    decimals: 8,
-    icon: "/icons/crypto/BTC.svg"
-};
 export const nativeCurrency = {
     name: "Solana",
     ticker: "SOL",
@@ -86,6 +81,8 @@ export function fromHumanReadable(amount, currencySpec) {
     return new BN(amount.multipliedBy(new BigNumber(10).pow(new BigNumber(spec.decimals))).toFixed(0));
 }
 export function fromHumanReadableString(amount, currencySpec) {
+    if (amount === "")
+        return null;
     let spec;
     if (!isCurrencySpec(currencySpec)) {
         spec = scCurrencyMap[currencySpec.toString()];

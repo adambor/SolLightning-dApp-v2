@@ -1,101 +1,74 @@
-import { Fragment as _Fragment, jsx as _jsx } from "react/jsx-runtime";
-import { Button } from "react-bootstrap";
-import { BitcoinNetworkType, getCapabilities } from "sats-connect";
-import { useEffect, useState } from "react";
-export function BitcoinWalletButton(props) {
-    const [isInstalled, setIsInstalled] = useState(false);
-    const [isEnabled, setEnabled] = useState(true);
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { Button, CloseButton, Dropdown, ListGroup, Modal } from "react-bootstrap";
+import * as React from "react";
+import { useContext, useEffect, useState } from "react";
+import { BitcoinWalletContext } from "../context/BitcoinWalletContext";
+import { getInstalledBitcoinWallets } from "./BitcoinWalletUtils";
+import { ic_brightness_1 } from 'react-icons-kit/md/ic_brightness_1';
+import Icon from "react-icons-kit";
+export function useBitcoinWalletChooser() {
+    const { bitcoinWallet, setBitcoinWallet } = useContext(BitcoinWalletContext);
+    const [loading, setLoading] = useState(false);
+    const [modalOpened, setModalOpened] = useState(false);
+    const [usableWallets, setUsableWallets] = useState([]);
+    const [error, setError] = useState();
     useEffect(() => {
-        setEnabled(localStorage.getItem("crossLightning-btcwalletenable") !== "false");
-        (async () => {
-            let success;
-            for (let i = 0; i < 10; i++) {
-                try {
-                    await getCapabilities({
-                        onFinish(response) {
-                            console.log("Capabilities: ", response);
-                            setIsInstalled(true);
-                        },
-                        onCancel() {
-                            console.log("User cancelled!");
-                        },
-                        payload: {
-                            network: {
-                                type: BitcoinNetworkType.Mainnet,
-                            },
-                        },
-                    });
-                    success = true;
-                    break;
-                }
-                catch (e) {
-                    success = false;
+        setLoading(true);
+        getInstalledBitcoinWallets().then(resp => {
+            setUsableWallets(resp.installed);
+            if (resp.active != null && bitcoinWallet == null) {
+                resp.active().then(wallet => setBitcoinWallet(wallet)).catch(e => {
                     console.error(e);
-                    await new Promise((resolve) => setTimeout(resolve, 200));
-                }
+                    setError(e.message);
+                });
             }
-            if (!success)
-                setIsInstalled(false);
-        })();
-    }, []);
-    const connectWallet = () => {
-        // if(btcConnectionState==null) {
-        //     const getAddressOptions = {
-        //         payload: {
-        //             purposes: [AddressPurpose.Payment],
-        //             message: 'Bitcoin address for SolLightning swaps',
-        //             network: {
-        //                 type: BitcoinNetworkType.Mainnet
-        //             },
-        //         },
-        //         onFinish: (response) => {
-        //             const address = response.addresses[0].address;
-        //             const connectedWallet = {
-        //                 address,
-        //                 declined: false,
-        //                 getBalance: () => ChainUtils.getAddressBalances(address).then(val => val.confirmedBalance.add(val.unconfirmedBalance)),
-        //                 sendTransaction: (recipientAddress: string, amount: BN) => new Promise<void>((resolve, reject) => {
-        //                     // @ts-ignore
-        //                     const amt = BigInt(amount.toString(10))
-        //                     const sendBtcOptions = {
-        //                         payload: {
-        //                             network: {
-        //                                 type: BitcoinNetworkType.Mainnet,
-        //                             },
-        //                             recipients: [
-        //                                 {
-        //                                     address: recipientAddress,
-        //                                     amountSats: amt,
-        //                                 }
-        //                             ],
-        //                             senderAddress: address,
-        //                         },
-        //                         onFinish: (response) => resolve(),
-        //                         onCancel: () => reject(new UserError("Bitcoin transaction rejected by the user!")),
-        //                     };
-        //
-        //                     sendBtcTransaction(sendBtcOptions).catch(reject);
-        //                 })
-        //             };
-        //             setBtcConnectionState(connectedWallet);
-        //             console.log("Bitcoin wallet connected:", connectedWallet);
-        //         },
-        //         onCancel: () => {
-        //             setBtcConnectionState({
-        //                 address: null,
-        //                 declined: true
-        //             });
-        //             console.log("Canceled getaddress request");
-        //         },
-        //     };
-        //
-        //     getAddress(getAddressOptions).catch(err => {
-        //         console.error(err)
-        //     });
-        // }
+            setLoading(false);
+        }).catch(e => console.error(e));
+    }, [bitcoinWallet == null]);
+    const connectWallet = (wallet) => {
+        if (wallet != null) {
+            wallet.use().then(result => {
+                setBitcoinWallet(result);
+                setModalOpened(false);
+            }).catch(e => {
+                console.error(e);
+                setError(e.message);
+            });
+            return;
+        }
+        if (usableWallets.length === 1) {
+            usableWallets[0].use().then(result => {
+                setBitcoinWallet(result);
+            }).catch(e => {
+                console.error(e);
+                setError(e.message);
+            });
+        }
+        else {
+            setModalOpened(true);
+        }
     };
-    console.log("Is installed: ", isInstalled);
-    if (!isInstalled)
+    return { loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet, setBitcoinWallet, error };
+}
+export function BitcoinWalletModal(props) {
+    return (_jsxs(Modal, { contentClassName: "text-white bg-dark", size: "sm", centered: true, show: props.modalOpened, onHide: () => props.setModalOpened(false), dialogClassName: "min-width-400px", children: [_jsx(Modal.Header, { className: "border-0", children: _jsxs(Modal.Title, { id: "contained-modal-title-vcenter", className: "d-flex flex-grow-1", children: ["Select a Bitcoin wallet", _jsx(CloseButton, { className: "ms-auto", variant: "white", onClick: () => props.setModalOpened(false) })] }) }), _jsx(Modal.Body, { children: _jsx(ListGroup, { variant: "flush", children: props.usableWallets.map((e, index) => {
+                        return (_jsxs(ListGroup.Item, { action: true, onClick: () => props.connectWallet(e), className: "d-flex flex-row bg-transparent text-white border-0", children: [_jsx("img", { width: 20, height: 20, src: e.iconUrl, className: "me-2" }), _jsx("span", { children: e.name })] }));
+                    }) }) })] }));
+}
+export function BitcoinWalletButton(props) {
+    const { loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet } = useBitcoinWalletChooser();
+    if (usableWallets.length === 0 && bitcoinWallet == null)
         return _jsx(_Fragment, {});
-    return (_jsx(Button, Object.assign({ variant: "dark", className: "me-2 px-3 " + (isEnabled ? "" : "opacity-50") }, { children: _jsx("img", { width: 20, height: 20, src: "/icons/wallets/xverse.png" }) })));
+    return (_jsxs(_Fragment, { children: [_jsx(BitcoinWalletModal, { modalOpened: modalOpened, setModalOpened: setModalOpened, usableWallets: usableWallets, connectWallet: connectWallet }), bitcoinWallet == null ? (_jsx(Button, { variant: "dark", className: "me-2 px-3", onClick: () => connectWallet(), children: "Connect BTC wallet" })) : (_jsxs(Button, { variant: "dark", className: "me-2 px-3", children: [_jsx("img", { width: 20, height: 20, src: bitcoinWallet.getIcon(), className: "me-2" }), bitcoinWallet.getName()] }))] }));
+}
+const BitcoinConnectedWallet = React.forwardRef(({ bitcoinWallet, onClick, noText }, ref) => (_jsxs("div", { className: "d-flex flex-row align-items-center cursor-pointer", onClick: onClick, children: [_jsx(Icon, { className: "text-success d-flex align-items-center me-1", icon: ic_brightness_1, size: 12 }), _jsx("img", { width: 16, height: 16, src: bitcoinWallet.getIcon(), className: "me-1" }), !noText ? bitcoinWallet.getName() : ""] })));
+export function BitcoinWalletAnchor(props) {
+    const { loading, modalOpened, setModalOpened, usableWallets, bitcoinWallet, connectWallet, setBitcoinWallet, error } = useBitcoinWalletChooser();
+    if (usableWallets.length === 0 && bitcoinWallet == null)
+        return _jsx(_Fragment, {});
+    return (_jsxs(_Fragment, { children: [_jsx(BitcoinWalletModal, { modalOpened: modalOpened, setModalOpened: setModalOpened, usableWallets: usableWallets, connectWallet: connectWallet }), bitcoinWallet == null ? (_jsx("a", { className: props.className, href: "javascript:void(0);", onClick: () => connectWallet(), children: "Connect BTC wallet" })) : (_jsxs(Dropdown, { align: { md: "start" }, children: [_jsx(Dropdown.Toggle, { as: BitcoinConnectedWallet, id: "dropdown-custom-components", className: props.className, bitcoinWallet: bitcoinWallet, noText: props.noText, children: "Custom toggle" }), _jsxs(Dropdown.Menu, { children: [_jsx(Dropdown.Item, { eventKey: "1", onClick: () => {
+                                    setBitcoinWallet(null);
+                                }, children: "Disconnect" }), usableWallets != null && usableWallets.length > 1 ? (_jsx(Dropdown.Item, { eventKey: "2", onClick: () => {
+                                    connectWallet();
+                                }, children: "Change wallet" })) : ""] })] }))] }));
 }

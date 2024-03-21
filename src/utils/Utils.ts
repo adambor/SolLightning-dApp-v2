@@ -27,6 +27,25 @@ export function getTimeDeltaText(timestamp: number, forward?: boolean): string {
     return deltaYears+" "+(deltaYears===1 ? "year" : "years");
 }
 
+export function elementInViewport(el): boolean {
+    let top = el.offsetTop;
+    let left = el.offsetLeft;
+    const width = el.offsetWidth;
+    const height = el.offsetHeight;
+
+    while(el.offsetParent) {
+        el = el.offsetParent;
+        top += el.offsetTop;
+        left += el.offsetLeft;
+    }
+
+    return (
+        top >= window.pageYOffset &&
+        left >= window.pageXOffset &&
+        (top + height) <= (window.pageYOffset + window.innerHeight) &&
+        (left + width) <= (window.pageXOffset + window.innerWidth)
+    );
+}
 
 //Workaround to variable returned PPM fee due to referral programme
 export function getFeePPM(swap: ISwap): BN {

@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import {btcCurrency, toHumanReadableString} from "../../../utils/Currencies";
@@ -10,6 +10,10 @@ import {LNNFCReader} from "../../lnnfc/LNNFCReader";
 import * as React from "react";
 import {useLocation} from "react-router-dom";
 import {useNavigate} from "react-router-dom";
+import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
+import * as BN from "bn.js";
+import {externalLink} from 'react-icons-kit/fa/externalLink';
+import {elementInViewport} from "../../../utils/Utils";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -17,8 +21,15 @@ export function FromBTCQuoteSummary(props: {
     setAmountLock: (isLocked: boolean) => void,
     type?: "payment" | "swap",
     abortSwap?: () => void,
-    notEnoughForGas: boolean
+    notEnoughForGas: boolean,
+    feeRate?: number,
+    balance?: BN
 }) {
+    const {bitcoinWallet, setBitcoinWallet} = useContext(BitcoinWalletContext);
+    const [bitcoinError, setBitcoinError] = useState<string>(null);
+    const [sendTransactionLoading, setSendTransactionLoading] = useState<boolean>(false);
+    const txLoading = useRef<boolean>(false);
+    const [transactionSent, setTransactionSent] = useState<string>(null);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -57,6 +68,28 @@ export function FromBTCQuoteSummary(props: {
         confirmations: number,
         confTarget: number
     }>(null);
+
+    const sendBitcoinTransaction = () => {
+        console.log("Send bitcoin transaction called!");
+        if(txLoading.current) return;
+        setSendTransactionLoading(true);
+        txLoading.current = true;
+        setBitcoinError(null);
+        bitcoinWallet.sendTransaction(props.quote.getAddress(), props.quote.getInAmount(), props.feeRate!=null && props.feeRate!==0 ? props.feeRate : null).then(txId => {
+            setSendTransactionLoading(false);
+            txLoading.current = false;
+            setTransactionSent(txId);
+        }).catch(e => {
+            setSendTransactionLoading(false);
+            txLoading.current = false;
+            console.error(e);
+            setBitcoinError(e.message);
+        });
+    };
+
+    useEffect(() => {
+        setBitcoinError(null);
+    }, [bitcoinWallet]);
 
     useEffect(() => {
 
@@ -97,6 +130,11 @@ export function FromBTCQuoteSummary(props: {
         const stateChange = (state: FromBTCSwapState) => {
             setState(state);
             if(state===FromBTCSwapState.CLAIM_COMMITED) {
+                props.quote.getBitcoinPayment().then(resp => {
+                    if(resp==null && bitcoinWallet!=null) {
+                        sendBitcoinTransaction();
+                    }
+                });
                 if(!paymentSubscribed) {
                     props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number) => {
                         setTxData({
@@ -104,7 +142,7 @@ export function FromBTCQuoteSummary(props: {
                             confirmations,
                             confTarget: confirmationTarget
                         });
-                    });
+                    }).catch(e => console.error(e));
                     let paymentInterval;
                     paymentInterval = setInterval(() => {
                         if(abortController.signal.aborted) {
@@ -174,8 +212,40 @@ export function FromBTCQuoteSummary(props: {
 
     useEffect(() => {
         if(state===FromBTCSwapState.CLAIM_COMMITED) {
-            // @ts-ignore
-            window.scrollBy(0,99999);
+            let lastScrollTime: number = 0;
+            let scrollListener = () => {
+                lastScrollTime = Date.now();
+            };
+            window.addEventListener("scroll", scrollListener);
+
+            const isScrolling = () => lastScrollTime && Date.now() < lastScrollTime + 100;
+
+            let interval;
+            interval = setInterval(() => {
+                const anchorElement = document.getElementById("scrollAnchor");
+                if(anchorElement==null) return;
+
+                if(elementInViewport(anchorElement)) {
+                    clearInterval(interval);
+                    window.removeEventListener("scroll", scrollListener);
+                    scrollListener = null;
+                    interval = null;
+                    return;
+                }
+
+                if(!isScrolling()) {
+                    // @ts-ignore
+                    window.scrollBy({
+                        left: 0,
+                        top: 99999
+                    });
+                }
+            }, 100);
+
+            return () => {
+                if(interval!=null) clearInterval(interval);
+                if(scrollListener!=null) window.removeEventListener("scroll", scrollListener);
+            }
         }
     }, [state]);
 
@@ -200,6 +270,8 @@ export function FromBTCQuoteSummary(props: {
 
         setShowCopyOverlay(num);
     };
+
+    const hasEnoughBalance = props.balance==null || props.quote==null ? true : props.balance.gte(props.quote.getInAmount());
 
     return (
         <>
@@ -237,7 +309,7 @@ export function FromBTCQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas} size="lg">
+                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg">
                             {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
                             Initiate swap
                         </Button>
@@ -249,37 +321,78 @@ export function FromBTCQuoteSummary(props: {
                 <>
                     {quoteTimeRemaining===0 ? "" : (
                         <div className="mb-3 tab-accent">
-                            <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
-                                {(props) => (
-                                    <Tooltip id="overlay-example" {...props}>
-                                        Address copied to clipboard!
-                                    </Tooltip>
-                                )}
-                            </Overlay>
-                            <div ref={qrCodeRef}>
-                                <QRCodeSVG
-                                    value={props.quote.getQrData()}
-                                    size={300}
-                                    includeMargin={true}
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                        copy(2);
-                                    }}
-                                />
-                            </div>
-                            <label>Please send exactly {toHumanReadableString(props.quote.getInAmount(), btcCurrency)} {btcCurrency.ticker} to the address</label>
-                            <ValidatedInput
-                                type={"text"}
-                                value={props.quote.getAddress()}
-                                textEnd={(
-                                    <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
-                                        copy(1);
-                                    }}>
-                                        <Icon icon={clipboard}/>
-                                    </a>
-                                )}
-                                inputRef={textFieldRef}
-                            />
+                            {bitcoinWallet!=null ? (
+                                <>
+                                    {bitcoinError!=null ? (
+                                        <Alert variant="danger" className="mb-2">
+                                            <strong>Btc TX failed</strong>
+                                            <label>{bitcoinError}</label>
+                                        </Alert>
+                                    ) : ""}
+                                    <div className="d-flex flex-column align-items-center justify-content-center">
+                                        {transactionSent!=null ? (
+                                            <div className="d-flex flex-column align-items-center tab-accent">
+                                                <Spinner/>
+                                                <label>Sending Bitcoin transaction...</label>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Button variant="light" className="d-flex flex-row align-items-center" disabled={sendTransactionLoading} onClick={sendBitcoinTransaction}>
+                                                    {sendTransactionLoading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                                                    Pay with
+                                                    <img width={20} height={20} src={bitcoinWallet.getIcon()} className="ms-2 me-1"/>
+                                                    {bitcoinWallet.getName()}
+                                                </Button>
+                                                <small className="mt-2"><a href="javascript:void(0);" onClick={() => setBitcoinWallet(null)}>Or use a QR code/wallet address</a></small>
+                                            </>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Overlay target={showCopyOverlay===1 ? copyBtnRef.current : (showCopyOverlay===2 ? qrCodeRef.current : null)} show={showCopyOverlay>0} placement="top">
+                                        {(props) => (
+                                            <Tooltip id="overlay-example" {...props}>
+                                                Address copied to clipboard!
+                                            </Tooltip>
+                                        )}
+                                    </Overlay>
+                                    <Alert variant="warning" className="mb-3">
+                                        <label>Please make sure that you send an <b><u>EXACT</u></b> amount in BTC, different amount wouldn't be accepted and you might loose funds!</label>
+                                    </Alert>
+                                    <div ref={qrCodeRef} className="mb-2">
+                                        <QRCodeSVG
+                                            value={props.quote.getQrData()}
+                                            size={300}
+                                            includeMargin={true}
+                                            className="cursor-pointer"
+                                            onClick={() => {
+                                                copy(2);
+                                            }}
+                                        />
+                                    </div>
+                                    <label>Please send exactly <strong>{toHumanReadableString(props.quote.getInAmount(), btcCurrency)}</strong> {btcCurrency.ticker} to the address</label>
+                                    <ValidatedInput
+                                        type={"text"}
+                                        value={props.quote.getAddress()}
+                                        textEnd={(
+                                            <a href="javascript:void(0);" ref={copyBtnRef} onClick={() => {
+                                                copy(1);
+                                            }}>
+                                                <Icon icon={clipboard}/>
+                                            </a>
+                                        )}
+                                        inputRef={textFieldRef}
+                                    />
+                                    <div className="d-flex justify-content-center mt-2">
+                                        <Button variant="light" className="d-flex flex-row align-items-center justify-content-center" onClick={() => {
+                                            window.location.href = props.quote.getQrData();
+                                        }}>
+                                            <Icon icon={externalLink} className="d-flex align-items-center me-2"/> Open in BTC wallet app
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                     <div className="d-flex flex-column mb-3 tab-accent">
@@ -329,6 +442,8 @@ export function FromBTCQuoteSummary(props: {
                     <label>Swap was concluded successfully</label>
                 </Alert>
             ) : ""}
+
+            <div id="scrollAnchor"></div>
 
         </>
     )

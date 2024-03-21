@@ -42,6 +42,6 @@ const fetchWithTimeout = async (input, init) => {
     }
 };
 function WalletTab(props) {
-    return (_jsx(ConnectionProvider, Object.assign({ endpoint: FEConstants.rpcUrl, config: { fetch: fetchWithTimeout, commitment: "confirmed" } }, { children: _jsx(WalletProvider, Object.assign({ wallets: wallets, autoConnect: true }, { children: _jsx(WalletModalProvider, { children: props.children }) })) })));
+    return (_jsx(ConnectionProvider, { endpoint: FEConstants.rpcUrl, config: { fetch: fetchWithTimeout, commitment: "confirmed" }, children: _jsx(WalletProvider, { wallets: wallets, autoConnect: true, children: _jsx(WalletModalProvider, { children: props.children }) }) }));
 }
 export default WalletTab;
