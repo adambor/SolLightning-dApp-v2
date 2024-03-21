@@ -140,3 +140,8 @@
 }
 
 .dottedUnderline { border-bottom: 1px dotted; }
+
+.text-decoration-dotted {
+  text-decoration-style: dotted;
+  text-decoration-line: underline;
+}
