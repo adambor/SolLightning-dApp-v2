@@ -126,6 +126,7 @@ export class XverseBitcoinWallet extends BitcoinWallet {
     getSpendableBalance() {
         return this._getSpendableBalance(this.account.address, this.addressType);
     }
+    //Workaround for undefined BigInt() convertor in es2020
     toBigInt(num) {
         let sum = 0n;
         for (let i = 0n; i < 53n; i++) {
