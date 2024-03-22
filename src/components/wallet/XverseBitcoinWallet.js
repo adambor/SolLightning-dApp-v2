@@ -160,7 +160,7 @@ export class XverseBitcoinWallet extends BitcoinWallet {
                 broadcast: true,
                 inputsToSign: [{
                         address: this.account.address,
-                        signingIndexes: psbt.txInputs.map(e => e.index)
+                        signingIndexes: psbt.txInputs.map((e, index) => index)
                     }]
             },
             onFinish: (resp) => { txId = resp.txId; },

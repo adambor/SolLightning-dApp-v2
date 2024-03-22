@@ -109,11 +109,12 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
             inputsToSign: [{
                 sigHash: 0x01,
                 address: this.account.address,
-                signingIndexes: psbt.txInputs.map(e => e.index)
+                signingIndexes: psbt.txInputs.map((e, index) => index)
             }]
         });
 
         const signedPsbt = bitcoin.Psbt.fromHex(resultSignedPsbtHex);
+        signedPsbt.finalizeAllInputs();
 
         const btcTx = signedPsbt.extractTransaction();
 
