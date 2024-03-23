@@ -13,7 +13,7 @@ import {useNavigate} from "react-router-dom";
 import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import * as BN from "bn.js";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
-import {elementInViewport} from "../../../utils/Utils";
+import {elementInViewport, getDeltaText} from "../../../utils/Utils";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -66,7 +66,8 @@ export function FromBTCQuoteSummary(props: {
     const [txData, setTxData] = useState<{
         txId: string,
         confirmations: number,
-        confTarget: number
+        confTarget: number,
+        txEtaMs: number
     }>(null);
 
     const sendBitcoinTransaction = () => {
@@ -136,11 +137,13 @@ export function FromBTCQuoteSummary(props: {
                     }
                 });
                 if(!paymentSubscribed) {
-                    props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number) => {
+                    props.quote.waitForPayment(abortController.signal, null, (txId: string, confirmations: number, confirmationTarget: number, txEtaMs: number) => {
+                        console.log("Tx eta: ", txEtaMs);
                         setTxData({
                             txId,
                             confirmations,
-                            confTarget: confirmationTarget
+                            confTarget: confirmationTarget,
+                            txEtaMs
                         });
                     }).catch(e => console.error(e));
                     let paymentInterval;
@@ -420,6 +423,8 @@ export function FromBTCQuoteSummary(props: {
                     <Spinner/>
                     <label>{txData.confirmations} / {txData.confTarget}</label>
                     <label>Confirmations</label>
+
+                    <label className="mt-2">ETA: {txData.txEtaMs===-1 || txData.txEtaMs>(60*60*1000) ? ">1 hour" : "~"+getDeltaText(txData.txEtaMs)}</label>
                 </div>
             )) : ""}
 

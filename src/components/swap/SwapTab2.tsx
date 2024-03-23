@@ -431,7 +431,10 @@ function useQuote(
                     return;
                 }
                 setQuoteLoading(false);
-                if(doSetError) setQuoteError(e.toString());
+                if(doSetError) {
+                    if(e.message==="Not enough liquidity") e = new Error("Not enough liquidity, please retry in 30mins-1hour");
+                    setQuoteError(e.toString());
+                }
             });
         };
 

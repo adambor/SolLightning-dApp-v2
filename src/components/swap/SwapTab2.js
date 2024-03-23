@@ -337,8 +337,11 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
                     return;
                 }
                 setQuoteLoading(false);
-                if (doSetError)
+                if (doSetError) {
+                    if (e.message === "Not enough liquidity")
+                        e = new Error("Not enough liquidity, please retry in 30mins-1hour");
                     setQuoteError(e.toString());
+                }
             });
         };
         currentQuotation.current.then(process, process);
