@@ -48,13 +48,14 @@ function usePricing(swapper, _amount, currency) {
         promise: Promise.resolve()
     });
     useEffect(() => {
+        console.log("useEffect(): usePricing, ", _amount, currency);
         if (currency == null)
             return;
         if (swapper == null)
             return;
         pricing.current.updates++;
         const updateNum = pricing.current.updates;
-        const amount = typeof (_amount) === "string" ? fromHumanReadableString(_amount, currency) : _amount;
+        const amount = _amount == null ? null : new BN(_amount);
         setValue(null);
         if (amount == null || amount.isZero()) {
             return;
@@ -347,6 +348,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
         currentQuotation.current.then(process, process);
     };
     useEffect(() => {
+        console.log("useEffect(): getQuote");
         getQuote();
     }, [address, amount, inCurrency, outCurrency, exactIn, swapper]);
     return {
@@ -373,9 +375,11 @@ function useWalletBalance(swapper, locked, currency, quoteRef) {
     const balanceUpdates = useRef(0);
     const lockedRef = useRef();
     useEffect(() => {
+        console.log("useEffect(): lockedRef");
         lockedRef.current = locked;
     }, [locked]);
     useEffect(() => {
+        console.log("useEffect(): useWalletBalance");
         setMaxSpendable(null);
         balanceUpdates.current++;
         if (swapper == null)
@@ -480,6 +484,7 @@ export function SwapTab(props) {
     const params = new URLSearchParams(search);
     const propSwapId = params.get("swapId");
     useEffect(() => {
+        console.log("useEffect(): load existing swap");
         if (props.swapper == null || propSwapId == null)
             return;
         props.swapper.getAllSwaps().then(res => {
@@ -511,6 +516,7 @@ export function SwapTab(props) {
     }, [propSwapId, props.swapper]);
     const [doValidate, setDoValidate] = useState();
     useEffect(() => {
+        console.log("useEffect(): doValidate");
         if (!doValidate)
             return;
         outAmountRef.current.validate();
@@ -524,6 +530,7 @@ export function SwapTab(props) {
     const outputDisabled = disabled && lnWallet == null;
     const maxSpendable = useWalletBalance(props.swapper, locked, inCurrency, quoteRef);
     useEffect(() => {
+        console.log("useEffect(): BTC-LN out");
         if (outCurrency.ticker === "BTC-LN" && lnWallet != null) {
             if (exactIn) {
                 setExactIn(false);
@@ -534,6 +541,7 @@ export function SwapTab(props) {
     }, [outCurrency, lnWallet]);
     const priorMaxSpendable = useRef();
     useEffect(() => {
+        console.log("useEffect(): Max spendable");
         if (priorMaxSpendable.current == maxSpendable)
             return;
         priorMaxSpendable.current = maxSpendable;
@@ -549,6 +557,7 @@ export function SwapTab(props) {
         }
     }, [maxSpendable, locked, quoteLoading, exactIn]);
     useEffect(() => {
+        console.log("useEffect(): BTC out");
         if (bitcoinWallet == null)
             return;
         if (outCurrency.ticker === "BTC") {
@@ -559,14 +568,17 @@ export function SwapTab(props) {
     const changeDirection = () => {
         if (locked)
             return;
+        setQuote(null);
         setExactIn(!exactIn);
         setInCurrency(outCurrency);
         setOutCurrency(inCurrency);
         _setAddress("");
         setDoValidate(true);
     };
-    const inputValue = usePricing(props.swapper, exactIn ? amount : quote != null ? quote.getInAmount() : null, inCurrency);
-    const outputValue = usePricing(props.swapper, !exactIn ? amount : quote != null ? quote.getOutAmount() : null, outCurrency);
+    const inputAmount = exactIn ? fromHumanReadableString(amount, inCurrency) : quote != null ? quote.getInAmount() : null;
+    const outputAmount = !exactIn ? fromHumanReadableString(amount, outCurrency) : quote != null ? quote.getOutAmount() : null;
+    const inputValue = usePricing(props.swapper, inputAmount == null ? null : inputAmount.toString(10), inCurrency);
+    const outputValue = usePricing(props.swapper, outputAmount == null ? null : outputAmount.toString(10), outCurrency);
     return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 0, enabled: !locked }), _jsx(QRScannerModal, { onScanned: (data) => {
                     console.log("QR scanned: ", data);
                     let resultText = data;

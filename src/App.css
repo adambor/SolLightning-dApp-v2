@@ -148,3 +148,9 @@
   text-decoration-style: dotted;
   text-decoration-line: underline;
 }
+
+.centered-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
