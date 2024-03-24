@@ -80,6 +80,7 @@ function WrappedApp() {
             setActionableSwaps(actionableSwaps);
             console.log("Initialized");
             setSwapperLoading(false);
+            return swapper;
         }
         catch (e) {
             setSwapperLoadingError(e.toString());
@@ -99,7 +100,24 @@ function WrappedApp() {
         const _provider = new AnchorProvider(connection, wallet, { preflightCommitment: "processed" });
         console.log("New signer set: ", wallet.publicKey);
         setProvider(_provider);
-        loadSwapper(_provider);
+        let listener = (swap) => {
+            if (swap.isFinished()) {
+                setActionableSwaps((val) => val.filter(e => e !== swap));
+            }
+        };
+        let _swapper;
+        loadSwapper(_provider).then((swapper) => {
+            if (swapper != null && listener != null) {
+                _swapper = swapper;
+                swapper.on("swapState", listener);
+            }
+        });
+        return () => {
+            if (_swapper != null) {
+                _swapper.off("swapState", listener);
+            }
+            listener = null;
+        };
     }, [wallet]);
     const [nfcSupported, setNfcSupported] = React.useState(false);
     const [nfcEnabled, setNfcEnabled] = React.useState(true);

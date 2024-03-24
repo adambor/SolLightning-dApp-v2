@@ -5,7 +5,7 @@ import WalletTab from "./components/WalletTab";
 import {QuickScanScreen} from "./components/quickscan/QuickScanScreen";
 import {Step2Screen} from "./components/quickscan/Step2Screen";
 import {useAnchorWallet, useConnection} from '@solana/wallet-adapter-react';
-import {createSwapperOptions, NetworkError, SolanaSwapper, UserError} from "sollightning-sdk/dist";
+import {createSwapperOptions, NetworkError, SolanaSwapData, SolanaSwapper, UserError} from "sollightning-sdk/dist";
 import {AnchorProvider} from "@coral-xyz/anchor";
 import {FEConstants} from "./FEConstants";
 import {SwapTab} from "./components/swap/SwapTab2";
@@ -85,7 +85,7 @@ function WrappedApp() {
 
     const affiliateLink = searchParams.get("affiliate") || window.localStorage.getItem("atomiq-affiliate");
 
-    const loadSwapper = async(_provider: AnchorProvider) => {
+    const loadSwapper: (_provider: AnchorProvider) => Promise<SolanaSwapper> = async(_provider: AnchorProvider) => {
         setSwapperLoadingError(null);
         setSwapperLoading(true);
         try {
@@ -116,6 +116,8 @@ function WrappedApp() {
             console.log("Initialized");
 
             setSwapperLoading(false);
+
+            return swapper;
         } catch (e) {
             setSwapperLoadingError(e.toString());
             console.error(e)
@@ -141,7 +143,26 @@ function WrappedApp() {
 
         setProvider(_provider);
 
-        loadSwapper(_provider);
+        let listener = (swap: ISwap) => {
+            if(swap.isFinished()) {
+                setActionableSwaps((val: ISwap[]) => val.filter(e => e!==swap));
+            }
+        };
+
+        let _swapper: SolanaSwapper;
+        loadSwapper(_provider).then((swapper: SolanaSwapper) => {
+            if(swapper!=null && listener!=null) {
+                _swapper = swapper;
+                swapper.on("swapState", listener);
+            }
+        });
+
+        return () => {
+            if(_swapper!=null) {
+                _swapper.off("swapState", listener);
+            }
+            listener = null;
+        }
 
     }, [wallet]);
 

@@ -278,7 +278,7 @@ export function FromBTCQuoteSummary(props: {
 
     return (
         <>
-            {error!=null ? (
+            {state!==FromBTCSwapState.CLAIM_CLAIMED && error!=null ? (
                 <Alert variant="danger" className="mb-3">
                     <strong>Swap failed</strong>
                     <label>{error}</label>
