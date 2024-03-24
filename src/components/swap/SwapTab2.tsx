@@ -434,7 +434,7 @@ function useQuote(
                 setQuoteLoading(false);
                 if(doSetError) {
                     if(e.message==="Not enough liquidity") e = new Error("Not enough liquidity, please retry in 30mins-1hour");
-                    setQuoteError(e.toString());
+                    setQuoteError(e.message || e.toString());
                 }
             });
         };
@@ -753,7 +753,7 @@ export function SwapTab(props: {
             <div className="d-flex flex-column align-items-center text-white">
                 <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
-                    <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => clearError()} dismissible closeVariant="white">
+                    <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => clearError()}>
                         <strong>Quoting error</strong>
                         <label>{quoteError}</label>
                     </Alert>
@@ -927,6 +927,10 @@ export function SwapTab(props: {
                             </>
                         ) : ""}
                     </Card>
+
+                    {quoteError!=null ? (
+                        <Button variant="light" className="mt-3" onClick={refreshQuote}>Retry</Button>
+                    ) : ""}
 
                     {quote!=null ? (
                         <>
