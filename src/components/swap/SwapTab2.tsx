@@ -236,8 +236,8 @@ function useConstraints(swapper: Swapper<any, any, any, any>, address: string, e
 
     if(addressConstraintsOverride!=null && addressConstraintsOverride.address===address) {
         let changeConstraints = null;
-        if(changeConstraints.currency===inCurrency) changeConstraints = inConstraints;
-        if(changeConstraints.currency===outCurrency) changeConstraints = outConstraints;
+        if(addressConstraintsOverride.currency===inCurrency) changeConstraints = inConstraints;
+        if(addressConstraintsOverride.currency===outCurrency) changeConstraints = outConstraints;
 
         if(changeConstraints!=null) {
             if(addressConstraintsOverride.data.min!=null) changeConstraints.min = BigNumber.max(changeConstraints.min, addressConstraintsOverride.data.min);

@@ -1,5 +1,5 @@
 import {useContext, useEffect, useRef, useState} from "react";
-import {Alert, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
+import {Alert, Badge, Button, Overlay, ProgressBar, Spinner, Tooltip} from "react-bootstrap";
 import {QRCodeSVG} from "qrcode.react";
 import {btcCurrency, toHumanReadableString} from "../../../utils/Currencies";
 import ValidatedInput, {ValidatedInputRef} from "../../ValidatedInput";
@@ -276,6 +276,7 @@ export function FromBTCQuoteSummary(props: {
 
     const hasEnoughBalance = props.balance==null || props.quote==null ? true : props.balance.gte(props.quote.getInAmount());
 
+    //TODO: Add subtitle to the button: "Create bitcoin swap address"
     return (
         <>
             {state!==FromBTCSwapState.CLAIM_CLAIMED && error!=null ? (
@@ -312,9 +313,12 @@ export function FromBTCQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg">
-                            {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
-                            Initiate swap
+                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg" className="d-flex flex-column">
+                            <div>
+                                {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                                Initiate swap
+                            </div>
+                            <small className="font-smallest opacity-75" style={{marginTop: "-6px"}}>(Creates bitcoin swap address)</small>
                         </Button>
                     )}
                 </>
@@ -418,13 +422,13 @@ export function FromBTCQuoteSummary(props: {
                 </>
             ) : (
                 <div className="d-flex flex-column align-items-center tab-accent">
-                    <label>Transaction successfully received, waiting for confirmations...</label>
+                    <small className="mb-2">Transaction successfully received, waiting for confirmations...</small>
 
                     <Spinner/>
                     <label>{txData.confirmations} / {txData.confTarget}</label>
-                    <label>Confirmations</label>
+                    <label style={{marginTop: "-6px"}}>Confirmations</label>
 
-                    <label className="mt-2">ETA: {txData.txEtaMs===-1 || txData.txEtaMs>(60*60*1000) ? ">1 hour" : "~"+getDeltaText(txData.txEtaMs)}</label>
+                    <Badge className="text-black" bg="light" pill>ETA: {txData.txEtaMs===-1 || txData.txEtaMs>(60*60*1000) ? ">1 hour" : "~"+getDeltaText(txData.txEtaMs)}</Badge>
                 </div>
             )) : ""}
 

@@ -170,9 +170,9 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
     }
     if (addressConstraintsOverride != null && addressConstraintsOverride.address === address) {
         let changeConstraints = null;
-        if (changeConstraints.currency === inCurrency)
+        if (addressConstraintsOverride.currency === inCurrency)
             changeConstraints = inConstraints;
-        if (changeConstraints.currency === outCurrency)
+        if (addressConstraintsOverride.currency === outCurrency)
             changeConstraints = outConstraints;
         if (changeConstraints != null) {
             if (addressConstraintsOverride.data.min != null)

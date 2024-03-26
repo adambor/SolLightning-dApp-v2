@@ -298,6 +298,7 @@ export function FromBTCLNQuoteSummary(props: {
 
     const [openAppModalOpened, setOpenAppModalOpened] = useState<boolean>(false);
 
+    //TODO: Add subtitle to the button: "Create ligtning invoice"
     return (
         <>
             <Modal contentClassName="text-white bg-dark" size="sm" centered show={openAppModalOpened} onHide={() => setOpenAppModalOpened(false)} dialogClassName="min-width-400px">
