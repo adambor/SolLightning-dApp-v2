@@ -1,20 +1,22 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { Alert, Badge, Card, Col, Form, Placeholder, Row, } from "react-bootstrap";
 import { bitcoinCurrencies, getCurrencySpec, toHumanReadableString } from "../../utils/Currencies";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
 import { FEConstants } from "../../FEConstants";
 import * as BN from "bn.js";
 import { SingleColumnStaticTable } from "../table/SingleColumnTable";
 import { getTimeDeltaText } from "../../utils/Utils";
+import { SwapsContext } from "../context/SwapsContext";
 export function AffiliateScreen(props) {
+    const { swapper } = useContext(SwapsContext);
     const [data, setData] = useState();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState();
     useEffect(() => {
-        if (props.swapper == null)
+        if (swapper == null)
             return;
-        const address = props.swapper.swapContract.getAddress();
+        const address = swapper.swapContract.getAddress();
         if (address != null) {
             setLoading(true);
             setError(null);
@@ -34,7 +36,7 @@ export function AffiliateScreen(props) {
                 setError(e.message);
             });
         }
-    }, [props.swapper]);
+    }, [swapper]);
     const currencySpec = data?.token == null ? null : getCurrencySpec(data.token);
     return (_jsx(_Fragment, { children: _jsxs("div", { className: "flex-fill text-white container mt-5 text-start", children: [_jsx("h1", { className: "section-title", children: "Referral" }), _jsxs(Card, { className: "px-3 pt-3 bg-dark bg-opacity-25 mb-3 border-0", children: [_jsx("h3", { children: "How does it work?" }), _jsxs("p", { children: ["Invite your friends to use atomiq via your invite link, they can enjoy reduced ", _jsx("strong", { children: "0.2%" }), " fee rate (instead of regular 0.3%), and you get a kickback for ", _jsx("strong", { children: "0.1%" }), " of their swap volume."] }), _jsxs("p", { children: ["Your kickback is accrued in BTC and payed out automatically to your Solana wallet address in ", data?.token == null ? null : getCurrencySpec(data?.token)?.ticker, " every day (minimum amount for payout is ", _jsxs("strong", { children: [toHumanReadableString(new BN(data?.minPayoutSats), bitcoinCurrencies[0]), " BTC"] }), ")."] }), _jsxs("p", { children: ["Next payout: ", _jsx("strong", { children: new Date(data?.nextPayoutTimestamp).toLocaleString() }), " (in ", getTimeDeltaText(data?.nextPayoutTimestamp || 0, true), ")"] })] }), _jsxs(Card, { className: "px-3 pt-3 bg-dark bg-opacity-25 mb-3 pb-3 border-0", children: [_jsx("h3", { children: "Your referral link" }), loading ? (_jsx(Placeholder, { xs: 12, as: Form.Control })) : (_jsx(ValidatedInput, { type: "text", value: data?.stats?.address == null ? "" : FEConstants.dappUrl + "?affiliate=" + encodeURIComponent(data.stats.identifier), copyEnabled: true }))] }), _jsxs(Row, { children: [_jsx(Col, { xs: 12, lg: 4, className: "pb-3", children: _jsxs(Card, { className: "px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0", children: [_jsx("span", { className: "", children: "Referral swap volume" }), _jsx("h4", { className: "mb-0", children: loading ? (_jsx(Placeholder, { xs: 6 })) : (_jsxs(_Fragment, { children: [_jsx("img", { src: bitcoinCurrencies[0].icon, className: "currency-icon-medium pb-2" }), toHumanReadableString(new BN(data?.stats?.totalVolumeSats), bitcoinCurrencies[0]) + " BTC"] })) }), _jsx("small", { className: "mb-2", style: { marginTop: "-6px" }, children: loading || currencySpec == null ? (_jsx(Placeholder, { xs: 6 })) : "across " + data?.stats?.totalSwapCount + " swaps" })] }) }), _jsx(Col, { xs: 12, lg: 4, className: "pb-3", children: _jsxs(Card, { className: "px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0", children: [_jsx("span", { className: "", children: "Total accrued kickback" }), _jsx("h4", { children: loading ? (_jsx(Placeholder, { xs: 6 })) : (_jsxs(_Fragment, { children: [_jsx("img", { src: bitcoinCurrencies[0].icon, className: "currency-icon-medium pb-2" }), toHumanReadableString(new BN(data?.stats?.totalFeeSats), bitcoinCurrencies[0]) + " BTC"] })) })] }) }), _jsx(Col, { xs: 12, lg: 4, className: "pb-3", children: _jsxs(Card, { className: "px-3 pt-3 bg-dark bg-opacity-25 height-100 border-0", children: [_jsx("span", { className: "", children: "Pending payout" }), _jsx("h4", { className: "mb-0", children: loading ? (_jsx(Placeholder, { xs: 6 })) : (_jsxs(_Fragment, { children: [_jsx("img", { src: bitcoinCurrencies[0].icon, className: "currency-icon-medium pb-2" }), toHumanReadableString(new BN(data?.stats?.unclaimedFeeSats), bitcoinCurrencies[0]) + " BTC"] })) }), _jsx("label", { className: "mb-2", children: loading || currencySpec == null ? (_jsx(Placeholder, { xs: 6 })) : (_jsxs(_Fragment, { children: [_jsx("img", { src: currencySpec.icon, className: "currency-icon-small pb-2" }), "~" + toHumanReadableString(new BN(data?.unclaimedUsdcValue), currencySpec) + " " + currencySpec.ticker] })) })] }) })] }), _jsx("h1", { className: "section-title mt-4", children: "Payouts" }), _jsx(SingleColumnStaticTable, { data: data?.stats?.payouts != null ? data.stats.payouts : [], column: {
                         renderer: (row) => {

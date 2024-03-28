@@ -52,6 +52,8 @@ import {BitcoinWalletContext} from './components/context/BitcoinWalletContext';
 import {WebLNProvider} from "webln";
 import {WebLNContext} from './components/context/WebLNContext';
 import {heart} from 'react-icons-kit/fa/heart';
+import KeypairWallet from "sollightning-sdk/dist/wallet/KeypairWallet";
+import {Keypair} from "@solana/web3.js";
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -69,6 +71,7 @@ function WrappedApp() {
     const {connection} = useConnection();
     const [provider, setProvider] = React.useState<AnchorProvider>();
     const [swapper, setSwapper] = React.useState<SolanaSwapper>();
+    const [walletType, setWalletType] = React.useState<"real" | "fake" | "loading">("loading");
     const [swapperLoadingError, setSwapperLoadingError] = React.useState<string>();
     const [swapperLoading, setSwapperLoading] = React.useState<boolean>(false);
     const [actionableSwaps, setActionableSwaps] = React.useState<ISwap[]>([]);
@@ -124,22 +127,26 @@ function WrappedApp() {
         }
     };
 
-    const [scanResult, setScanResult] = React.useState<string>(null);
-
     React.useEffect(() => {
 
         if(noWalletPaths.has(pathName)) return;
 
+        let isReal: boolean;
+
+        setWalletType("loading");
+        let _provider;
         if(wallet==null) {
             // setSwapper(null);
-            setProvider(null);
-            setActionableSwaps([]);
-            return;
+            // setProvider(null);
+            // setActionableSwaps([]);
+            // return;
+            _provider = new AnchorProvider(connection, new KeypairWallet(Keypair.generate()), {preflightCommitment: "processed"});
+            isReal = false;
+        } else {
+            _provider = new AnchorProvider(connection, wallet, {preflightCommitment: "processed"});
+            isReal = true;
+            console.log("New signer set: ", wallet.publicKey);
         }
-
-        const _provider = new AnchorProvider(connection, wallet, {preflightCommitment: "processed"});
-
-        console.log("New signer set: ", wallet.publicKey);
 
         setProvider(_provider);
 
@@ -149,15 +156,19 @@ function WrappedApp() {
             }
         };
 
+        let canceled = false;
         let _swapper: SolanaSwapper;
         loadSwapper(_provider).then((swapper: SolanaSwapper) => {
+            if(canceled) return;
             if(swapper!=null && listener!=null) {
                 _swapper = swapper;
                 swapper.on("swapState", listener);
             }
+            setWalletType(isReal ? "real" : "fake");
         });
 
         return () => {
+            canceled = true;
             if(_swapper!=null) {
                 _swapper.off("swapState", listener);
             }
@@ -320,7 +331,9 @@ function WrappedApp() {
                             if(i>=0) cpy.splice(i, 1);
                             return cpy;
                         });
-                    }
+                    },
+                    walletType,
+                    swapper
                 }}>
                     <div className="d-flex flex-grow-1 flex-column">
                         {swapper==null && !noWalletPaths.has(pathName) ? (
@@ -359,18 +372,18 @@ function WrappedApp() {
                         <BrowserRouter>
                             <Routes>
                                 <Route path="/">
-                                    <Route index element={<SwapTab swapper={swapper} supportedCurrencies={smartChainCurrencies}/>}></Route>
+                                    <Route index element={<SwapTab supportedCurrencies={smartChainCurrencies}/>}></Route>
                                     <Route path="scan">
                                         <Route index element={<QuickScanScreen/>}/>
-                                        <Route path="2" element={<Step2Screen swapper={swapper}/>}/>
+                                        <Route path="2" element={<Step2Screen/>}/>
                                     </Route>
-                                    <Route path="history" element={<HistoryScreen swapper={swapper}/>}/>
-                                    <Route path="gas" element={<SwapForGasScreen swapper={swapper}/>}/>
+                                    <Route path="history" element={<HistoryScreen/>}/>
+                                    <Route path="gas" element={<SwapForGasScreen/>}/>
                                     <Route path="faq" element={<FAQ/>}/>
                                     <Route path="about" element={<About/>}/>
                                     <Route path="map" element={<Map/>}/>
                                     <Route path="explorer" element={<SwapExplorer/>}/>
-                                    <Route path="referral" element={<AffiliateScreen swapper={swapper}/>}/>
+                                    <Route path="referral" element={<AffiliateScreen/>}/>
                                 </Route>
                             </Routes>
                         </BrowserRouter>

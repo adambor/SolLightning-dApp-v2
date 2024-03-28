@@ -14,9 +14,11 @@ import { useContext } from "react";
 import { WebLNContext } from "../context/WebLNContext";
 import { WebLNAnchor } from "../wallet/WebLNButton";
 import { externalLink } from 'react-icons-kit/fa/externalLink';
+import { SwapsContext } from "../context/SwapsContext";
 const swapAmount = 7500000;
 const swapAmountSol = swapAmount / 1000000000;
 export function SwapForGasScreen(props) {
+    const { swapper } = useContext(SwapsContext);
     const navigate = useNavigate();
     const { search, state } = useLocation();
     const { lnWallet, setLnWallet } = useContext(WebLNContext);
@@ -63,7 +65,7 @@ export function SwapForGasScreen(props) {
         setLoading(true);
         setError(null);
         setSuccess(false);
-        props.swapper.createTrustedLNForGasSwap(new BN(swapAmount)).then(swap => {
+        swapper.createTrustedLNForGasSwap(new BN(swapAmount)).then(swap => {
             if (abortControllerRef.current.signal.aborted)
                 return;
             setLoading(false);
@@ -106,7 +108,7 @@ export function SwapForGasScreen(props) {
     };
     useEffect(() => {
         abortControllerRef.current = new AbortController();
-        if (props.swapper == null)
+        if (swapper == null)
             return () => { };
         createSwap();
         return () => {
@@ -115,7 +117,7 @@ export function SwapForGasScreen(props) {
                 clearInterval(intervalRef.current);
             intervalRef.current = null;
         };
-    }, [props.swapper]);
+    }, [swapper]);
     const copy = (num) => {
         try {
             // @ts-ignore

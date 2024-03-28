@@ -14,7 +14,7 @@ import {
     getCurrencySpec,
     toHumanReadableString
 } from "../../utils/Currencies";
-import {useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import * as React from "react";
 import ValidatedInput from "../ValidatedInput";
 import {clipboard} from "react-icons-kit/fa/*";
@@ -23,6 +23,7 @@ import * as BN from "bn.js";
 import {SingleColumnStaticTable} from "../table/SingleColumnTable";
 import {ic_arrow_downward, ic_arrow_forward} from "react-icons-kit/md/*";
 import {getTimeDeltaText} from "../../utils/Utils";
+import {SwapsContext} from "../context/SwapsContext";
 
 type AffiliatePayout = {
     timestamp: number,
@@ -33,9 +34,8 @@ type AffiliatePayout = {
     state: "pending" | "fail" | "success"
 };
 
-export function AffiliateScreen(props: {
-    swapper: SolanaSwapper
-}) {
+export function AffiliateScreen(props: {}) {
+    const {swapper} = useContext(SwapsContext);
 
     const [data, setData] = useState<{
         stats: {
@@ -59,9 +59,9 @@ export function AffiliateScreen(props: {
 
     useEffect(() => {
 
-        if(props.swapper==null) return;
+        if(swapper==null) return;
 
-        const address: string = props.swapper.swapContract.getAddress();
+        const address: string = swapper.swapContract.getAddress();
         if(address!=null) {
             setLoading(true);
             setError(null);
@@ -82,7 +82,7 @@ export function AffiliateScreen(props: {
             });
         }
 
-    }, [props.swapper]);
+    }, [swapper]);
 
     const currencySpec = data?.token==null ? null : getCurrencySpec(data.token);
 

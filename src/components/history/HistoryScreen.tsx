@@ -108,9 +108,7 @@ function HistoryEntry(props: {
     }
 }
 
-export function HistoryScreen(props: {
-    swapper: SolanaSwapper
-}) {
+export function HistoryScreen(props: {}) {
 
     const [error, setError] = useState<string>();
 

@@ -35,6 +35,8 @@ import { BitcoinWallet } from './components/wallet/BitcoinWallet';
 import { BitcoinWalletContext } from './components/context/BitcoinWalletContext';
 import { WebLNContext } from './components/context/WebLNContext';
 import { heart } from 'react-icons-kit/fa/heart';
+import KeypairWallet from "sollightning-sdk/dist/wallet/KeypairWallet";
+import { Keypair } from "@solana/web3.js";
 require('@solana/wallet-adapter-react-ui/styles.css');
 // export type BtcConnectionState = {
 //     declined: boolean,
@@ -48,6 +50,7 @@ function WrappedApp() {
     const { connection } = useConnection();
     const [provider, setProvider] = React.useState();
     const [swapper, setSwapper] = React.useState();
+    const [walletType, setWalletType] = React.useState("loading");
     const [swapperLoadingError, setSwapperLoadingError] = React.useState();
     const [swapperLoading, setSwapperLoading] = React.useState(false);
     const [actionableSwaps, setActionableSwaps] = React.useState([]);
@@ -87,32 +90,44 @@ function WrappedApp() {
             console.error(e);
         }
     };
-    const [scanResult, setScanResult] = React.useState(null);
     React.useEffect(() => {
         if (noWalletPaths.has(pathName))
             return;
+        let isReal;
+        setWalletType("loading");
+        let _provider;
         if (wallet == null) {
             // setSwapper(null);
-            setProvider(null);
-            setActionableSwaps([]);
-            return;
+            // setProvider(null);
+            // setActionableSwaps([]);
+            // return;
+            _provider = new AnchorProvider(connection, new KeypairWallet(Keypair.generate()), { preflightCommitment: "processed" });
+            isReal = false;
         }
-        const _provider = new AnchorProvider(connection, wallet, { preflightCommitment: "processed" });
-        console.log("New signer set: ", wallet.publicKey);
+        else {
+            _provider = new AnchorProvider(connection, wallet, { preflightCommitment: "processed" });
+            isReal = true;
+            console.log("New signer set: ", wallet.publicKey);
+        }
         setProvider(_provider);
         let listener = (swap) => {
             if (swap.isFinished()) {
                 setActionableSwaps((val) => val.filter(e => e !== swap));
             }
         };
+        let canceled = false;
         let _swapper;
         loadSwapper(_provider).then((swapper) => {
+            if (canceled)
+                return;
             if (swapper != null && listener != null) {
                 _swapper = swapper;
                 swapper.on("swapState", listener);
             }
+            setWalletType(isReal ? "real" : "fake");
         });
         return () => {
+            canceled = true;
             if (_swapper != null) {
                 _swapper.off("swapState", listener);
             }
@@ -170,10 +185,12 @@ function WrappedApp() {
                                     cpy.splice(i, 1);
                                 return cpy;
                             });
-                        }
+                        },
+                        walletType,
+                        swapper
                     }, children: [_jsxs("div", { className: "d-flex flex-grow-1 flex-column", children: [swapper == null && !noWalletPaths.has(pathName) ? (_jsx("div", { className: "no-wallet-overlay d-flex align-items-center", children: _jsx("div", { className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill", children: _jsx("div", { className: "text-white text-center", children: provider != null && swapper == null ? (_jsx(_Fragment, { children: swapperLoadingError == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to atomiq network..." })] })) : (_jsx(_Fragment, { children: _jsxs(Alert, { className: "text-center", show: true, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "SolLightning network connection error" }), _jsx("p", { children: swapperLoadingError }), _jsx(Button, { variant: "light", onClick: () => {
                                                                     loadSwapper(provider);
-                                                                }, children: "Retry" })] }) })) })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", { className: "mt-3", children: "Connect your wallet to start" })] })) }) }) })) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, { path: "/", children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, { path: "scan", children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] }), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) }), _jsx(Route, { path: "gas", element: _jsx(SwapForGasScreen, { swapper: swapper }) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) }), _jsx(Route, { path: "map", element: _jsx(Map, {}) }), _jsx(Route, { path: "explorer", element: _jsx(SwapExplorer, {}) }), _jsx(Route, { path: "referral", element: _jsx(AffiliateScreen, { swapper: swapper }) })] }) }) })] }), _jsxs(Row, { className: "mt-auto bg-dark bg-opacity-50 g-0 p-2", children: [_jsxs(Col, { className: "d-flex flex-row", children: [_jsx("a", { href: "https://twitter.com/atomiqlabs", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/twitter.png" }) }), _jsx("a", { href: "https://github.com/adambor/SolLightning-readme", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/github.png" }) }), _jsx("a", { href: "https://docs.atomiq.exchange/", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/gitbook.png" }) })] }), affiliateLink != null && affiliateLink !== "" ? (_jsx(Col, { xs: "auto", className: "d-flex justify-content-center", children: _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "referral-tooltip", children: _jsx("span", { children: "Swap fee reduced to 0.2%, thanks to being referred to atomiq.exchange!" }) }), children: _jsxs("div", { className: "font-small text-white opacity-75 d-flex align-items-center ", children: [_jsx(Icon, { icon: heart, className: "d-flex align-items-center me-1" }), _jsx("span", { className: "text-decoration-dotted", children: "Using referral link" })] }) }) })) : "", _jsx(Col, { className: "d-flex justify-content-end", children: _jsxs("a", { href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", className: "ms-auto d-flex flex-row align-items-center text-white text-decoration-none hover-opacity-75 font-small", children: [_jsx("img", { className: "social-icon me-1", src: "/icons/socials/telegram.png" }), "Talk to us"] }) })] })] })] }) }));
+                                                                }, children: "Retry" })] }) })) })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", { className: "mt-3", children: "Connect your wallet to start" })] })) }) }) })) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, { path: "/", children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, { path: "scan", children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, {}) })] }), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, {}) }), _jsx(Route, { path: "gas", element: _jsx(SwapForGasScreen, {}) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) }), _jsx(Route, { path: "map", element: _jsx(Map, {}) }), _jsx(Route, { path: "explorer", element: _jsx(SwapExplorer, {}) }), _jsx(Route, { path: "referral", element: _jsx(AffiliateScreen, {}) })] }) }) })] }), _jsxs(Row, { className: "mt-auto bg-dark bg-opacity-50 g-0 p-2", children: [_jsxs(Col, { className: "d-flex flex-row", children: [_jsx("a", { href: "https://twitter.com/atomiqlabs", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/twitter.png" }) }), _jsx("a", { href: "https://github.com/adambor/SolLightning-readme", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/github.png" }) }), _jsx("a", { href: "https://docs.atomiq.exchange/", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/gitbook.png" }) })] }), affiliateLink != null && affiliateLink !== "" ? (_jsx(Col, { xs: "auto", className: "d-flex justify-content-center", children: _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "referral-tooltip", children: _jsx("span", { children: "Swap fee reduced to 0.2%, thanks to being referred to atomiq.exchange!" }) }), children: _jsxs("div", { className: "font-small text-white opacity-75 d-flex align-items-center ", children: [_jsx(Icon, { icon: heart, className: "d-flex align-items-center me-1" }), _jsx("span", { className: "text-decoration-dotted", children: "Using referral link" })] }) }) })) : "", _jsx(Col, { className: "d-flex justify-content-end", children: _jsxs("a", { href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", className: "ms-auto d-flex flex-row align-items-center text-white text-decoration-none hover-opacity-75 font-small", children: [_jsx("img", { className: "social-icon me-1", src: "/icons/socials/telegram.png" }), "Talk to us"] }) })] })] })] }) }));
 }
 function App() {
     return (_jsx("div", { className: "App d-flex flex-column", children: _jsx(WalletTab, { children: _jsx(WrappedApp, {}) }) }));

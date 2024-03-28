@@ -20,13 +20,13 @@ import {useContext} from "react";
 import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor, WebLNButton} from "../wallet/WebLNButton";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
+import {SwapsContext} from "../context/SwapsContext";
 
 const swapAmount = 7500000;
 const swapAmountSol = swapAmount/1000000000;
 
-export function SwapForGasScreen(props: {
-    swapper: SolanaSwapper,
-}) {
+export function SwapForGasScreen(props: {}) {
+    const {swapper} = useContext(SwapsContext);
     const navigate = useNavigate();
 
     const {search, state} = useLocation() as {search: string, state: {returnPath?: string}};
@@ -83,7 +83,7 @@ export function SwapForGasScreen(props: {
         setLoading(true);
         setError(null);
         setSuccess(false);
-        props.swapper.createTrustedLNForGasSwap(new BN(swapAmount)).then(swap => {
+        swapper.createTrustedLNForGasSwap(new BN(swapAmount)).then(swap => {
             if(abortControllerRef.current.signal.aborted) return;
             setLoading(false);
             setSwapData(swap);
@@ -126,7 +126,7 @@ export function SwapForGasScreen(props: {
 
     useEffect(() => {
         abortControllerRef.current = new AbortController();
-        if(props.swapper==null) return () => {};
+        if(swapper==null) return () => {};
 
         createSwap();
 
@@ -135,7 +135,7 @@ export function SwapForGasScreen(props: {
             if(intervalRef.current!=null) clearInterval(intervalRef.current);
             intervalRef.current = null;
         };
-    }, [props.swapper]);
+    }, [swapper]);
 
     const copy = (num: number) => {
         try {

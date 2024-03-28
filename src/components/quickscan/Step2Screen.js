@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import ValidatedInput from "../ValidatedInput";
 import { CurrencyDropdown } from "../CurrencyDropdown";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { FeeSummaryScreen } from "../FeeSummaryScreen";
 import { Alert, Badge, Button, Form, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
 import { SolanaSwapper, SwapType } from "sollightning-sdk";
@@ -11,8 +11,10 @@ import { btcCurrency, fromHumanReadable, smartChainCurrencies, toHumanReadable }
 import { QuoteSummary } from "../quotes/QuoteSummary";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Topbar } from "../Topbar";
+import { SwapsContext } from "../context/SwapsContext";
 const balanceExpiryTime = 30000;
 export function Step2Screen(props) {
+    const { swapper } = useContext(SwapsContext);
     const navigate = useNavigate();
     const { search, state } = useLocation();
     const params = new URLSearchParams(search);
@@ -42,7 +44,7 @@ export function Step2Screen(props) {
     const getBalance = async (tokenAddress) => {
         if (balanceCache.current[tokenAddress.toString()] == null || balanceCache.current[tokenAddress.toString()].balance == null || Date.now() - balanceCache.current[tokenAddress.toString()].timestamp > balanceExpiryTime) {
             balanceCache.current[tokenAddress.toString()] = {
-                balance: await props.swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
+                balance: await swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
                 timestamp: Date.now()
             };
         }
@@ -70,7 +72,7 @@ export function Step2Screen(props) {
             navigate("/scan");
             return;
         }
-        if (props.swapper != null) {
+        if (swapper != null) {
             let lightning = false;
             let resultText = propAddress;
             if (resultText.startsWith("lightning:")) {
@@ -98,14 +100,14 @@ export function Step2Screen(props) {
             setAddressError(null);
             setLnurl(false);
             setAddress(resultText);
-            if (props.swapper.isValidBitcoinAddress(resultText)) {
+            if (swapper.isValidBitcoinAddress(resultText)) {
                 //On-chain send
                 setType("send");
                 if (_amount != null) {
                     const amountBN = new BigNumber(_amount);
                     const amountSolBN = fromHumanReadable(amountBN, btcCurrency);
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                    const min = swapper.getMinimum(SwapType.TO_BTC);
+                    const max = swapper.getMaximum(SwapType.TO_BTC);
                     if (amountSolBN.lt(min)) {
                         setAddressError("Payment amount (" + amountBN.toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
                         return;
@@ -121,8 +123,8 @@ export function Step2Screen(props) {
                     setAmount(amountBN.toString(10));
                 }
                 else {
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                    const min = swapper.getMinimum(SwapType.TO_BTC);
+                    const max = swapper.getMaximum(SwapType.TO_BTC);
                     setAmountConstraints({
                         min: toHumanReadable(min, btcCurrency),
                         max: toHumanReadable(max, btcCurrency),
@@ -131,12 +133,12 @@ export function Step2Screen(props) {
                 setNetwork("btc");
                 return;
             }
-            if (props.swapper.isValidLightningInvoice(resultText)) {
+            if (swapper.isValidLightningInvoice(resultText)) {
                 //Lightning send
                 setType("send");
-                const amountSolBN = props.swapper.getLightningInvoiceValue(resultText);
-                const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
+                const amountSolBN = swapper.getLightningInvoiceValue(resultText);
+                const min = swapper.getMinimum(SwapType.TO_BTCLN);
+                const max = swapper.getMaximum(SwapType.TO_BTCLN);
                 if (amountSolBN.lt(min)) {
                     setAddressError("Payment amount (" + toHumanReadable(amountSolBN, btcCurrency).toString(10) + ") is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
                     return;
@@ -153,7 +155,7 @@ export function Step2Screen(props) {
                 setNetwork("ln");
                 return;
             }
-            if (props.swapper.isValidLNURL(resultText)) {
+            if (swapper.isValidLNURL(resultText)) {
                 //Check LNURL type
                 setLnurlLoading(true);
                 setLnurl(true);
@@ -169,8 +171,8 @@ export function Step2Screen(props) {
                         setLnurlParams(result);
                     if (result.type === "pay") {
                         setType("send");
-                        const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
+                        const min = swapper.getMinimum(SwapType.TO_BTCLN);
+                        const max = swapper.getMaximum(SwapType.TO_BTCLN);
                         if (result.min.gt(max)) {
                             setAddressError("Minimum payable amount (" + toHumanReadable(result.min, btcCurrency).toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
                             return;
@@ -187,8 +189,8 @@ export function Step2Screen(props) {
                     }
                     if (result.type === "withdraw") {
                         setType("receive");
-                        const min = props.swapper.getMinimum(SwapType.FROM_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.FROM_BTCLN);
+                        const min = swapper.getMinimum(SwapType.FROM_BTCLN);
+                        const max = swapper.getMaximum(SwapType.FROM_BTCLN);
                         if (result.min.gt(max)) {
                             setAddressError("Minimum withdrawable amount (" + toHumanReadable(result.min, btcCurrency).toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
                             return;
@@ -210,7 +212,7 @@ export function Step2Screen(props) {
                     processLNURL(stateLnurlParams, false);
                     return;
                 }
-                props.swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
+                swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
                     setLnurlLoading(false);
                     setAddressError("Failed to contact LNURL service, check you internet connection and retry later.");
                 });
@@ -225,7 +227,7 @@ export function Step2Screen(props) {
             catch (e) { }
             setAddressError("Invalid address, lightning invoice or LNURL!");
         }
-    }, [propAddress, props.swapper]);
+    }, [propAddress, swapper]);
     const quoteUpdates = useRef(0);
     const currentQuotation = useRef(Promise.resolve());
     const getQuote = () => {
@@ -251,19 +253,19 @@ export function Step2Screen(props) {
                 let swapPromise;
                 if (type === "send") {
                     if (network === "btc") {
-                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, null, null, additionalParam);
+                        swapPromise = swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, null, null, additionalParam);
                     }
                     if (network === "ln") {
                         if (isLnurl) {
-                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60, null, null, null, additionalParam);
+                            swapPromise = swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5 * 24 * 60 * 60, null, null, null, additionalParam);
                         }
                         else {
-                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5 * 24 * 60 * 60, null, null, additionalParam);
+                            swapPromise = swapper.createToBTCLNSwap(selectedCurrency.address, address, 5 * 24 * 60 * 60, null, null, additionalParam);
                         }
                     }
                 }
                 else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
+                    swapPromise = swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
@@ -295,11 +297,11 @@ export function Step2Screen(props) {
     const goBack = () => {
         navigate("/scan");
     };
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: !isLocked }), _jsx("div", { className: "d-flex flex-column flex-fill justify-content-center align-items-center text-white", children: _jsxs("div", { className: "quickscan-summary-panel d-flex flex-column flex-fill", children: [_jsxs("div", { className: "p-3 d-flex flex-column tab-bg border-0 card", children: [_jsx(ValidatedInput, { type: "text", className: "", disabled: true, value: address || propAddress }), addressError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] })) : "", lnurlLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] })) : "", addressError == null && props.swapper != null && !lnurlLoading ? (_jsxs("div", { className: "mt-3 tab-accent-p3 text-center", children: [_jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "Pay" : "Withdraw" }), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs("span", { className: "text-white font-bigger d-flex align-items-center", children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints.min, max: amountConstraints?.max, disabled: (amountConstraints != null && amountConstraints.min.eq(amountConstraints.max)) ||
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: !isLocked }), _jsx("div", { className: "d-flex flex-column flex-fill justify-content-center align-items-center text-white", children: _jsxs("div", { className: "quickscan-summary-panel d-flex flex-column flex-fill", children: [_jsxs("div", { className: "p-3 d-flex flex-column tab-bg border-0 card", children: [_jsx(ValidatedInput, { type: "text", className: "", disabled: true, value: address || propAddress }), addressError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] })) : "", lnurlLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] })) : "", addressError == null && swapper != null && !lnurlLoading ? (_jsxs("div", { className: "mt-3 tab-accent-p3 text-center", children: [_jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "Pay" : "Withdraw" }), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs("span", { className: "text-white font-bigger d-flex align-items-center", children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints.min, max: amountConstraints?.max, disabled: (amountConstraints != null && amountConstraints.min.eq(amountConstraints.max)) ||
                                                 isLocked, size: "lg", inputRef: amountRef, value: amount, onChange: setAmount, placeholder: "Input amount" }), _jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "with" : "to" }), _jsx("div", { className: "d-flex justify-content-center", children: _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: val => {
                                                     if (isLocked)
                                                         return;
                                                     setSelectedCurrency(val);
                                                 }, value: selectedCurrency, className: "bg-black bg-opacity-10 text-white" }) }), _jsxs(Form, { className: "text-start d-flex align-items-center justify-content-center font-bigger mt-2", children: [_jsx(Form.Check // prettier-ignore
-                                                , { id: "autoclaim-pay", type: "switch", onChange: (val) => setAndSaveAutoContinue(val.target.checked), checked: autoContinue }), _jsx("label", { title: "", htmlFor: "autoclaim-pay", className: "form-check-label me-2", children: type === "send" ? "Auto-pay" : "Auto-claim" }), _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "autoclaim-pay-tooltip", children: "Automatically requests authorization of the transaction through your wallet - as soon as the swap pricing is returned." }), children: _jsx(Badge, { bg: "primary", className: "pill-round", pill: true, children: "?" }) })] })] })) : "", quoteLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] })) : "", quoteError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] })) : "", quoteError || addressError ? (_jsx(Button, { variant: "secondary", onClick: goBack, className: "mt-3", children: "Back" })) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote[0], className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { swapper: props.swapper, setAmountLock: setLocked, type: "payment", quote: quote[0], balance: quote[1], refreshQuote: getQuote, autoContinue: autoContinue })] })) : ""] }), _jsx("div", { className: "d-flex mt-auto py-4", children: _jsx(Button, { variant: "secondary flex-fill", disabled: isLocked, onClick: goBack, children: "< Back" }) })] }) })] }));
+                                                , { id: "autoclaim-pay", type: "switch", onChange: (val) => setAndSaveAutoContinue(val.target.checked), checked: autoContinue }), _jsx("label", { title: "", htmlFor: "autoclaim-pay", className: "form-check-label me-2", children: type === "send" ? "Auto-pay" : "Auto-claim" }), _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "autoclaim-pay-tooltip", children: "Automatically requests authorization of the transaction through your wallet - as soon as the swap pricing is returned." }), children: _jsx(Badge, { bg: "primary", className: "pill-round", pill: true, children: "?" }) })] })] })) : "", quoteLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Fetching quote..."] })) : "", quoteError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Quoting error" }) }), quoteError] })) : "", quoteError || addressError ? (_jsx(Button, { variant: "secondary", onClick: goBack, className: "mt-3", children: "Back" })) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx(FeeSummaryScreen, { swap: quote[0], className: "mt-3 mb-3 tab-accent" }), _jsx(QuoteSummary, { swapper: swapper, setAmountLock: setLocked, type: "payment", quote: quote[0], balance: quote[1], refreshQuote: getQuote, autoContinue: autoContinue })] })) : ""] }), _jsx("div", { className: "d-flex mt-auto py-4", children: _jsx(Button, { variant: "secondary flex-fill", disabled: isLocked, onClick: goBack, children: "< Back" }) })] }) })] }));
 }

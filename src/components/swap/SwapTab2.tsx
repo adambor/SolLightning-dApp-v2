@@ -48,6 +48,8 @@ import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor} from "../wallet/WebLNButton";
 import {ic_account_balance_wallet} from 'react-icons-kit/md/ic_account_balance_wallet';
 import {BitcoinWallet} from "../wallet/BitcoinWallet";
+import {SwapsContext} from "../context/SwapsContext";
+import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -545,25 +547,24 @@ function useWalletBalance(swapper: Swapper<any, any, any, any>, locked: boolean,
 }
 
 export function SwapTab(props: {
-    swapper: SolanaSwapper,
     supportedCurrencies: CurrencySpec[]
 }) {
+    const {bitcoinWallet} = useContext(BitcoinWalletContext);
+    const {swapper, walletType} = useContext(SwapsContext);
+    const {lnWallet} = useContext(WebLNContext);
 
     const navigate = useNavigate();
     const addressValidator = useCallback((val) => {
         if(val==="") return "Destination address/lightning invoice required";
         console.log("Is valid bitcoin address: ", val);
-        if(props.swapper.isValidLNURL(val) || props.swapper.isValidBitcoinAddress(val) || props.swapper.isValidLightningInvoice(val)) return null;
+        if(swapper.isValidLNURL(val) || swapper.isValidBitcoinAddress(val) || swapper.isValidLightningInvoice(val)) return null;
         try {
             if(SolanaSwapper.getLightningInvoiceValue(val)==null) {
                 return "Lightning invoice needs to contain a payment amount!";
             }
         } catch (e) {}
         return "Invalid bitcoin address/lightning network invoice";
-    }, [props.swapper]);
-
-    const {bitcoinWallet} = useContext(BitcoinWalletContext);
-    const {lnWallet} = useContext(WebLNContext);
+    }, [swapper]);
 
     const [locked, setLocked] = useState<boolean>(false);
     const [inCurrency, setInCurrency] = useState<CurrencySpec>(btcCurrency);
@@ -577,17 +578,17 @@ export function SwapTab(props: {
     const kind: "frombtc" | "tobtc" = inCurrency.ticker==="BTC" || inCurrency.ticker==="BTC-LN" ? "frombtc" : "tobtc";
     const setAddress = (val: string) => {
         _setAddress(val);
-        if(props.swapper.isValidLNURL(val)) {
+        if(swapper.isValidLNURL(val)) {
             setOutCurrency(bitcoinCurrencies[1]);
             return;
         }
-        if(props.swapper.isValidBitcoinAddress(val)) {
+        if(swapper.isValidBitcoinAddress(val)) {
             setOutCurrency(bitcoinCurrencies[0]);
             return;
         }
-        if(props.swapper.isValidLightningInvoice(val)) {
+        if(swapper.isValidLightningInvoice(val)) {
             setOutCurrency(bitcoinCurrencies[1]);
-            const outAmt = props.swapper.getLightningInvoiceValue(val);
+            const outAmt = swapper.getLightningInvoiceValue(val);
             setAmount(toHumanReadableString(outAmt, btcCurrency));
             setExactIn(false);
             return;
@@ -607,7 +608,7 @@ export function SwapTab(props: {
         clearError,
         setQuote,
         refreshQuote
-    } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
+    } = useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
 
     //Load existing swap
     const {search} = useLocation();
@@ -615,8 +616,8 @@ export function SwapTab(props: {
     const propSwapId = params.get("swapId");
     useEffect(() => {
         console.log("useEffect(): load existing swap");
-        if(props.swapper==null || propSwapId==null) return;
-        props.swapper.getAllSwaps().then(res => {
+        if(swapper==null || propSwapId==null) return;
+        swapper.getAllSwaps().then(res => {
             const foundSwap = res.find(e => e.getPaymentHash().toString("hex")===propSwapId);
             if(foundSwap!=null) {
                 setLocked(true);
@@ -641,7 +642,7 @@ export function SwapTab(props: {
             }
             // navigate("/");
         });
-    }, [propSwapId, props.swapper]);
+    }, [propSwapId, swapper]);
 
     const [doValidate, setDoValidate] = useState<boolean>();
     useEffect(() => {
@@ -653,12 +654,12 @@ export function SwapTab(props: {
     }, [doValidate]);
 
     const disabled = useMemo(() => {
-        return address!=null && props.swapper.isValidLightningInvoice(address);
+        return address!=null && swapper.isValidLightningInvoice(address);
     }, [address]);
     const inputDisabled = disabled || (outCurrency.ticker==="BTC-LN" && lnWallet!=null);
     const outputDisabled = disabled && lnWallet==null;
 
-    const maxSpendable = useWalletBalance(props.swapper, locked, inCurrency, quoteRef);
+    const maxSpendable = useWalletBalance(swapper, locked, inCurrency, quoteRef);
 
     useEffect(() => {
         console.log("useEffect(): BTC-LN out");
@@ -709,8 +710,8 @@ export function SwapTab(props: {
     const inputAmount: BN = exactIn ? fromHumanReadableString(amount, inCurrency) : quote!=null ? quote.getInAmount() : null;
     const outputAmount: BN = !exactIn ? fromHumanReadableString(amount, outCurrency) : quote!=null ? quote.getOutAmount() : null;
 
-    const inputValue = usePricing(props.swapper, inputAmount==null ? null : inputAmount.toString(10), inCurrency);
-    const outputValue = usePricing(props.swapper, outputAmount==null ? null : outputAmount.toString(10), outCurrency);
+    const inputValue = usePricing(swapper, inputAmount==null ? null : inputAmount.toString(10), inCurrency);
+    const outputValue = usePricing(swapper, outputAmount==null ? null : outputAmount.toString(10), outCurrency);
 
     return (
         <>
@@ -919,7 +920,7 @@ export function SwapTab(props: {
                                         ) : ""}
                                     </>
                                 ) : ""}
-                                {lnWallet==null && outCurrency===bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (
+                                {lnWallet==null && outCurrency===bitcoinCurrencies[1] && !swapper.isValidLightningInvoice(address) && !swapper.isValidLNURL(address) ? (
                                     <Alert variant={"success"} className="mt-3 mb-0 text-center">
                                         <label>Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount.</label>
                                     </Alert>
@@ -937,9 +938,9 @@ export function SwapTab(props: {
                             <div className="mt-3">
                                 <SimpleFeeSummaryScreen swap={quote} btcFeeRate={inCurrency.ticker==="BTC" ? maxSpendable?.feeRate : null}/>
                             </div>
-                            {quote.getAddress()!==RANDOM_BTC_ADDRESS ? (
+                            {quote.getAddress()!==RANDOM_BTC_ADDRESS && walletType==="real" ? (
                                 <div className="mt-3 d-flex flex-column text-white">
-                                    <QuoteSummary type="swap" swapper={props.swapper} quote={quote} balance={maxSpendable?.amount} refreshQuote={refreshQuote} setAmountLock={(val) => {
+                                    <QuoteSummary type="swap" swapper={swapper} quote={quote} balance={maxSpendable?.amount} refreshQuote={refreshQuote} setAmountLock={(val) => {
                                         setLocked(val);
                                         if(!val && propSwapId!=null) navigate("/");
                                     }} abortSwap={() => {
@@ -949,6 +950,9 @@ export function SwapTab(props: {
                                         setAmount("");
                                     }} feeRate={maxSpendable?.feeRate}/>
                                 </div>
+                            ) : ""}
+                            {walletType==="fake" ? (
+                                <WalletMultiButton className="bg-primary"/>
                             ) : ""}
                         </>
                     ) : ""}

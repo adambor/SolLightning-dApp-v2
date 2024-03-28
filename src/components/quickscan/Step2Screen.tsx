@@ -1,6 +1,6 @@
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import {CurrencyDropdown} from "../CurrencyDropdown";
-import {useEffect, useRef, useState} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import {FeeSummaryScreen} from "../FeeSummaryScreen";
 import {Alert, Badge, Button, Form, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {ISwap, LNURLPay, LNURLWithdraw, SolanaSwapper, SwapType, TokenAddress} from "sollightning-sdk";
@@ -17,13 +17,13 @@ import {QuoteSummary} from "../quotes/QuoteSummary";
 import {useLocation, useNavigate} from "react-router-dom";
 import {Topbar} from "../Topbar";
 import * as React from "react";
+import {SwapsContext} from "../context/SwapsContext";
 
 const balanceExpiryTime = 30000;
 
-export function Step2Screen(props: {
-    swapper: SolanaSwapper
-}) {
+export function Step2Screen(props: {}) {
 
+    const {swapper} = useContext(SwapsContext);
     const navigate = useNavigate();
 
     const {search, state} = useLocation() as {search: string, state: any};
@@ -71,7 +71,7 @@ export function Step2Screen(props: {
     const getBalance: (tokenAddress: TokenAddress) => Promise<BN> = async (tokenAddress: TokenAddress) => {
         if(balanceCache.current[tokenAddress.toString()]==null || balanceCache.current[tokenAddress.toString()].balance==null || Date.now()-balanceCache.current[tokenAddress.toString()].timestamp>balanceExpiryTime) {
             balanceCache.current[tokenAddress.toString()] = {
-                balance: await props.swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
+                balance: await swapper.swapContract.getBalance(tokenAddress, false).catch(e => console.error(e)),
                 timestamp: Date.now()
             };
         }
@@ -109,7 +109,7 @@ export function Step2Screen(props: {
             return;
         }
 
-        if(props.swapper!=null) {
+        if(swapper!=null) {
 
             let lightning: boolean = false;
             let resultText: string = propAddress;
@@ -140,14 +140,14 @@ export function Step2Screen(props: {
             setLnurl(false);
             setAddress(resultText);
 
-            if(props.swapper.isValidBitcoinAddress(resultText)) {
+            if(swapper.isValidBitcoinAddress(resultText)) {
                 //On-chain send
                 setType("send");
                 if(_amount!=null) {
                     const amountBN = new BigNumber(_amount);
                     const amountSolBN = fromHumanReadable(amountBN, btcCurrency);
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                    const min = swapper.getMinimum(SwapType.TO_BTC);
+                    const max = swapper.getMaximum(SwapType.TO_BTC);
                     if(amountSolBN.lt(min)) {
                         setAddressError("Payment amount ("+amountBN.toString(10)+" BTC) is below minimum swappable amount ("+toHumanReadable(min, btcCurrency).toString(10)+" BTC)");
                         return;
@@ -162,8 +162,8 @@ export function Step2Screen(props: {
                     });
                     setAmount(amountBN.toString(10));
                 } else {
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
+                    const min = swapper.getMinimum(SwapType.TO_BTC);
+                    const max = swapper.getMaximum(SwapType.TO_BTC);
                     setAmountConstraints({
                         min: toHumanReadable(min, btcCurrency),
                         max: toHumanReadable(max, btcCurrency),
@@ -172,13 +172,13 @@ export function Step2Screen(props: {
                 setNetwork("btc");
                 return;
             }
-            if(props.swapper.isValidLightningInvoice(resultText)) {
+            if(swapper.isValidLightningInvoice(resultText)) {
                 //Lightning send
                 setType("send");
 
-                const amountSolBN = props.swapper.getLightningInvoiceValue(resultText);
-                const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
+                const amountSolBN = swapper.getLightningInvoiceValue(resultText);
+                const min = swapper.getMinimum(SwapType.TO_BTCLN);
+                const max = swapper.getMaximum(SwapType.TO_BTCLN);
                 if(amountSolBN.lt(min)) {
                     setAddressError("Payment amount ("+toHumanReadable(amountSolBN, btcCurrency).toString(10)+") is below minimum swappable amount ("+toHumanReadable(min, btcCurrency).toString(10)+" BTC)");
                     return;
@@ -196,7 +196,7 @@ export function Step2Screen(props: {
                 setNetwork("ln");
                 return;
             }
-            if(props.swapper.isValidLNURL(resultText)) {
+            if(swapper.isValidLNURL(resultText)) {
                 //Check LNURL type
                 setLnurlLoading(true);
                 setLnurl(true);
@@ -211,8 +211,8 @@ export function Step2Screen(props: {
                     if(doSetState) setLnurlParams(result);
                     if(result.type==="pay") {
                         setType("send");
-                        const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
+                        const min = swapper.getMinimum(SwapType.TO_BTCLN);
+                        const max = swapper.getMaximum(SwapType.TO_BTCLN);
                         if(result.min.gt(max)) {
                             setAddressError("Minimum payable amount ("+toHumanReadable(result.min, btcCurrency).toString(10)+" BTC) is above maximum swappable amount ("+toHumanReadable(max, btcCurrency).toString(10)+" BTC)");
                             return;
@@ -229,8 +229,8 @@ export function Step2Screen(props: {
                     }
                     if(result.type==="withdraw") {
                         setType("receive");
-                        const min = props.swapper.getMinimum(SwapType.FROM_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.FROM_BTCLN);
+                        const min = swapper.getMinimum(SwapType.FROM_BTCLN);
+                        const max = swapper.getMaximum(SwapType.FROM_BTCLN);
                         if(result.min.gt(max)) {
                             setAddressError("Minimum withdrawable amount ("+toHumanReadable(result.min, btcCurrency).toString(10)+" BTC) is above maximum swappable amount ("+toHumanReadable(max, btcCurrency).toString(10)+" BTC)");
                             return;
@@ -252,7 +252,7 @@ export function Step2Screen(props: {
                     processLNURL(stateLnurlParams, false);
                     return;
                 }
-                props.swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
+                swapper.getLNURLTypeAndData(resultText).then(resp => processLNURL(resp, true)).catch((e) => {
                     setLnurlLoading(false);
                     setAddressError("Failed to contact LNURL service, check you internet connection and retry later.");
                 });
@@ -266,7 +266,7 @@ export function Step2Screen(props: {
             } catch (e) {}
             setAddressError("Invalid address, lightning invoice or LNURL!");
         }
-    }, [propAddress, props.swapper]);
+    }, [propAddress, swapper]);
 
     const quoteUpdates = useRef<number>(0);
     const currentQuotation = useRef<Promise<any>>(Promise.resolve());
@@ -295,17 +295,17 @@ export function Step2Screen(props: {
                 let swapPromise;
                 if(type==="send") {
                     if(network==="btc") {
-                        swapPromise = props.swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, null, null, additionalParam);
+                        swapPromise = swapper.createToBTCSwap(selectedCurrency.address, address, fromHumanReadable(new BigNumber(amount), btcCurrency), null, null, null, additionalParam);
                     }
                     if(network==="ln") {
                         if(isLnurl) {
-                            swapPromise = props.swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLPay, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60, null, null, null, additionalParam);
+                            swapPromise = swapper.createToBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLPay, fromHumanReadable(new BigNumber(amount), btcCurrency), "", 5*24*60*60, null, null, null, additionalParam);
                         } else {
-                            swapPromise = props.swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60, null, null, additionalParam);
+                            swapPromise = swapper.createToBTCLNSwap(selectedCurrency.address, address, 5*24*60*60, null, null, additionalParam);
                         }
                     }
                 } else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLWithdraw, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
+                    swapPromise = swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams as LNURLWithdraw, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {
@@ -369,7 +369,7 @@ export function Step2Screen(props: {
                             </div>
                         ) : ""}
 
-                        {addressError==null && props.swapper!=null && !lnurlLoading ? (
+                        {addressError==null && swapper!=null && !lnurlLoading ? (
                             <div className="mt-3 tab-accent-p3 text-center">
                                 <label className="fw-bold mb-1">{type==="send" ? "Pay" : "Withdraw"}</label>
 
@@ -444,7 +444,7 @@ export function Step2Screen(props: {
                         {quote!=null ? (
                             <>
                                 <FeeSummaryScreen swap={quote[0]} className="mt-3 mb-3 tab-accent"/>
-                                <QuoteSummary swapper={props.swapper} setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={autoContinue}/>
+                                <QuoteSummary swapper={swapper} setAmountLock={setLocked} type={"payment"} quote={quote[0]} balance={quote[1]} refreshQuote={getQuote} autoContinue={autoContinue}/>
                             </>
                         ) : ""}
                     </div>
