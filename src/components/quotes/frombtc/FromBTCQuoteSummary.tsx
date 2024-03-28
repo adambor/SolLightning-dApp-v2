@@ -313,12 +313,9 @@ export function FromBTCQuoteSummary(props: {
                             New quote
                         </Button>
                     ) : (
-                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg" className="d-flex flex-column">
-                            <div>
-                                {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
-                                Initiate swap
-                            </div>
-                            <small className="font-smallest opacity-75" style={{marginTop: "-6px"}}>(Creates bitcoin swap address)</small>
+                        <Button onClick={onCommit} disabled={loading || props.notEnoughForGas || !hasEnoughBalance} size="lg" className="d-flex flex-row">
+                            {loading ? <Spinner animation="border" size="sm" className="mr-2"/> : ""}
+                            Initiate swap
                         </Button>
                     )}
                 </>
