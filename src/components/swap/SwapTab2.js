@@ -267,14 +267,14 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
         }
         if (exactIn) {
             outAmountRef.current.validate();
-            if (!inAmountRef.current.validate()) {
+            if (!inAmountRef.current.validate() || amount === "") {
                 setQuoteLoading(false);
                 return;
             }
         }
         else {
             inAmountRef.current.validate();
-            if (!outAmountRef.current.validate()) {
+            if (!outAmountRef.current.validate() || amount === "") {
                 setQuoteLoading(false);
                 return;
             }
@@ -546,7 +546,7 @@ export function SwapTab(props) {
             return;
         priorMaxSpendable.current = maxSpendable;
         if (exactIn) {
-            if (inAmountRef.current.validate()) {
+            if (inAmountRef.current.validate() || amount === "") {
                 if (quoteRef.current == null && !quoteLoading && !locked)
                     refreshQuote();
             }
@@ -615,7 +615,8 @@ export function SwapTab(props) {
                                         setAmount(val);
                                         setExactIn(true);
                                     }, inputId: "amount-input", inputClassName: "font-weight-500", floatingLabel: inputValue == null ? null : FEConstants.USDollar.format(inputValue.toNumber()), expectingFloatingLabel: true, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: maxSpendable == null ? inConstraints.max : inConstraints.max == null ? toHumanReadable(maxSpendable.amount, inCurrency) : BigNumber.min(toHumanReadable(maxSpendable.amount, inCurrency), inConstraints.max), onValidate: (val) => {
-                                        return exactIn && val === "" ? "Amount cannot be empty" : null;
+                                        // return exactIn && val==="" ? "Amount cannot be empty" : null;
+                                        return null;
                                     }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "frombtc" ? bitcoinCurrencies : props.supportedCurrencies, onSelect: val => {
                                             if (locked)
                                                 return;
@@ -626,7 +627,8 @@ export function SwapTab(props) {
                                                 setAddress("");
                                             setExactIn(false);
                                         }, inputId: "amount-output", inputClassName: "font-weight-500", floatingLabel: outputValue == null ? null : FEConstants.USDollar.format(outputValue.toNumber()), expectingFloatingLabel: true, step: outCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals)), min: outConstraints.min, max: outConstraints.max, onValidate: (val) => {
-                                            return !exactIn && val === "" ? "Amount cannot be empty" : null;
+                                            // return !exactIn && val==="" ? "Amount cannot be empty" : null;
+                                            return null;
                                         }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "tobtc" ? bitcoinCurrencies : props.supportedCurrencies, onSelect: (val) => {
                                                 if (locked)
                                                     return;
@@ -642,7 +644,7 @@ export function SwapTab(props) {
                                                         e.preventDefault();
                                                         setQrScanning(true);
                                                     }, children: _jsx(Icon, { size: 24, icon: ic_qr_code_scanner }) }) })), successFeedback: bitcoinWallet != null && address === bitcoinWallet.getReceiveAddress() ? "Address fetched from your " + bitcoinWallet.getName() + " wallet!" : null }), lnWallet != null && outCurrency === bitcoinCurrencies[1] ? (_jsx(_Fragment, { children: address == null || address === "" ? (_jsx("div", { className: "mt-2", children: _jsx("a", { href: "javascript:void(0);", onClick: () => {
-                                                        if (!outAmountRef.current.validate())
+                                                        if (!outAmountRef.current.validate() || amount === "")
                                                             return;
                                                         lnWallet.makeInvoice(fromHumanReadableString(amount, outCurrency).toNumber()).then(res => {
                                                             setAddress(res.paymentRequest);

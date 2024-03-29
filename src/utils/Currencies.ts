@@ -27,8 +27,9 @@ export const nativeCurrency: CurrencySpec = {
     ticker: "SOL",
     decimals: 9,
     address: new PublicKey(FEConstants.wsolToken),
-    icon: "/icons/crypto/SOL.svg"
-}
+    icon: "/icons/crypto/SOL.svg",
+    minBalance: new BN(2500000)
+};
 
 export const smartChainCurrencies: CurrencySpec[] = [
     nativeCurrency,

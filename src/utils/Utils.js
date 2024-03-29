@@ -86,6 +86,9 @@ export function getFeePPM(swap) {
     }
 }
 export function getFeePct(swap, digits) {
-    const feePPM = getFeePPM(swap).add(new BN(5).mul(new BN(10).pow(new BN(3 - digits))));
+    const feeOriginal = getFeePPM(swap);
+    // console.log("Fee PPM: ", feeOriginal.toString(10));
+    const feePPM = feeOriginal.add(new BN(9).mul(new BN(10).pow(new BN(3 - digits))));
+    // console.log("Fee PPM: ", feePPM.toString(10));
     return feePPM.div(new BN(10).pow(new BN(4 - digits))).mul(new BN(10).pow(new BN(4 - digits)));
 }

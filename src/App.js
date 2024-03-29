@@ -35,6 +35,7 @@ import { BitcoinWallet } from './components/wallet/BitcoinWallet';
 import { BitcoinWalletContext } from './components/context/BitcoinWalletContext';
 import { WebLNContext } from './components/context/WebLNContext';
 import { heart } from 'react-icons-kit/fa/heart';
+import { useCallback, useRef } from "react";
 require('@solana/wallet-adapter-react-ui/styles.css');
 // export type BtcConnectionState = {
 //     declined: boolean,
@@ -59,9 +60,18 @@ function WrappedApp() {
         window.localStorage.setItem("atomiq-affiliate", searchParams.get("affiliate"));
     }
     const affiliateLink = searchParams.get("affiliate") || window.localStorage.getItem("atomiq-affiliate");
+    const swapListener = useCallback((swap) => {
+        if (swap.isFinished()) {
+            setActionableSwaps((val) => val.filter(e => e !== swap));
+        }
+    }, []);
+    const abortController = useRef();
     const loadSwapper = async (_provider) => {
         setSwapperLoadingError(null);
         setSwapperLoading(true);
+        if (abortController.current != null)
+            abortController.current.abort();
+        abortController.current = new AbortController();
         try {
             console.log("init start");
             const options = createSwapperOptions(FEConstants.chain, null, null, null, {
@@ -72,14 +82,19 @@ function WrappedApp() {
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);
             await swapper.init();
+            if (abortController.current.signal.aborted)
+                return;
             console.log(swapper);
             console.log("Swapper initialized, getting claimable swaps...");
             setSwapper(swapper);
             const actionableSwaps = (await swapper.getActionableSwaps());
+            if (abortController.current.signal.aborted)
+                return;
             console.log("actionable swaps: ", actionableSwaps);
             setActionableSwaps(actionableSwaps);
             console.log("Initialized");
             setSwapperLoading(false);
+            swapper.on("swapState", swapListener);
             return swapper;
         }
         catch (e) {
@@ -87,7 +102,13 @@ function WrappedApp() {
             console.error(e);
         }
     };
-    const [scanResult, setScanResult] = React.useState(null);
+    React.useEffect(() => {
+        return () => {
+            if (swapper != null) {
+                swapper.off("swapState", swapListener);
+            }
+        };
+    }, [swapper]);
     React.useEffect(() => {
         if (noWalletPaths.has(pathName))
             return;
@@ -100,24 +121,7 @@ function WrappedApp() {
         const _provider = new AnchorProvider(connection, wallet, { preflightCommitment: "processed" });
         console.log("New signer set: ", wallet.publicKey);
         setProvider(_provider);
-        let listener = (swap) => {
-            if (swap.isFinished()) {
-                setActionableSwaps((val) => val.filter(e => e !== swap));
-            }
-        };
-        let _swapper;
-        loadSwapper(_provider).then((swapper) => {
-            if (swapper != null && listener != null) {
-                _swapper = swapper;
-                swapper.on("swapState", listener);
-            }
-        });
-        return () => {
-            if (_swapper != null) {
-                _swapper.off("swapState", listener);
-            }
-            listener = null;
-        };
+        loadSwapper(_provider);
     }, [wallet]);
     const [nfcSupported, setNfcSupported] = React.useState(false);
     const [nfcEnabled, setNfcEnabled] = React.useState(true);
@@ -171,7 +175,7 @@ function WrappedApp() {
                                 return cpy;
                             });
                         }
-                    }, children: [_jsxs("div", { className: "d-flex flex-grow-1 flex-column", children: [swapper == null && !noWalletPaths.has(pathName) ? (_jsx("div", { className: "no-wallet-overlay d-flex align-items-center", children: _jsx("div", { className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill", children: _jsx("div", { className: "text-white text-center", children: provider != null && swapper == null ? (_jsx(_Fragment, { children: swapperLoadingError == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to atomiq network..." })] })) : (_jsx(_Fragment, { children: _jsxs(Alert, { className: "text-center", show: true, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "SolLightning network connection error" }), _jsx("p", { children: swapperLoadingError }), _jsx(Button, { variant: "light", onClick: () => {
+                    }, children: [_jsxs("div", { className: "d-flex flex-grow-1 flex-column", children: [(provider == null || swapperLoading) && !noWalletPaths.has(pathName) ? (_jsx("div", { className: "no-wallet-overlay d-flex align-items-center", children: _jsx("div", { className: "mt-auto height-50 d-flex justify-content-center align-items-center flex-fill", children: _jsx("div", { className: "text-white text-center", children: swapperLoading ? (_jsx(_Fragment, { children: swapperLoadingError == null ? (_jsxs(_Fragment, { children: [_jsx(Spinner, {}), _jsx("h4", { children: "Connecting to atomiq network..." })] })) : (_jsx(_Fragment, { children: _jsxs(Alert, { className: "text-center d-flex flex-column align-items-center justify-content-center", show: true, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "atomiq network connection error" }), _jsx("p", { children: swapperLoadingError }), _jsx(Button, { variant: "light", onClick: () => {
                                                                     loadSwapper(provider);
                                                                 }, children: "Retry" })] }) })) })) : (_jsxs(_Fragment, { children: [_jsx(WalletMultiButton, {}), _jsx("h2", { className: "mt-3", children: "Connect your wallet to start" })] })) }) }) })) : "", _jsx(BrowserRouter, { children: _jsx(Routes, { children: _jsxs(Route, { path: "/", children: [_jsx(Route, { index: true, element: _jsx(SwapTab, { swapper: swapper, supportedCurrencies: smartChainCurrencies }) }), _jsxs(Route, { path: "scan", children: [_jsx(Route, { index: true, element: _jsx(QuickScanScreen, {}) }), _jsx(Route, { path: "2", element: _jsx(Step2Screen, { swapper: swapper }) })] }), _jsx(Route, { path: "history", element: _jsx(HistoryScreen, { swapper: swapper }) }), _jsx(Route, { path: "gas", element: _jsx(SwapForGasScreen, { swapper: swapper }) }), _jsx(Route, { path: "faq", element: _jsx(FAQ, {}) }), _jsx(Route, { path: "about", element: _jsx(About, {}) }), _jsx(Route, { path: "map", element: _jsx(Map, {}) }), _jsx(Route, { path: "explorer", element: _jsx(SwapExplorer, {}) }), _jsx(Route, { path: "referral", element: _jsx(AffiliateScreen, { swapper: swapper }) })] }) }) })] }), _jsxs(Row, { className: "mt-auto bg-dark bg-opacity-50 g-0 p-2", children: [_jsxs(Col, { className: "d-flex flex-row", children: [_jsx("a", { href: "https://twitter.com/atomiqlabs", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/twitter.png" }) }), _jsx("a", { href: "https://github.com/adambor/SolLightning-readme", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/github.png" }) }), _jsx("a", { href: "https://docs.atomiq.exchange/", target: "_blank", className: "mx-2 hover-opacity-75 d-flex align-items-center", children: _jsx("img", { className: "social-icon", src: "/icons/socials/gitbook.png" }) })] }), affiliateLink != null && affiliateLink !== "" ? (_jsx(Col, { xs: "auto", className: "d-flex justify-content-center", children: _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "referral-tooltip", children: _jsx("span", { children: "Swap fee reduced to 0.2%, thanks to being referred to atomiq.exchange!" }) }), children: _jsxs("div", { className: "font-small text-white opacity-75 d-flex align-items-center ", children: [_jsx(Icon, { icon: heart, className: "d-flex align-items-center me-1" }), _jsx("span", { className: "text-decoration-dotted", children: "Using referral link" })] }) }) })) : "", _jsx(Col, { className: "d-flex justify-content-end", children: _jsxs("a", { href: "https://t.me/+_MQNtlBXQ2Q1MGEy", target: "_blank", className: "ms-auto d-flex flex-row align-items-center text-white text-decoration-none hover-opacity-75 font-small", children: [_jsx("img", { className: "social-icon me-1", src: "/icons/socials/telegram.png" }), "Talk to us"] }) })] })] })] }) }));
 }

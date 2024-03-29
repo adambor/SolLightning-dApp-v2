@@ -52,6 +52,7 @@ import {BitcoinWalletContext} from './components/context/BitcoinWalletContext';
 import {WebLNProvider} from "webln";
 import {WebLNContext} from './components/context/WebLNContext';
 import {heart} from 'react-icons-kit/fa/heart';
+import {useCallback, useRef} from "react";
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -85,9 +86,18 @@ function WrappedApp() {
 
     const affiliateLink = searchParams.get("affiliate") || window.localStorage.getItem("atomiq-affiliate");
 
+    const swapListener = useCallback((swap: ISwap) => {
+        if(swap.isFinished()) {
+            setActionableSwaps((val: ISwap[]) => val.filter(e => e!==swap));
+        }
+    }, []);
+    const abortController = useRef<AbortController>();
+
     const loadSwapper: (_provider: AnchorProvider) => Promise<SolanaSwapper> = async(_provider: AnchorProvider) => {
         setSwapperLoadingError(null);
         setSwapperLoading(true);
+        if(abortController.current!=null) abortController.current.abort();
+        abortController.current = new AbortController();
         try {
             console.log("init start");
 
@@ -102,6 +112,7 @@ function WrappedApp() {
             const swapper = new SolanaSwapper(_provider, options);
 
             await swapper.init();
+            if(abortController.current.signal.aborted) return;
 
             console.log(swapper);
 
@@ -110,12 +121,15 @@ function WrappedApp() {
             setSwapper(swapper);
 
             const actionableSwaps = (await swapper.getActionableSwaps());
+            if(abortController.current.signal.aborted) return;
             console.log("actionable swaps: ", actionableSwaps);
             setActionableSwaps(actionableSwaps);
 
             console.log("Initialized");
 
             setSwapperLoading(false);
+
+            swapper.on("swapState", swapListener);
 
             return swapper;
         } catch (e) {
@@ -124,7 +138,13 @@ function WrappedApp() {
         }
     };
 
-    const [scanResult, setScanResult] = React.useState<string>(null);
+    React.useEffect(() => {
+        return () => {
+            if(swapper!=null) {
+                swapper.off("swapState", swapListener);
+            }
+        }
+    }, [swapper]);
 
     React.useEffect(() => {
 
@@ -142,27 +162,7 @@ function WrappedApp() {
         console.log("New signer set: ", wallet.publicKey);
 
         setProvider(_provider);
-
-        let listener = (swap: ISwap) => {
-            if(swap.isFinished()) {
-                setActionableSwaps((val: ISwap[]) => val.filter(e => e!==swap));
-            }
-        };
-
-        let _swapper: SolanaSwapper;
-        loadSwapper(_provider).then((swapper: SolanaSwapper) => {
-            if(swapper!=null && listener!=null) {
-                _swapper = swapper;
-                swapper.on("swapState", listener);
-            }
-        });
-
-        return () => {
-            if(_swapper!=null) {
-                _swapper.off("swapState", listener);
-            }
-            listener = null;
-        }
+        loadSwapper(_provider);
 
     }, [wallet]);
 
@@ -323,11 +323,11 @@ function WrappedApp() {
                     }
                 }}>
                     <div className="d-flex flex-grow-1 flex-column">
-                        {swapper==null && !noWalletPaths.has(pathName) ? (
+                        {(provider==null || swapperLoading) && !noWalletPaths.has(pathName) ? (
                             <div className="no-wallet-overlay d-flex align-items-center">
                                 <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                     <div className="text-white text-center">
-                                        {provider!=null && swapper==null ? (
+                                        {swapperLoading ? (
                                             <>
                                                 {swapperLoadingError==null ? (
                                                     <>
@@ -336,8 +336,8 @@ function WrappedApp() {
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Alert className="text-center" show={true} variant="danger" closeVariant="white">
-                                                            <strong>SolLightning network connection error</strong>
+                                                        <Alert className="text-center d-flex flex-column align-items-center justify-content-center" show={true} variant="danger" closeVariant="white">
+                                                            <strong>atomiq network connection error</strong>
                                                             <p>{swapperLoadingError}</p>
                                                             <Button variant="light" onClick={() => {
                                                                 loadSwapper(provider)

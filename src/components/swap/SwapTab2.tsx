@@ -360,13 +360,13 @@ function useQuote(
 
         if(exactIn) {
             outAmountRef.current.validate();
-            if(!inAmountRef.current.validate()) {
+            if(!inAmountRef.current.validate() || amount==="") {
                 setQuoteLoading(false);
                 return;
             }
         } else {
             inAmountRef.current.validate();
-            if(!outAmountRef.current.validate()) {
+            if(!outAmountRef.current.validate() || amount==="") {
                 setQuoteLoading(false);
                 return;
             }
@@ -678,7 +678,7 @@ export function SwapTab(props: {
         priorMaxSpendable.current = maxSpendable;
 
         if(exactIn) {
-            if(inAmountRef.current.validate()) {
+            if(inAmountRef.current.validate() || amount==="") {
                 if(quoteRef.current==null && !quoteLoading && !locked) refreshQuote();
             } else {
                 if((quoteRef.current!=null || quoteLoading) && !locked) refreshQuote();
@@ -809,7 +809,8 @@ export function SwapTab(props: {
                             min={inConstraints.min}
                             max={maxSpendable==null ? inConstraints.max : inConstraints.max==null ? toHumanReadable(maxSpendable.amount, inCurrency) : BigNumber.min(toHumanReadable(maxSpendable.amount, inCurrency), inConstraints.max)}
                             onValidate={(val: any) => {
-                                return exactIn && val==="" ? "Amount cannot be empty" : null;
+                                // return exactIn && val==="" ? "Amount cannot be empty" : null;
+                                return null;
                             }}
                             elementEnd={(
                                 <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
@@ -863,7 +864,8 @@ export function SwapTab(props: {
                                 min={outConstraints.min}
                                 max={outConstraints.max}
                                 onValidate={(val: any) => {
-                                    return !exactIn && val==="" ? "Amount cannot be empty" : null;
+                                    // return !exactIn && val==="" ? "Amount cannot be empty" : null;
+                                    return null;
                                 }}
                                 elementEnd={(
                                     <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={(val) => {
@@ -910,7 +912,7 @@ export function SwapTab(props: {
                                         {address==null || address==="" ? (
                                             <div className="mt-2">
                                                 <a href="javascript:void(0);" onClick={() => {
-                                                    if(!outAmountRef.current.validate()) return;
+                                                    if(!outAmountRef.current.validate() || amount==="") return;
                                                     lnWallet.makeInvoice(fromHumanReadableString(amount, outCurrency).toNumber()).then(res => {
                                                         setAddress(res.paymentRequest);
                                                     }).catch(e => console.error(e));
