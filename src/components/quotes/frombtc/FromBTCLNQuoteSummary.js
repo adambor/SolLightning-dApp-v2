@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Badge, Button, CloseButton, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
+import { Alert, Badge, Button, CloseButton, Form, Modal, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
 import { QRCodeSVG } from "qrcode.react";
 import ValidatedInput from "../../ValidatedInput";
 import { FromBTCLNSwapState } from "sollightning-sdk";
@@ -10,7 +10,6 @@ import { LNNFCReader, LNNFCStartResult } from "../../lnnfc/LNNFCReader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { WebLNContext } from "../../context/WebLNContext";
 import { externalLink } from 'react-icons-kit/fa/externalLink';
-import { Modal } from "react-bootstrap";
 import { info } from 'react-icons-kit/fa/info';
 import { elementInViewport } from "../../../utils/Utils";
 export function FromBTCLNQuoteSummary(props) {
@@ -138,13 +137,17 @@ export function FromBTCLNQuoteSummary(props) {
             if (dt <= 0) {
                 clearInterval(interval);
                 dt = 0;
-                if (props.setAmountLock != null)
-                    props.setAmountLock(false);
+                // if(props.setAmountLock!=null) props.setAmountLock(false);
                 abortControllerRef.current.abort();
             }
             setQuoteTimeRemaining(Math.floor(dt / 1000));
         }, 500);
-        expiryTime.current = props.quote.getTimeoutTime();
+        if (props.quote.getState() === FromBTCLNSwapState.CLAIM_COMMITED) {
+            expiryTime.current = props.quote.getExpiry();
+        }
+        else {
+            expiryTime.current = props.quote.getTimeoutTime();
+        }
         const dt = Math.floor((expiryTime.current - Date.now()) / 1000);
         setInitialQuoteTimeout(dt);
         setQuoteTimeRemaining(dt);
@@ -153,10 +156,9 @@ export function FromBTCLNQuoteSummary(props) {
         // setState(FromBTCLNSwapState.PR_CREATED);
         props.quote.events.on("swapState", listener = (quote) => {
             setState(quote.getState());
-            if (quote.getState() === FromBTCLNSwapState.CLAIM_CLAIMED) {
-                if (props.setAmountLock)
-                    props.setAmountLock(false);
-            }
+            // if(quote.getState()===FromBTCLNSwapState.CLAIM_CLAIMED) {
+            //     if(props.setAmountLock) props.setAmountLock(false);
+            // }
             if (quote.getState() === FromBTCLNSwapState.PR_PAID) {
                 clearInterval(interval);
                 interval = setInterval(() => {
@@ -164,13 +166,13 @@ export function FromBTCLNQuoteSummary(props) {
                     if (dt <= 0) {
                         clearInterval(interval);
                         dt = 0;
-                        if (props.setAmountLock != null)
-                            props.setAmountLock(false);
+                        // if(props.setAmountLock!=null) props.setAmountLock(false);
                     }
                     setQuoteTimeRemaining(Math.floor(dt / 1000));
                 }, 500);
                 expiryTime.current = quote.getExpiry();
                 const dt = Math.floor((expiryTime.current - Date.now()) / 1000);
+                console.log("FromBTCLN swap state PR_PAID, dt: ", dt);
                 setInitialQuoteTimeout(dt);
                 setQuoteTimeRemaining(dt);
             }
@@ -181,6 +183,13 @@ export function FromBTCLNQuoteSummary(props) {
             abortControllerRef.current.abort();
         };
     }, [props.quote]);
+    useEffect(() => {
+        if ((quoteTimeRemaining === 0 && !loading) ||
+            state === FromBTCLNSwapState.CLAIM_CLAIMED) {
+            if (props.quote != null && props.setAmountLock != null)
+                props.setAmountLock(false);
+        }
+    }, [quoteTimeRemaining, loading, props.quote, state]);
     useEffect(() => {
         if (state === FromBTCLNSwapState.PR_PAID) {
             if (autoClaim || lnWallet != null)
@@ -245,7 +254,6 @@ export function FromBTCLNQuoteSummary(props) {
         setShowCopyOverlay(num);
     };
     const [openAppModalOpened, setOpenAppModalOpened] = useState(false);
-    //TODO: Add subtitle to the button: "Create ligtning invoice"
     return (_jsxs(_Fragment, { children: [_jsxs(Modal, { contentClassName: "text-white bg-dark", size: "sm", centered: true, show: openAppModalOpened, onHide: () => setOpenAppModalOpened(false), dialogClassName: "min-width-400px", children: [_jsx(Modal.Header, { className: "border-0", children: _jsxs(Modal.Title, { id: "contained-modal-title-vcenter", className: "d-flex flex-grow-1", children: [_jsx(Icon, { icon: info, className: "d-flex align-items-center me-2" }), " Important notice", _jsx(CloseButton, { className: "ms-auto", variant: "white", onClick: () => setOpenAppModalOpened(false) })] }) }), _jsx(Modal.Body, { children: _jsxs("p", { children: ["Please make sure that you return back to this dApp once you inititated a Lightning Network payment from your wallet app. ", _jsx("b", { children: "The Lightning Network payment will only succeed/confirm once you come back to the dApp and claim the funds on the Solana side!" })] }) }), _jsx(Modal.Footer, { className: "border-0 d-flex", children: _jsx(Button, { variant: "primary", className: "flex-grow-1", onClick: () => {
                                 window.location.href = props.quote.getQrData();
                                 setOpenAppModalOpened(false);
