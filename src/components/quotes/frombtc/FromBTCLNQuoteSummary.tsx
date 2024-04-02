@@ -201,6 +201,7 @@ export function FromBTCLNQuoteSummary(props: {
 
         props.quote.events.on("swapState", listener = (quote: FromBTCLNSwap<any>) => {
             setState(quote.getState());
+            console.log("FromBTCLN swap state: ", quote.getState());
             // if(quote.getState()===FromBTCLNSwapState.CLAIM_CLAIMED) {
             //     if(props.setAmountLock) props.setAmountLock(false);
             // }
@@ -235,7 +236,8 @@ export function FromBTCLNQuoteSummary(props: {
 
     useEffect(() => {
         if(
-            (quoteTimeRemaining===0 && !loading) ||
+            (state===FromBTCLNSwapState.PR_CREATED && quoteTimeRemaining===0 && !loading) ||
+            (state===FromBTCLNSwapState.PR_PAID && quoteTimeRemaining===0 && !loading) ||
             state===FromBTCLNSwapState.CLAIM_CLAIMED
         ) {
             if(props.quote!=null && props.setAmountLock!=null) props.setAmountLock(false);
@@ -502,7 +504,7 @@ export function FromBTCLNQuoteSummary(props: {
                         </div>
                     ) : ""}
                     {state===FromBTCLNSwapState.PR_PAID ? (
-                        <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
+                        <div className={!loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                             {quoteTimeRemaining===0 ? (
                                 <label>Swap expired! Your lightning payment should refund shortly.</label>
                             ) : (
@@ -511,7 +513,7 @@ export function FromBTCLNQuoteSummary(props: {
                             <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                         </div>
                     ) : ""}
-                    {quoteTimeRemaining===0 && !loading ? (
+                    {state===FromBTCLNSwapState.PR_PAID && quoteTimeRemaining===0 && !loading ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote
                         </Button>
