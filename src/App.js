@@ -78,6 +78,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+            //options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 8, 100, "no");
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);

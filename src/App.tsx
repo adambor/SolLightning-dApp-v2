@@ -5,14 +5,14 @@ import WalletTab from "./components/WalletTab";
 import {QuickScanScreen} from "./components/quickscan/QuickScanScreen";
 import {Step2Screen} from "./components/quickscan/Step2Screen";
 import {useAnchorWallet, useConnection} from '@solana/wallet-adapter-react';
-import {createSwapperOptions, NetworkError, SolanaSwapData, SolanaSwapper, UserError} from "sollightning-sdk/dist";
+import {createSwapperOptions, NetworkError, SolanaSwapData, SolanaSwapper, SolanaSwapperOptions, UserError} from "sollightning-sdk/dist";
 import {AnchorProvider} from "@coral-xyz/anchor";
 import {FEConstants} from "./FEConstants";
 import {SwapTab} from "./components/swap/SwapTab2";
 import {smartChainCurrencies} from "./utils/Currencies";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {SwapsContext} from "./components/context/SwapsContext";
-import {ChainUtils, FromBTCSwap, ISwap} from "sollightning-sdk";
+import {ChainUtils, FromBTCSwap, ISwap, SolanaFeeEstimator} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import {
@@ -101,10 +101,11 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
+            //options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 8, 100, "no");
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
 
             console.log("Created swapper options: ", options);
