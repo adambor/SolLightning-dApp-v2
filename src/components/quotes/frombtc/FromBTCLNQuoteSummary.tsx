@@ -6,6 +6,7 @@ import {
     Button,
     CloseButton,
     Form,
+    Modal,
     Overlay,
     OverlayTrigger,
     ProgressBar,
@@ -19,10 +20,8 @@ import {clipboard} from 'react-icons-kit/fa/clipboard'
 import Icon from "react-icons-kit";
 import {LNNFCReader, LNNFCStartResult} from "../../lnnfc/LNNFCReader";
 import {useLocation, useNavigate} from "react-router-dom";
-import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import {WebLNContext} from "../../context/WebLNContext";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
-import {Modal} from "react-bootstrap";
 import {info} from 'react-icons-kit/fa/info';
 import {elementInViewport} from "../../../utils/Utils";
 
@@ -179,13 +178,17 @@ export function FromBTCLNQuoteSummary(props: {
             if(dt<=0) {
                 clearInterval(interval);
                 dt = 0;
-                if(props.setAmountLock!=null) props.setAmountLock(false);
+                // if(props.setAmountLock!=null) props.setAmountLock(false);
                 abortControllerRef.current.abort();
             }
             setQuoteTimeRemaining(Math.floor(dt/1000));
         }, 500);
 
-        expiryTime.current = props.quote.getTimeoutTime();
+        if(props.quote.getState()===FromBTCLNSwapState.CLAIM_COMMITED) {
+            expiryTime.current = props.quote.getExpiry();
+        } else {
+            expiryTime.current = props.quote.getTimeoutTime();
+        }
 
         const dt = Math.floor((expiryTime.current-Date.now())/1000);
         setInitialQuoteTimeout(dt);
@@ -198,9 +201,10 @@ export function FromBTCLNQuoteSummary(props: {
 
         props.quote.events.on("swapState", listener = (quote: FromBTCLNSwap<any>) => {
             setState(quote.getState());
-            if(quote.getState()===FromBTCLNSwapState.CLAIM_CLAIMED) {
-                if(props.setAmountLock) props.setAmountLock(false);
-            }
+            console.log("FromBTCLN swap state: ", quote.getState());
+            // if(quote.getState()===FromBTCLNSwapState.CLAIM_CLAIMED) {
+            //     if(props.setAmountLock) props.setAmountLock(false);
+            // }
             if(quote.getState()===FromBTCLNSwapState.PR_PAID) {
                 clearInterval(interval);
                 interval = setInterval(() => {
@@ -208,7 +212,7 @@ export function FromBTCLNQuoteSummary(props: {
                     if(dt<=0) {
                         clearInterval(interval);
                         dt = 0;
-                        if(props.setAmountLock!=null) props.setAmountLock(false);
+                        // if(props.setAmountLock!=null) props.setAmountLock(false);
                     }
                     setQuoteTimeRemaining(Math.floor(dt/1000));
                 }, 500);
@@ -216,6 +220,7 @@ export function FromBTCLNQuoteSummary(props: {
                 expiryTime.current = quote.getExpiry();
 
                 const dt = Math.floor((expiryTime.current-Date.now())/1000);
+                console.log("FromBTCLN swap state PR_PAID, dt: ", dt);
                 setInitialQuoteTimeout(dt);
                 setQuoteTimeRemaining(dt);
             }
@@ -228,6 +233,16 @@ export function FromBTCLNQuoteSummary(props: {
         };
 
     }, [props.quote]);
+
+    useEffect(() => {
+        if(
+            (state===FromBTCLNSwapState.PR_CREATED && quoteTimeRemaining===0 && !loading) ||
+            (state===FromBTCLNSwapState.PR_PAID && quoteTimeRemaining===0 && !loading) ||
+            state===FromBTCLNSwapState.CLAIM_CLAIMED
+        ) {
+            if(props.quote!=null && props.setAmountLock!=null) props.setAmountLock(false);
+        }
+    }, [quoteTimeRemaining, loading, props.quote, state]);
 
     useEffect(() => {
         if(state===FromBTCLNSwapState.PR_PAID) {
@@ -298,7 +313,6 @@ export function FromBTCLNQuoteSummary(props: {
 
     const [openAppModalOpened, setOpenAppModalOpened] = useState<boolean>(false);
 
-    //TODO: Add subtitle to the button: "Create ligtning invoice"
     return (
         <>
             <Modal contentClassName="text-white bg-dark" size="sm" centered show={openAppModalOpened} onHide={() => setOpenAppModalOpened(false)} dialogClassName="min-width-400px">
@@ -330,7 +344,7 @@ export function FromBTCLNQuoteSummary(props: {
 
             <Alert className="text-center mb-3 d-flex align-items-center flex-column" show={props.notEnoughForGas} variant="danger" closeVariant="white">
                 <strong>Not enough SOL for fees</strong>
-                <label>You need at least 0.005 SOL to pay for fees and refundable deposit! You can swap for gas first & then continue swapping here!</label>
+                <label>You need at least 0.01 SOL to pay for fees and refundable deposit! You can swap for gas first & then continue swapping here!</label>
                 <Button className="mt-2" variant="secondary" onClick={() => {
                     navigate("/gas", {
                         state: {
@@ -490,7 +504,7 @@ export function FromBTCLNQuoteSummary(props: {
                         </div>
                     ) : ""}
                     {state===FromBTCLNSwapState.PR_PAID ? (
-                        <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
+                        <div className={!loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                             {quoteTimeRemaining===0 ? (
                                 <label>Swap expired! Your lightning payment should refund shortly.</label>
                             ) : (
@@ -499,8 +513,7 @@ export function FromBTCLNQuoteSummary(props: {
                             <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                         </div>
                     ) : ""}
-
-                    {quoteTimeRemaining===0 && !loading ? (
+                    {state===FromBTCLNSwapState.PR_PAID && quoteTimeRemaining===0 && !loading ? (
                         <Button onClick={props.refreshQuote} variant="secondary">
                             New quote
                         </Button>

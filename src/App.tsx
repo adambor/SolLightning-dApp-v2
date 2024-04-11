@@ -5,14 +5,14 @@ import WalletTab from "./components/WalletTab";
 import {QuickScanScreen} from "./components/quickscan/QuickScanScreen";
 import {Step2Screen} from "./components/quickscan/Step2Screen";
 import {useAnchorWallet, useConnection} from '@solana/wallet-adapter-react';
-import {createSwapperOptions, NetworkError, SolanaSwapData, SolanaSwapper, UserError} from "sollightning-sdk/dist";
+import {createSwapperOptions, NetworkError, SolanaSwapData, SolanaSwapper, SolanaSwapperOptions, UserError} from "sollightning-sdk/dist";
 import {AnchorProvider} from "@coral-xyz/anchor";
 import {FEConstants} from "./FEConstants";
 import {SwapTab} from "./components/swap/SwapTab2";
 import {smartChainCurrencies} from "./utils/Currencies";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {SwapsContext} from "./components/context/SwapsContext";
-import {ChainUtils, FromBTCSwap, ISwap} from "sollightning-sdk";
+import {ChainUtils, FromBTCSwap, ISwap, SolanaFeeEstimator} from "sollightning-sdk";
 import {HistoryScreen} from "./components/history/HistoryScreen";
 import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import {
@@ -64,6 +64,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 // };
 
 const noWalletPaths = new Set(["/about", "/faq", "/map", "/explorer"]);
+const jitoPubkey = "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL";
+const jitoEndpoint = "https://mainnet.block-engine.jito.wtf/api/v1/transactions";
 
 function WrappedApp() {
     const wallet: any = useAnchorWallet();
@@ -101,9 +103,14 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options = createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
+            });
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 500000, 8, 100, "auto", {
+                address: jitoPubkey,
+                endpoint: jitoEndpoint,
+                getStaticFee:() => new BN(100000)
             });
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
 

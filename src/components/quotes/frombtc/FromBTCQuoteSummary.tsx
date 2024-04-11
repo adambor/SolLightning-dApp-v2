@@ -288,7 +288,7 @@ export function FromBTCQuoteSummary(props: {
 
             <Alert className="text-center mb-3 d-flex align-items-center flex-column" show={props.notEnoughForGas} variant="danger" closeVariant="white">
                 <strong>Not enough SOL for fees</strong>
-                <label>You need at least 0.005 SOL to pay for fees and refundable deposit! You can use <b>Bitcoin Lightning</b> to swap for gas first & then continue swapping here!</label>
+                <label>You need at least 0.01 SOL to pay for fees and refundable deposit! You can use <b>Bitcoin Lightning</b> to swap for gas first & then continue swapping here!</label>
                 <Button className="mt-2" variant="secondary" onClick={() => {
                     navigate("/gas", {
                         state: {

@@ -13,6 +13,7 @@ import { SwapTab } from "./components/swap/SwapTab2";
 import { smartChainCurrencies } from "./utils/Currencies";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SwapsContext } from "./components/context/SwapsContext";
+import { SolanaFeeEstimator } from "sollightning-sdk";
 import { HistoryScreen } from "./components/history/HistoryScreen";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { Alert, Badge, Button, Col, Container, Form, Nav, Navbar, OverlayTrigger, Row, Spinner, Tooltip } from "react-bootstrap";
@@ -24,6 +25,7 @@ import { info } from 'react-icons-kit/fa/info';
 import { question } from 'react-icons-kit/fa/question';
 import { exchange } from 'react-icons-kit/fa/exchange';
 import Icon from "react-icons-kit";
+import * as BN from "bn.js";
 import { LNNFCReader, LNNFCStartResult } from './components/lnnfc/LNNFCReader';
 import { ic_contactless } from 'react-icons-kit/md/ic_contactless';
 import { SwapForGasScreen } from "./components/swapforgas/SwapForGasScreen";
@@ -44,6 +46,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 //     sendTransaction?: (address: string, amount: BN) => Promise<void>
 // };
 const noWalletPaths = new Set(["/about", "/faq", "/map", "/explorer"]);
+const jitoPubkey = "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL";
+const jitoEndpoint = "https://mainnet.block-engine.jito.wtf/api/v1/transactions";
 function WrappedApp() {
     const wallet = useAnchorWallet();
     const { connection } = useConnection();
@@ -77,6 +81,11 @@ function WrappedApp() {
             const options = createSwapperOptions(FEConstants.chain, null, null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000
+            });
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 500000, 8, 100, "auto", {
+                address: jitoPubkey,
+                endpoint: jitoEndpoint,
+                getStaticFee: () => new BN(100000)
             });
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);

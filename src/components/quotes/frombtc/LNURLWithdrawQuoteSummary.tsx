@@ -13,6 +13,7 @@ export function LNURLWithdrawQuoteSummary(props: {
 
     const [quoteTimeRemaining, setQuoteTimeRemaining] = useState<number>();
     const [initialQuoteTimeout, setInitialQuoteTimeout] = useState<number>();
+    const [state, setState] = useState<FromBTCLNSwapState>(null);
     const expiryTime = useRef<number>();
 
     const [loading, setLoading] = useState<boolean>();
@@ -46,23 +47,51 @@ export function LNURLWithdrawQuoteSummary(props: {
             if(props.autoContinue) onContinue(true);
         }
 
+        let listener;
+        setState(props.quote.getState());
+        props.quote.events.on("swapState", listener = (quote: FromBTCLNSwap<any>) => {
+            setState(quote.getState());
+        });
+
         return () => {
             clearInterval(interval);
+            props.quote.events.removeListener("swapState", listener);
         };
 
     }, [props.quote]);
 
     const onContinue = async (skipChecks?: boolean) => {
+        if(props.quote.getState()===FromBTCLNSwapState.CLAIM_COMMITED) {
+            setLoading(true);
+            try {
+                await props.quote.commitAndClaim(null, skipChecks);
+                setSuccess(true);
+            } catch (e) {
+                setError(e.toString());
+            }
+            if(props.setAmountLock) props.setAmountLock(false);
+            setLoading(false);
+            return;
+        }
         if (!props.quote.prPosted) {
             setLoading(true);
             try {
                 if(props.setAmountLock) props.setAmountLock(true);
                 await props.quote.waitForPayment(null, 1);
-                await props.quote.commitAndClaim(null, skipChecks);
-                setSuccess(true);
             } catch (e) {
                 setSuccess(false);
                 setError(e.toString());
+                setLoading(false);
+                if(props.setAmountLock) props.setAmountLock(false);
+                return;
+            }
+
+            try {
+                await props.quote.commitAndClaim(null, skipChecks);
+                setSuccess(true);
+            } catch (e) {
+                setError(e.toString());
+                if(props.quote.getState()!==FromBTCLNSwapState.CLAIM_COMMITED) setSuccess(false);
             }
             if(props.setAmountLock) props.setAmountLock(false);
             setLoading(false);
@@ -71,7 +100,14 @@ export function LNURLWithdrawQuoteSummary(props: {
 
     return (
         <>
-            <div className={success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
+            {error!=null ? (
+                <Alert variant="danger" className="mb-3">
+                    <strong>Swap failed</strong>
+                    <label>{error}</label>
+                </Alert>
+            ) : ""}
+
+            <div className={state!==FromBTCLNSwapState.CLAIM_COMMITED && success===null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none"}>
                 {quoteTimeRemaining===0 ? (
                     <label>Quote expired!</label>
                 ) : (
@@ -81,7 +117,7 @@ export function LNURLWithdrawQuoteSummary(props: {
             </div>
 
             {success===null ? (
-                quoteTimeRemaining===0 && !loading ? (
+                state!==FromBTCLNSwapState.CLAIM_COMMITED && quoteTimeRemaining===0 && !loading ? (
                     <Button onClick={props.refreshQuote} variant="secondary">
                         New quote
                     </Button>
@@ -98,15 +134,9 @@ export function LNURLWithdrawQuoteSummary(props: {
                         <label>Swap was concluded successfully</label>
                     </Alert>
                 ) : (
-                    <>
-                        <Alert variant="danger" className="mb-3">
-                            <strong>Swap failed</strong>
-                            <label>{error}</label>
-                        </Alert>
-                        <Button onClick={props.refreshQuote} variant="secondary">
-                            New quote
-                        </Button>
-                    </>
+                    <Button onClick={props.refreshQuote} variant="secondary">
+                        New quote
+                    </Button>
                 )
             )}
 

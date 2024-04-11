@@ -333,6 +333,7 @@ function useQuote(
             }
 
             const lnurlResult = await lnurlData.current.data;
+            if(quoteUpdates.current!==updateNum) return;
             if(lnurlResult==null) {
                 setQuoteAddressError({
                     address: useAddress,

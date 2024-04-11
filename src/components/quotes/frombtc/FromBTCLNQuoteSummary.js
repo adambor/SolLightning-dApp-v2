@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useContext, useEffect, useRef, useState } from "react";
-import { Alert, Badge, Button, CloseButton, Form, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
+import { Alert, Badge, Button, CloseButton, Form, Modal, Overlay, OverlayTrigger, ProgressBar, Spinner, Tooltip } from "react-bootstrap";
 import { QRCodeSVG } from "qrcode.react";
 import ValidatedInput from "../../ValidatedInput";
 import { FromBTCLNSwapState } from "sollightning-sdk";
@@ -10,7 +10,6 @@ import { LNNFCReader, LNNFCStartResult } from "../../lnnfc/LNNFCReader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { WebLNContext } from "../../context/WebLNContext";
 import { externalLink } from 'react-icons-kit/fa/externalLink';
-import { Modal } from "react-bootstrap";
 import { info } from 'react-icons-kit/fa/info';
 import { elementInViewport } from "../../../utils/Utils";
 export function FromBTCLNQuoteSummary(props) {
@@ -138,13 +137,17 @@ export function FromBTCLNQuoteSummary(props) {
             if (dt <= 0) {
                 clearInterval(interval);
                 dt = 0;
-                if (props.setAmountLock != null)
-                    props.setAmountLock(false);
+                // if(props.setAmountLock!=null) props.setAmountLock(false);
                 abortControllerRef.current.abort();
             }
             setQuoteTimeRemaining(Math.floor(dt / 1000));
         }, 500);
-        expiryTime.current = props.quote.getTimeoutTime();
+        if (props.quote.getState() === FromBTCLNSwapState.CLAIM_COMMITED) {
+            expiryTime.current = props.quote.getExpiry();
+        }
+        else {
+            expiryTime.current = props.quote.getTimeoutTime();
+        }
         const dt = Math.floor((expiryTime.current - Date.now()) / 1000);
         setInitialQuoteTimeout(dt);
         setQuoteTimeRemaining(dt);
@@ -153,10 +156,10 @@ export function FromBTCLNQuoteSummary(props) {
         // setState(FromBTCLNSwapState.PR_CREATED);
         props.quote.events.on("swapState", listener = (quote) => {
             setState(quote.getState());
-            if (quote.getState() === FromBTCLNSwapState.CLAIM_CLAIMED) {
-                if (props.setAmountLock)
-                    props.setAmountLock(false);
-            }
+            console.log("FromBTCLN swap state: ", quote.getState());
+            // if(quote.getState()===FromBTCLNSwapState.CLAIM_CLAIMED) {
+            //     if(props.setAmountLock) props.setAmountLock(false);
+            // }
             if (quote.getState() === FromBTCLNSwapState.PR_PAID) {
                 clearInterval(interval);
                 interval = setInterval(() => {
@@ -164,13 +167,13 @@ export function FromBTCLNQuoteSummary(props) {
                     if (dt <= 0) {
                         clearInterval(interval);
                         dt = 0;
-                        if (props.setAmountLock != null)
-                            props.setAmountLock(false);
+                        // if(props.setAmountLock!=null) props.setAmountLock(false);
                     }
                     setQuoteTimeRemaining(Math.floor(dt / 1000));
                 }, 500);
                 expiryTime.current = quote.getExpiry();
                 const dt = Math.floor((expiryTime.current - Date.now()) / 1000);
+                console.log("FromBTCLN swap state PR_PAID, dt: ", dt);
                 setInitialQuoteTimeout(dt);
                 setQuoteTimeRemaining(dt);
             }
@@ -181,6 +184,14 @@ export function FromBTCLNQuoteSummary(props) {
             abortControllerRef.current.abort();
         };
     }, [props.quote]);
+    useEffect(() => {
+        if ((state === FromBTCLNSwapState.PR_CREATED && quoteTimeRemaining === 0 && !loading) ||
+            (state === FromBTCLNSwapState.PR_PAID && quoteTimeRemaining === 0 && !loading) ||
+            state === FromBTCLNSwapState.CLAIM_CLAIMED) {
+            if (props.quote != null && props.setAmountLock != null)
+                props.setAmountLock(false);
+        }
+    }, [quoteTimeRemaining, loading, props.quote, state]);
     useEffect(() => {
         if (state === FromBTCLNSwapState.PR_PAID) {
             if (autoClaim || lnWallet != null)
@@ -245,11 +256,10 @@ export function FromBTCLNQuoteSummary(props) {
         setShowCopyOverlay(num);
     };
     const [openAppModalOpened, setOpenAppModalOpened] = useState(false);
-    //TODO: Add subtitle to the button: "Create ligtning invoice"
     return (_jsxs(_Fragment, { children: [_jsxs(Modal, { contentClassName: "text-white bg-dark", size: "sm", centered: true, show: openAppModalOpened, onHide: () => setOpenAppModalOpened(false), dialogClassName: "min-width-400px", children: [_jsx(Modal.Header, { className: "border-0", children: _jsxs(Modal.Title, { id: "contained-modal-title-vcenter", className: "d-flex flex-grow-1", children: [_jsx(Icon, { icon: info, className: "d-flex align-items-center me-2" }), " Important notice", _jsx(CloseButton, { className: "ms-auto", variant: "white", onClick: () => setOpenAppModalOpened(false) })] }) }), _jsx(Modal.Body, { children: _jsxs("p", { children: ["Please make sure that you return back to this dApp once you inititated a Lightning Network payment from your wallet app. ", _jsx("b", { children: "The Lightning Network payment will only succeed/confirm once you come back to the dApp and claim the funds on the Solana side!" })] }) }), _jsx(Modal.Footer, { className: "border-0 d-flex", children: _jsx(Button, { variant: "primary", className: "flex-grow-1", onClick: () => {
                                 window.location.href = props.quote.getQrData();
                                 setOpenAppModalOpened(false);
-                            }, children: "Understood, continue" }) })] }), error != null ? (_jsxs(Alert, { variant: "danger", className: "mb-3", children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] })) : "", _jsxs(Alert, { className: "text-center mb-3 d-flex align-items-center flex-column", show: props.notEnoughForGas, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "Not enough SOL for fees" }), _jsx("label", { children: "You need at least 0.005 SOL to pay for fees and refundable deposit! You can swap for gas first & then continue swapping here!" }), _jsx(Button, { className: "mt-2", variant: "secondary", onClick: () => {
+                            }, children: "Understood, continue" }) })] }), error != null ? (_jsxs(Alert, { variant: "danger", className: "mb-3", children: [_jsx("strong", { children: "Swap failed" }), _jsx("label", { children: error })] })) : "", _jsxs(Alert, { className: "text-center mb-3 d-flex align-items-center flex-column", show: props.notEnoughForGas, variant: "danger", closeVariant: "white", children: [_jsx("strong", { children: "Not enough SOL for fees" }), _jsx("label", { children: "You need at least 0.01 SOL to pay for fees and refundable deposit! You can swap for gas first & then continue swapping here!" }), _jsx(Button, { className: "mt-2", variant: "secondary", onClick: () => {
                             navigate("/gas", {
                                 state: {
                                     returnPath: location.pathname + location.search
@@ -267,5 +277,5 @@ export function FromBTCLNQuoteSummary(props) {
                                             }, children: _jsx(Icon, { icon: clipboard }) })), inputRef: textFieldRef }), _jsx("div", { className: "d-flex justify-content-center mt-2", children: _jsxs(Button, { variant: "light", className: "d-flex flex-row align-items-center justify-content-center", onClick: () => {
                                                 setOpenAppModalOpened(true);
                                             }, children: [_jsx(Icon, { icon: externalLink, className: "d-flex align-items-center me-2" }), " Open in Lightning wallet app"] }) })] })), lnWallet == null ? (_jsxs(Form, { className: "text-start d-flex align-items-center justify-content-center font-bigger mt-3", children: [_jsx(Form.Check // prettier-ignore
-                                    , { id: "autoclaim", type: "switch", onChange: (val) => setAndSaveAutoClaim(val.target.checked), checked: autoClaim }), _jsx("label", { title: "", htmlFor: "autoclaim", className: "form-check-label me-2", children: "Auto-claim" }), _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "autoclaim-pay-tooltip", children: "Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives." }), children: _jsx(Badge, { bg: "primary", className: "pill-round", pill: true, children: "?" }) })] })) : ""] })), payingWithLNURL && quoteTimeRemaining !== 0 ? "" : (_jsxs("div", { className: "d-flex flex-column mb-3 tab-accent", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsx(Button, { onClick: props.abortSwap, variant: "danger", children: "Abort swap" }))] }))) : "", state === FromBTCLNSwapState.PR_PAID || state === FromBTCLNSwapState.CLAIM_COMMITED ? (_jsxs(_Fragment, { children: [quoteTimeRemaining !== 0 ? (_jsxs("div", { className: "mb-3 tab-accent", children: [_jsx("label", { children: "Lightning network payment received" }), _jsx("label", { children: "Claim it below to finish the swap!" })] })) : "", state === FromBTCLNSwapState.PR_PAID ? (_jsxs("div", { className: success === null && !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap expired! Your lightning payment should refund shortly." })) : (_jsxs("label", { children: ["Offer expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })) : "", quoteTimeRemaining === 0 && !loading ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsxs(Button, { onClick: () => onClaim(), disabled: loading, size: "lg", children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] }))] })) : "", state === FromBTCLNSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, { variant: "success", className: "mb-0", children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] })) : "", _jsx("div", { id: "scrollAnchor" })] }));
+                                    , { id: "autoclaim", type: "switch", onChange: (val) => setAndSaveAutoClaim(val.target.checked), checked: autoClaim }), _jsx("label", { title: "", htmlFor: "autoclaim", className: "form-check-label me-2", children: "Auto-claim" }), _jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "autoclaim-pay-tooltip", children: "Automatically requests authorization of the claim transaction through your wallet as soon as the lightning payment arrives." }), children: _jsx(Badge, { bg: "primary", className: "pill-round", pill: true, children: "?" }) })] })) : ""] })), payingWithLNURL && quoteTimeRemaining !== 0 ? "" : (_jsxs("div", { className: "d-flex flex-column mb-3 tab-accent", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Quote expired!" })) : (_jsxs("label", { children: ["Quote expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })), quoteTimeRemaining === 0 ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsx(Button, { onClick: props.abortSwap, variant: "danger", children: "Abort swap" }))] }))) : "", state === FromBTCLNSwapState.PR_PAID || state === FromBTCLNSwapState.CLAIM_COMMITED ? (_jsxs(_Fragment, { children: [quoteTimeRemaining !== 0 ? (_jsxs("div", { className: "mb-3 tab-accent", children: [_jsx("label", { children: "Lightning network payment received" }), _jsx("label", { children: "Claim it below to finish the swap!" })] })) : "", state === FromBTCLNSwapState.PR_PAID ? (_jsxs("div", { className: !loading ? "d-flex flex-column mb-3 tab-accent" : "d-none", children: [quoteTimeRemaining === 0 ? (_jsx("label", { children: "Swap expired! Your lightning payment should refund shortly." })) : (_jsxs("label", { children: ["Offer expires in ", quoteTimeRemaining, " seconds"] })), _jsx(ProgressBar, { animated: true, now: quoteTimeRemaining, max: initialQuoteTimeout, min: 0 })] })) : "", state === FromBTCLNSwapState.PR_PAID && quoteTimeRemaining === 0 && !loading ? (_jsx(Button, { onClick: props.refreshQuote, variant: "secondary", children: "New quote" })) : (_jsxs(Button, { onClick: () => onClaim(), disabled: loading, size: "lg", children: [loading ? _jsx(Spinner, { animation: "border", size: "sm", className: "mr-2" }) : "", "Finish swap (claim funds)"] }))] })) : "", state === FromBTCLNSwapState.CLAIM_CLAIMED ? (_jsxs(Alert, { variant: "success", className: "mb-0", children: [_jsx("strong", { children: "Swap successful" }), _jsx("label", { children: "Swap was concluded successfully" })] })) : "", _jsx("div", { id: "scrollAnchor" })] }));
 }
