@@ -21,7 +21,7 @@ import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor, WebLNButton} from "../wallet/WebLNButton";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
 
-const swapAmount = 7500000;
+const swapAmount = 12500000;
 const swapAmountSol = swapAmount/1000000000;
 
 export function SwapForGasScreen(props: {
@@ -183,7 +183,7 @@ export function SwapForGasScreen(props: {
                         <Alert className="text-center mb-3 d-flex align-items-center flex-column" show={swapData!=null && !success && !error} variant="success" closeVariant="white">
                             <label>
                                 Swap for gas is a trusted service allowing you to swap BTC-LN to SOL, so you can then cover the gas fees of a trustless atomiq swap.
-                                Note that this is a trusted service and is therefore only used for very small amounts! You can read more about it in our <a href="javascript:void(0);" onClick={() => navigate("/faq?tabOpen=11")}>FAQ</a>.
+                                Note that this is a trusted service and is therefore only used for small amounts! You can read more about it in our <a href="javascript:void(0);" onClick={() => navigate("/faq?tabOpen=11")}>FAQ</a>.
                             </label>
                         </Alert>
 

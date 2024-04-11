@@ -64,6 +64,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 // };
 
 const noWalletPaths = new Set(["/about", "/faq", "/map", "/explorer"]);
+const jitoPubkey = "DttWaMuVvTiduZRnguLF7jNxTgiMBZ1hyAumKUiL2KRL";
+const jitoEndpoint = "https://mainnet.block-engine.jito.wtf/api/v1/transactions";
 
 function WrappedApp() {
     const wallet: any = useAnchorWallet();
@@ -105,7 +107,11 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
-            //options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 8, 100, "no");
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 500000, 8, 100, "auto", {
+                address: jitoPubkey,
+                endpoint: jitoEndpoint,
+                getStaticFee:() => new BN(100000)
+            });
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
 
             console.log("Created swapper options: ", options);
