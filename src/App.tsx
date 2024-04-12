@@ -107,7 +107,7 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
-            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 500000, 8, 100, "auto", {
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 1000000, 8, 100, "auto", {
                 address: jitoPubkey,
                 endpoint: jitoEndpoint,
                 getStaticFee:() => new BN(100000)
