@@ -25,7 +25,6 @@ import { info } from 'react-icons-kit/fa/info';
 import { question } from 'react-icons-kit/fa/question';
 import { exchange } from 'react-icons-kit/fa/exchange';
 import Icon from "react-icons-kit";
-import * as BN from "bn.js";
 import { LNNFCReader, LNNFCStartResult } from './components/lnnfc/LNNFCReader';
 import { ic_contactless } from 'react-icons-kit/md/ic_contactless';
 import { SwapForGasScreen } from "./components/swapforgas/SwapForGasScreen";
@@ -82,11 +81,11 @@ function WrappedApp() {
                 getTimeout: 15000,
                 postTimeout: 30000
             });
-            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 1000000, 8, 100, "auto", {
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 1000000, 8, 100, "auto" /*, {
                 address: jitoPubkey,
                 endpoint: jitoEndpoint,
-                getStaticFee: () => new BN(100000)
-            });
+                getStaticFee:() => new BN(100000)
+            }*/);
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
             console.log("Created swapper options: ", options);
             const swapper = new SolanaSwapper(_provider, options);
