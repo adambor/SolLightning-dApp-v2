@@ -16,7 +16,7 @@ import {
     ToBTCSwap,
     ToBTCSwapState
 } from "sollightning-sdk";
-import {Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
+import {Accordion, Alert, Badge, Button, Card, Nav, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {MutableRefObject, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -955,6 +955,29 @@ export function SwapTab(props: {
                             ) : ""}
                         </>
                     ) : ""}
+
+                    <Card className="bg-black bg-opacity-10 border-0 mt-3">
+                        <Card.Header>
+                            <Nav variant="tabs" defaultActiveKey="#first">
+                                <Nav.Item>
+                                    <Nav.Link href="#first">Initiate swap</Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link href="#link">Pay bitcoin</Nav.Link>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <Nav.Link href="#disabled">Completed</Nav.Link>
+                                </Nav.Item>
+                            </Nav>
+                        </Card.Header>
+                        <Card.Body>
+                            <Card.Title>Special title treatment</Card.Title>
+                            <Card.Text>
+                                With supporting text below as a natural lead-in to additional content.
+                            </Card.Text>
+                            <Button variant="primary">Go somewhere</Button>
+                        </Card.Body>
+                    </Card>
                 </Card>
             </div>
 

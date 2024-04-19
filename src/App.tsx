@@ -331,7 +331,7 @@ function WrappedApp() {
                 }}>
                     <div className="d-flex flex-grow-1 flex-column">
                         {(provider==null || swapperLoading) && !noWalletPaths.has(pathName) ? (
-                            <div className="no-wallet-overlay d-flex align-items-center">
+                            <div className="no-wallet-overlay d-flex align-items-center d-none">
                                 <div className="mt-auto height-50 d-flex justify-content-center align-items-center flex-fill">
                                     <div className="text-white text-center">
                                         {swapperLoading ? (

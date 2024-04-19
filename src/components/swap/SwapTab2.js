@@ -1,6 +1,6 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { FromBTCSwap, FromBTCSwapState, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap, ToBTCSwapState } from "sollightning-sdk";
-import { Alert, Button, Card, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
+import { Alert, Button, Card, Nav, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -661,5 +661,5 @@ export function SwapTab(props) {
                                             if (propSwapId != null)
                                                 navigate("/");
                                             setAmount("");
-                                        }, feeRate: maxSpendable?.feeRate }) })) : ""] })) : ""] }) }), _jsx("div", { className: "text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center mb-3", children: _jsxs("div", { className: "cursor-pointer d-flex align-items-center justify-content-center", onClick: () => navigate("/faq?tabOpen=6"), children: [_jsx(Icon, { size: 18, icon: lock, style: { marginTop: "-0.5rem" } }), _jsx("small", { children: "Audited by" }), _jsx("img", { className: "opacity-50 d-block ms-1", height: 18, src: "/ackee_blockchain.svg", style: { marginTop: "-0.125rem" } })] }) })] }));
+                                        }, feeRate: maxSpendable?.feeRate }) })) : ""] })) : "", _jsxs(Card, { className: "bg-black bg-opacity-10 border-0 mt-3", children: [_jsx(Card.Header, { children: _jsxs(Nav, { variant: "tabs", defaultActiveKey: "#first", children: [_jsx(Nav.Item, { children: _jsx(Nav.Link, { href: "#first", children: "Initiate swap" }) }), _jsx(Nav.Item, { children: _jsx(Nav.Link, { href: "#link", children: "Pay bitcoin" }) }), _jsx(Nav.Item, { children: _jsx(Nav.Link, { href: "#disabled", children: "Completed" }) })] }) }), _jsxs(Card.Body, { children: [_jsx(Card.Title, { children: "Special title treatment" }), _jsx(Card.Text, { children: "With supporting text below as a natural lead-in to additional content." }), _jsx(Button, { variant: "primary", children: "Go somewhere" })] })] })] }) }), _jsx("div", { className: "text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center mb-3", children: _jsxs("div", { className: "cursor-pointer d-flex align-items-center justify-content-center", onClick: () => navigate("/faq?tabOpen=6"), children: [_jsx(Icon, { size: 18, icon: lock, style: { marginTop: "-0.5rem" } }), _jsx("small", { children: "Audited by" }), _jsx("img", { className: "opacity-50 d-block ms-1", height: 18, src: "/ackee_blockchain.svg", style: { marginTop: "-0.125rem" } })] }) })] }));
 }
