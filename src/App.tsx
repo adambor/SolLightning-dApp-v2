@@ -382,7 +382,7 @@ function WrappedApp() {
                             </Routes>
                         </BrowserRouter>
                     </div>
-                    <Row className="mt-auto bg-dark bg-opacity-50 g-0 p-2">
+                    <Row className="mt-auto bg-dark bg-opacity-50 g-0 p-2" style={{zIndex: 1000}}>
 
                         <Col className="d-flex flex-row">
                             <a href="https://twitter.com/atomiqlabs" target="_blank" className="mx-2 hover-opacity-75 d-flex align-items-center"><img className="social-icon" src="/icons/socials/twitter.png"/></a>
