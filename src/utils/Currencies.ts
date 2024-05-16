@@ -2,8 +2,6 @@ import {PublicKey} from "@solana/web3.js";
 import {FEConstants} from "../FEConstants";
 import * as BN from "bn.js";
 import BigNumber from "bignumber.js";
-import {smart} from "@babel/template";
-
 
 export const btcCurrency: CurrencySpec = {
     name: "Bitcoin (on-chain)",
@@ -39,6 +37,13 @@ export const smartChainCurrencies: CurrencySpec[] = [
         decimals: 6,
         address: new PublicKey(FEConstants.usdcToken),
         icon: "/icons/crypto/USDC.svg"
+    },
+    {
+        name: "Bonk",
+        ticker: "BONK",
+        decimals: 5,
+        address: new PublicKey(FEConstants.bonkToken),
+        icon: "/icons/crypto/BONK.png"
     }
 ];
 

@@ -263,7 +263,7 @@ export function Step2Screen(props) {
                     }
                 }
                 else {
-                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), true, additionalParam);
+                    swapPromise = props.swapper.createFromBTCLNSwapViaLNURL(selectedCurrency.address, computedLnurlParams, fromHumanReadable(new BigNumber(amount), btcCurrency), additionalParam);
                 }
                 const balancePromise = getBalance(selectedCurrency.address);
                 currentQuotation.current = Promise.all([swapPromise, balancePromise]).then((swapAndBalance) => {

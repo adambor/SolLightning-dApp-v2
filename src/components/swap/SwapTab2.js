@@ -461,7 +461,6 @@ export function SwapTab(props) {
     const inAmountRef = useRef();
     const outAmountRef = useRef();
     const addressRef = useRef();
-    const kind = inCurrency.ticker === "BTC" || inCurrency.ticker === "BTC-LN" ? "frombtc" : "tobtc";
     const setAddress = (val) => {
         _setAddress(val);
         if (props.swapper.isValidLNURL(val)) {
@@ -480,6 +479,13 @@ export function SwapTab(props) {
             return;
         }
     };
+    const kind = inCurrency.ticker === "BTC" || inCurrency.ticker === "BTC-LN" ? "frombtc" : "tobtc";
+    const swapType = inCurrency.ticker === "BTC" ? SwapType.FROM_BTC : inCurrency.ticker === "BTC-LN" ? SwapType.FROM_BTCLN : outCurrency.ticker === "BTC" ? SwapType.TO_BTC : SwapType.TO_BTCLN;
+    let allowedSCTokens = props.supportedCurrencies;
+    if (props.swapper != null) {
+        const supportedCurrencies = props.swapper.getSupportedTokens(swapType);
+        allowedSCTokens = props.supportedCurrencies.filter(currency => supportedCurrencies.has(currency.address.toString()));
+    }
     const { inConstraints, outConstraints, quoteError, quoteAddressError, quoteLoading, quoteRef, quote, clearError, setQuote, refreshQuote } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
     //Load existing swap
     const { search } = useLocation();
@@ -619,7 +625,7 @@ export function SwapTab(props) {
                                     }, inputId: "amount-input", inputClassName: "font-weight-500", floatingLabel: inputValue == null ? null : FEConstants.USDollar.format(inputValue.toNumber()), expectingFloatingLabel: true, step: inCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-inCurrency.decimals)), min: inConstraints.min, max: maxSpendable == null ? inConstraints.max : inConstraints.max == null ? toHumanReadable(maxSpendable.amount, inCurrency) : BigNumber.min(toHumanReadable(maxSpendable.amount, inCurrency), inConstraints.max), onValidate: (val) => {
                                         // return exactIn && val==="" ? "Amount cannot be empty" : null;
                                         return null;
-                                    }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "frombtc" ? bitcoinCurrencies : props.supportedCurrencies, onSelect: val => {
+                                    }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "frombtc" ? bitcoinCurrencies : allowedSCTokens, onSelect: val => {
                                             if (locked)
                                                 return;
                                             setInCurrency(val);
@@ -631,7 +637,7 @@ export function SwapTab(props) {
                                         }, inputId: "amount-output", inputClassName: "font-weight-500", floatingLabel: outputValue == null ? null : FEConstants.USDollar.format(outputValue.toNumber()), expectingFloatingLabel: true, step: outCurrency == null ? new BigNumber("0.00000001") : new BigNumber(10).pow(new BigNumber(-outCurrency.decimals)), min: outConstraints.min, max: outConstraints.max, onValidate: (val) => {
                                             // return !exactIn && val==="" ? "Amount cannot be empty" : null;
                                             return null;
-                                        }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "tobtc" ? bitcoinCurrencies : props.supportedCurrencies, onSelect: (val) => {
+                                        }, elementEnd: (_jsx(CurrencyDropdown, { currencyList: kind === "tobtc" ? bitcoinCurrencies : allowedSCTokens, onSelect: (val) => {
                                                 if (locked)
                                                     return;
                                                 setOutCurrency(val);

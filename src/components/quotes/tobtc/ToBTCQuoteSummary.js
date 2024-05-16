@@ -59,6 +59,7 @@ export function ToBTCQuoteSummary(props) {
                 props.setAmountLock(false);
         }
         catch (e) {
+            console.error(e);
         }
         setRefunding(false);
     };

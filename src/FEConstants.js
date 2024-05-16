@@ -38,6 +38,7 @@ export const FEConstants = {
     usdcToken: new PublicKey(SolanaChains[chain].tokens.USDC),
     usdtToken: new PublicKey(SolanaChains[chain].tokens.USDT),
     wsolToken: new PublicKey(SolanaChains[chain].tokens.WSOL),
+    bonkToken: new PublicKey(SolanaChains[chain].tokens.BONK),
     tokenData: {
         [SolanaChains[chain].tokens.WBTC]: {
             decimals: 8,
@@ -54,6 +55,10 @@ export const FEConstants = {
         [SolanaChains[chain].tokens.WSOL]: {
             decimals: 9,
             symbol: "SOL"
+        },
+        [SolanaChains[chain].tokens.BONK]: {
+            decimals: 5,
+            symbol: "BONK"
         }
     },
     url: null,

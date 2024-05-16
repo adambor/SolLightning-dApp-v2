@@ -69,7 +69,7 @@ export function ToBTCQuoteSummary(props: {
             setError("Deposit refunded successfully");
             if(props.setAmountLock) props.setAmountLock(false);
         } catch (e) {
-
+            console.error(e);
         }
         setRefunding(false);
     };

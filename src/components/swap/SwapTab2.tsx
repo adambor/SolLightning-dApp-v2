@@ -1,7 +1,4 @@
 import {
-    BinanceSwapPrice,
-    FromBTCLNSwap,
-    FromBTCLNSwapState,
     FromBTCSwap,
     FromBTCSwapState,
     IFromBTCSwap,
@@ -12,7 +9,6 @@ import {
     SolanaSwapper,
     Swapper,
     SwapType,
-    ToBTCLNSwap,
     ToBTCSwap,
     ToBTCSwapState
 } from "sollightning-sdk";
@@ -566,6 +562,7 @@ export function SwapTab(props: {
     const {bitcoinWallet} = useContext(BitcoinWalletContext);
     const {lnWallet} = useContext(WebLNContext);
 
+
     const [locked, setLocked] = useState<boolean>(false);
     const [inCurrency, setInCurrency] = useState<CurrencySpec>(btcCurrency);
     const [outCurrency, setOutCurrency] = useState<CurrencySpec>(smartChainCurrencies[0]);
@@ -575,7 +572,6 @@ export function SwapTab(props: {
     const inAmountRef = useRef<ValidatedInputRef>();
     const outAmountRef = useRef<ValidatedInputRef>();
     const addressRef = useRef<ValidatedInputRef>();
-    const kind: "frombtc" | "tobtc" = inCurrency.ticker==="BTC" || inCurrency.ticker==="BTC-LN" ? "frombtc" : "tobtc";
     const setAddress = (val: string) => {
         _setAddress(val);
         if(props.swapper.isValidLNURL(val)) {
@@ -594,6 +590,14 @@ export function SwapTab(props: {
             return;
         }
     };
+
+    const kind: "frombtc" | "tobtc" = inCurrency.ticker==="BTC" || inCurrency.ticker==="BTC-LN" ? "frombtc" : "tobtc";
+    const swapType: SwapType = inCurrency.ticker==="BTC" ? SwapType.FROM_BTC : inCurrency.ticker==="BTC-LN" ? SwapType.FROM_BTCLN : outCurrency.ticker==="BTC" ? SwapType.TO_BTC : SwapType.TO_BTCLN;
+    let allowedSCTokens: CurrencySpec[] = props.supportedCurrencies;
+    if(props.swapper!=null) {
+        const supportedCurrencies = props.swapper.getSupportedTokens(swapType);
+        allowedSCTokens = props.supportedCurrencies.filter(currency => supportedCurrencies.has(currency.address.toString()));
+    }
 
     const {
         inConstraints,
@@ -814,7 +818,7 @@ export function SwapTab(props: {
                                 return null;
                             }}
                             elementEnd={(
-                                <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={val => {
+                                <CurrencyDropdown currencyList={kind==="frombtc" ? bitcoinCurrencies : allowedSCTokens} onSelect={val => {
                                     if(locked) return;
                                     setInCurrency(val);
                                 }} value={inCurrency} className="round-right text-white bg-black bg-opacity-10"/>
@@ -869,7 +873,7 @@ export function SwapTab(props: {
                                     return null;
                                 }}
                                 elementEnd={(
-                                    <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : props.supportedCurrencies} onSelect={(val) => {
+                                    <CurrencyDropdown currencyList={kind==="tobtc" ? bitcoinCurrencies : allowedSCTokens} onSelect={(val) => {
                                         if(locked) return;
                                         setOutCurrency(val);
                                         if(kind==="tobtc" && val!==outCurrency) {

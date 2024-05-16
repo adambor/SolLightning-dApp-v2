@@ -248,8 +248,8 @@ export function SwapExplorer(props: {}) {
                                                     <div className="min-width-0 me-md-2">
                                                         <a className="font-small single-line-ellipsis" target="_blank" href={inputExplorer==null || txIdInput==null ? null : inputExplorer+txIdInput}>{txIdInput || "None"}</a>
                                                         <span className="d-flex align-items-center font-weight-500 my-1">
-                                                            <img src={inputCurrency.icon} className="currency-icon-medium"/>
-                                                            {inputAmount==null ? "???" : toHumanReadableString(inputAmount, inputCurrency)} {inputCurrency.ticker}
+                                                            <img src={inputCurrency?.icon} className="currency-icon-medium"/>
+                                                            {inputAmount==null || inputCurrency==null ? "???" : toHumanReadableString(inputAmount, inputCurrency)} {inputCurrency?.ticker || "???"}
                                                             {inputInfo!=null ? (
                                                                 <OverlayTrigger overlay={<Tooltip id={"explorer-tooltip-in-"+row.id}>
                                                                     {inputInfo}
@@ -268,8 +268,8 @@ export function SwapExplorer(props: {}) {
                                                 <Col md={6} xs={12} className="ps-md-4">
                                                     <a className="font-small single-line-ellipsis" target="_blank" href={outputExplorer==null || txIdOutput==null ? null : outputExplorer+txIdOutput}>{txIdOutput || "..."}</a>
                                                     <span className="d-flex align-items-center font-weight-500 my-1">
-                                                        <img src={outputCurrency.icon} className="currency-icon-medium"/>
-                                                        {outputAmount==null ? "???" : toHumanReadableString(outputAmount, outputCurrency)} {outputCurrency.ticker}
+                                                        <img src={outputCurrency?.icon} className="currency-icon-medium"/>
+                                                        {outputAmount==null || outputCurrency==null ? "???" : toHumanReadableString(outputAmount, outputCurrency)} {outputCurrency?.ticker || "???"}
                                                         {outputInfo!=null ? (
                                                             <OverlayTrigger overlay={<Tooltip id={"explorer-tooltip-out-"+row.id}>
                                                                 {outputInfo}

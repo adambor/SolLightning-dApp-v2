@@ -103,14 +103,20 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, null, null, null, {
+            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, null, [
+                "https://161-97-73-23.sslip.io:4000",
+                "https://node3.gethopa.com:14003"
+            ], null, {
                 getTimeout: 15000,
-                postTimeout: 30000
+                postTimeout: 30000,
             });
-            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 1000000, 8, 100, "auto"/*, {
+            options.retryPolicy = {
+                transactionResendInterval: 3000
+            };
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 2, 100, "auto", () => new BN(20000)/*, {
                 address: jitoPubkey,
                 endpoint: jitoEndpoint,
-                getStaticFee:() => new BN(100000)
+                getStaticFee:() => new BN(250000)
             }*/);
             // options.defaultTrustedIntermediaryUrl = "http://localhost:24521";
 

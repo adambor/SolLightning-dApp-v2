@@ -33,6 +33,13 @@ export const smartChainCurrencies = [
         decimals: 6,
         address: new PublicKey(FEConstants.usdcToken),
         icon: "/icons/crypto/USDC.svg"
+    },
+    {
+        name: "Bonk",
+        ticker: "BONK",
+        decimals: 5,
+        address: new PublicKey(FEConstants.bonkToken),
+        icon: "/icons/crypto/BONK.png"
     }
 ];
 const scCurrencyMap = {};
