@@ -1,7 +1,9 @@
 import {BitcoinNetworkType, getCapabilities} from "sats-connect";
 import {PhantomBitcoinWallet} from "./PhantomBitcoinWallet";
-import {XverseBitcoinWallet} from "./XverseBitcoinWallet";
+import {SatsConnectBitcoinWallet} from "./SatsConnectBitcoinWallet";
 import {BitcoinWallet} from "./BitcoinWallet";
+import {XverseBitcoinWallet} from "./XverseBitcoinWallet";
+import {MagicEdenBitcoinWallet} from "./MagicEdenBitcoinWallet";
 
 export type BitcoinWalletType = {
     iconUrl: string,
@@ -16,6 +18,12 @@ const bitcoinWalletList: BitcoinWalletType[] = [
         name: PhantomBitcoinWallet.walletName,
         detect: PhantomBitcoinWallet.isInstalled,
         use: PhantomBitcoinWallet.init
+    },
+    {
+        iconUrl: MagicEdenBitcoinWallet.iconUrl,
+        name: MagicEdenBitcoinWallet.walletName,
+        detect: MagicEdenBitcoinWallet.isInstalled,
+        use: MagicEdenBitcoinWallet.init
     },
     {
         iconUrl: XverseBitcoinWallet.iconUrl,

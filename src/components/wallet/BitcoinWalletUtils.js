@@ -1,12 +1,19 @@
 import { PhantomBitcoinWallet } from "./PhantomBitcoinWallet";
-import { XverseBitcoinWallet } from "./XverseBitcoinWallet";
 import { BitcoinWallet } from "./BitcoinWallet";
+import { XverseBitcoinWallet } from "./XverseBitcoinWallet";
+import { MagicEdenBitcoinWallet } from "./MagicEdenBitcoinWallet";
 const bitcoinWalletList = [
     {
         iconUrl: PhantomBitcoinWallet.iconUrl,
         name: PhantomBitcoinWallet.walletName,
         detect: PhantomBitcoinWallet.isInstalled,
         use: PhantomBitcoinWallet.init
+    },
+    {
+        iconUrl: MagicEdenBitcoinWallet.iconUrl,
+        name: MagicEdenBitcoinWallet.walletName,
+        detect: MagicEdenBitcoinWallet.isInstalled,
+        use: MagicEdenBitcoinWallet.init
     },
     {
         iconUrl: XverseBitcoinWallet.iconUrl,
