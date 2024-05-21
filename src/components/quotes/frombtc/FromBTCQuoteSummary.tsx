@@ -14,6 +14,7 @@ import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import * as BN from "bn.js";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
 import {elementInViewport, getDeltaText} from "../../../utils/Utils";
+import {FEConstants} from "../../../FEConstants";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -425,13 +426,16 @@ export function FromBTCQuoteSummary(props: {
                     <label>{txData.confirmations} / {txData.confTarget}</label>
                     <label style={{marginTop: "-6px"}}>Confirmations</label>
 
-                    <Badge className="text-black" bg="light" pill>ETA: {txData.txEtaMs===-1 || txData.txEtaMs>(60*60*1000) ? ">1 hour" : "~"+getDeltaText(txData.txEtaMs)}</Badge>
+                    <a className="mb-2 text-overflow-ellipsis text-nowrap overflow-hidden" style={{width: "100%"}} target="_blank" href={FEConstants.btcBlockExplorer+txData.txId}><small>{txData.txId}</small></a>
+
+                    <Badge className="text-black" bg="light"
+                           pill>ETA: {txData.txEtaMs === -1 || txData.txEtaMs > (60 * 60 * 1000) ? ">1 hour" : "~" + getDeltaText(txData.txEtaMs)}</Badge>
                 </div>
             )) : ""}
 
-            {state===FromBTCSwapState.BTC_TX_CONFIRMED ? (
+            {state === FromBTCSwapState.BTC_TX_CONFIRMED ? (
                 <>
-                    <div className="d-flex flex-column align-items-center tab-accent mb-3">
+                <div className="d-flex flex-column align-items-center tab-accent mb-3">
                         <label>Transaction received & confirmed</label>
                     </div>
 
