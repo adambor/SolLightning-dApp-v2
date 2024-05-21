@@ -103,7 +103,7 @@ function WrappedApp() {
         try {
             console.log("init start");
 
-            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, null, [
+            const options: SolanaSwapperOptions = createSwapperOptions(FEConstants.chain, new BN(50000), [
                 "https://161-97-73-23.sslip.io:4000",
                 "https://node3.gethopa.com:14003"
             ], null, {

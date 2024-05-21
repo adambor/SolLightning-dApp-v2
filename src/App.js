@@ -78,7 +78,7 @@ function WrappedApp() {
         abortController.current = new AbortController();
         try {
             console.log("init start");
-            const options = createSwapperOptions(FEConstants.chain, null, [
+            const options = createSwapperOptions(FEConstants.chain, new BN(50000), [
                 "https://161-97-73-23.sslip.io:4000",
                 "https://node3.gethopa.com:14003"
             ], null, {

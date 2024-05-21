@@ -19,7 +19,11 @@ export abstract class BitcoinWallet {
         value: number,
         type: CoinselectAddressTypes,
         outputScript: Buffer,
-        address: string
+        address: string,
+        cpfp?: {
+            txVsize: number,
+            txEffectiveFeeRate: number
+        }
     }[]> {
 
         const utxos = await ChainUtils.getAddressUTXOs(sendingAddress);
@@ -28,18 +32,38 @@ export abstract class BitcoinWallet {
 
         const outputScript = bitcoin.address.toOutputScript(sendingAddress, bitcoinNetwork);
 
-        const utxoPool = utxos.map(utxo => {
+        const utxoPool: {
+            vout: number,
+            txId: string,
+            value: number,
+            type: CoinselectAddressTypes,
+            outputScript: Buffer,
+            address: string,
+            cpfp?: {
+                txVsize: number,
+                txEffectiveFeeRate: number
+            }
+        }[] = [];
+
+        for(let utxo of utxos) {
             const value = utxo.value.toNumber();
             totalSpendable += value;
-            return {
+            utxoPool.push({
                 vout: utxo.vout,
                 txId: utxo.txid,
                 value: value,
                 type: sendingAddressType,
                 outputScript: outputScript,
-                address: sendingAddress
-            };
-        });
+                address: sendingAddress,
+                cpfp: !utxo.status.confirmed ? await ChainUtils.getCPFPData(utxo.txid).then((result) => {
+                    if(result.effectiveFeePerVsize==null) return null;
+                    return {
+                        txVsize: result.adjustedVsize,
+                        txEffectiveFeeRate: result.effectiveFeePerVsize
+                    }
+                }) : null
+            })
+        }
 
         console.log("Total spendable value: "+totalSpendable+" num utxos: "+utxoPool.length);
 
@@ -62,7 +86,11 @@ export abstract class BitcoinWallet {
             value: number,
             type: CoinselectAddressTypes,
             outputScript: Buffer,
-            address: string
+            address: string,
+            cpfp?: {
+                txVsize: number,
+                txEffectiveFeeRate: number
+            }
         }[] = await this._getUtxoPool(sendingAddress, sendingAddressType);
 
         const targets = [
@@ -155,7 +183,11 @@ export abstract class BitcoinWallet {
             value: number,
             type: CoinselectAddressTypes,
             outputScript: Buffer,
-            address: string
+            address: string,
+            cpfp?: {
+                txVsize: number,
+                txEffectiveFeeRate: number
+            }
         }[] = await this._getUtxoPool(sendingAddress, sendingAddressType);
 
 

@@ -10,18 +10,27 @@ export class BitcoinWallet {
         const utxos = await ChainUtils.getAddressUTXOs(sendingAddress);
         let totalSpendable = 0;
         const outputScript = bitcoin.address.toOutputScript(sendingAddress, bitcoinNetwork);
-        const utxoPool = utxos.map(utxo => {
+        const utxoPool = [];
+        for (let utxo of utxos) {
             const value = utxo.value.toNumber();
             totalSpendable += value;
-            return {
+            utxoPool.push({
                 vout: utxo.vout,
                 txId: utxo.txid,
                 value: value,
                 type: sendingAddressType,
                 outputScript: outputScript,
-                address: sendingAddress
-            };
-        });
+                address: sendingAddress,
+                cpfp: !utxo.status.confirmed ? await ChainUtils.getCPFPData(utxo.txid).then((result) => {
+                    if (result.effectiveFeePerVsize == null)
+                        return null;
+                    return {
+                        txVsize: result.adjustedVsize,
+                        txEffectiveFeeRate: result.effectiveFeePerVsize
+                    };
+                }) : null
+            });
+        }
         console.log("Total spendable value: " + totalSpendable + " num utxos: " + utxoPool.length);
         return utxoPool;
     }
