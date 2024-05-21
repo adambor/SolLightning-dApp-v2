@@ -263,6 +263,7 @@ function useQuote(
 
     const [quoteError, setQuoteError] = useState<string>();
     const [quoteAddressError, setQuoteAddressError] = useState<{address: string, error: string}>();
+    const [quoteAddressLoading, setQuoteAddressLoading] = useState<boolean>(false);
     const [quoteLoading, setQuoteLoading] = useState<boolean>(false);
     const [quote, _setQuote] = useState<ISwap>();
     const quoteRef = useRef<ISwap>();
@@ -328,8 +329,10 @@ function useQuote(
                 };
             }
 
+            setQuoteAddressLoading(true);
             const lnurlResult = await lnurlData.current.data;
             if(quoteUpdates.current!==updateNum) return;
+            setQuoteAddressLoading(false);
             if(lnurlResult==null) {
                 setQuoteAddressError({
                     address: useAddress,
@@ -452,6 +455,7 @@ function useQuote(
         outConstraints,
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -605,6 +609,7 @@ export function SwapTab(props: {
 
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -897,6 +902,9 @@ export function SwapTab(props: {
                                     onValidate={addressValidator}
                                     validated={quoteAddressError?.error}
                                     disabled={lnWallet!=null && outCurrency===bitcoinCurrencies[1]}
+                                    textStart={quoteAddressLoading ? (
+                                        <Spinner size="sm" className="text-white"/>
+                                    ) : null}
                                     textEnd={lnWallet!=null && outCurrency===bitcoinCurrencies[1] ? null : (
                                         <OverlayTrigger
                                             placement="top"

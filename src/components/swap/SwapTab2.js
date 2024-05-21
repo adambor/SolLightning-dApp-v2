@@ -188,6 +188,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
     const { inConstraints, outConstraints, updateTokenConstraints, updateAddressConstraints } = useConstraints(swapper, address, exactIn, inCurrency, outCurrency);
     const [quoteError, setQuoteError] = useState();
     const [quoteAddressError, setQuoteAddressError] = useState();
+    const [quoteAddressLoading, setQuoteAddressLoading] = useState(false);
     const [quoteLoading, setQuoteLoading] = useState(false);
     const [quote, _setQuote] = useState();
     const quoteRef = useRef();
@@ -242,9 +243,11 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
                     })
                 };
             }
+            setQuoteAddressLoading(true);
             const lnurlResult = await lnurlData.current.data;
             if (quoteUpdates.current !== updateNum)
                 return;
+            setQuoteAddressLoading(false);
             if (lnurlResult == null) {
                 setQuoteAddressError({
                     address: useAddress,
@@ -358,6 +361,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
         outConstraints,
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -486,7 +490,7 @@ export function SwapTab(props) {
         const supportedCurrencies = props.swapper.getSupportedTokens(swapType);
         allowedSCTokens = props.supportedCurrencies.filter(currency => supportedCurrencies.has(currency.address.toString()));
     }
-    const { inConstraints, outConstraints, quoteError, quoteAddressError, quoteLoading, quoteRef, quote, clearError, setQuote, refreshQuote } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
+    const { inConstraints, outConstraints, quoteError, quoteAddressError, quoteAddressLoading, quoteLoading, quoteRef, quote, clearError, setQuote, refreshQuote } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
     //Load existing swap
     const { search } = useLocation();
     const params = new URLSearchParams(search);
@@ -646,7 +650,7 @@ export function SwapTab(props) {
                                                 }
                                             }, value: outCurrency, className: "round-right text-white bg-black bg-opacity-10" })) }) }), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3 " + (lnWallet != null && outCurrency === bitcoinCurrencies[1] && (address == null || address === "") ? "d-none" : ""), value: address, onChange: (val) => {
                                                 setAddress(val);
-                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: lnWallet != null && outCurrency === bitcoinCurrencies[1], textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
+                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: lnWallet != null && outCurrency === bitcoinCurrencies[1], textStart: quoteAddressLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
                                                         marginTop: "-3px"
                                                     }, onClick: (e) => {
                                                         e.preventDefault();
