@@ -98,59 +98,73 @@ export function Step2Screen(props) {
             setAddressError(null);
             setLnurl(false);
             setAddress(resultText);
-            if (props.swapper.isValidBitcoinAddress(resultText)) {
-                //On-chain send
-                setType("send");
-                if (_amount != null) {
-                    const amountBN = new BigNumber(_amount);
-                    const amountSolBN = fromHumanReadable(amountBN, btcCurrency);
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                    if (amountSolBN.lt(min)) {
-                        setAddressError("Payment amount (" + amountBN.toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
+            const callback = (type, network, swapType, amount, min, max) => {
+                setType(type);
+                setNetwork(network);
+                const bounds = props.swapper.getSwapBounds()[swapType];
+                let lpsMin;
+                let lpsMax;
+                for (let token in bounds) {
+                    lpsMin == null ? lpsMin = bounds[token].min : lpsMin = BN.min(lpsMin, bounds[token].min);
+                    lpsMax == null ? lpsMax = bounds[token].max : lpsMax = BN.max(lpsMax, bounds[token].max);
+                }
+                if (amount != null) {
+                    const amountBN = toHumanReadable(amount, btcCurrency);
+                    if (amount.lt(lpsMin)) {
+                        setAddressError("Payment amount (" + amountBN.toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(lpsMin, btcCurrency).toString(10) + " BTC)");
                         return;
                     }
-                    if (amountSolBN.gt(max)) {
-                        setAddressError("Payment amount (" + amountBN.toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
+                    if (amount.gt(lpsMax)) {
+                        setAddressError("Payment amount (" + amountBN.toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(lpsMax, btcCurrency).toString(10) + " BTC)");
                         return;
                     }
-                    setAmountConstraints({
-                        min: amountBN,
-                        max: amountBN,
-                    });
                     setAmount(amountBN.toString(10));
                 }
-                else {
-                    const min = props.swapper.getMinimum(SwapType.TO_BTC);
-                    const max = props.swapper.getMaximum(SwapType.TO_BTC);
-                    setAmountConstraints({
-                        min: toHumanReadable(min, btcCurrency),
-                        max: toHumanReadable(max, btcCurrency),
-                    });
+                if (min != null && max != null) {
+                    if (min.gt(lpsMax)) {
+                        setAddressError("Minimum payable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(lpsMax, btcCurrency).toString(10) + " BTC)");
+                        return;
+                    }
+                    if (max.lt(lpsMin)) {
+                        setAddressError("Maximum payable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(lpsMin, btcCurrency).toString(10) + " BTC)");
+                        return;
+                    }
+                    for (let token in bounds) {
+                        if (min.gt(bounds[token].max) ||
+                            max.lt(bounds[token].min)) {
+                            delete bounds[token];
+                            continue;
+                        }
+                        bounds[token].min = BN.max(min, bounds[token].min);
+                        bounds[token].max = BN.min(max, bounds[token].max);
+                    }
+                    setAmount(toHumanReadable(BN.max(min, lpsMin), btcCurrency).toString(10));
                 }
-                setNetwork("btc");
+                const boundsBN = {};
+                for (let token in bounds) {
+                    boundsBN[token] = {
+                        min: toHumanReadable(bounds[token].min, btcCurrency),
+                        max: toHumanReadable(bounds[token].max, btcCurrency)
+                    };
+                }
+                boundsBN[""] = {
+                    min: toHumanReadable(lpsMin, btcCurrency),
+                    max: toHumanReadable(lpsMax, btcCurrency)
+                };
+                setAmountConstraints(boundsBN);
+            };
+            if (props.swapper.isValidBitcoinAddress(resultText)) {
+                //On-chain send
+                let amountSolBN = null;
+                if (_amount != null)
+                    amountSolBN = fromHumanReadable(new BigNumber(_amount), btcCurrency);
+                callback("send", "btc", SwapType.TO_BTC, amountSolBN);
                 return;
             }
             if (props.swapper.isValidLightningInvoice(resultText)) {
                 //Lightning send
-                setType("send");
                 const amountSolBN = props.swapper.getLightningInvoiceValue(resultText);
-                const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
-                if (amountSolBN.lt(min)) {
-                    setAddressError("Payment amount (" + toHumanReadable(amountSolBN, btcCurrency).toString(10) + ") is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
-                    return;
-                }
-                if (amountSolBN.gt(max)) {
-                    setAddressError("Payment amount (" + toHumanReadable(amountSolBN, btcCurrency).toString(10) + ") is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
-                    return;
-                }
-                setAmountConstraints({
-                    min: toHumanReadable(amountSolBN, btcCurrency),
-                    max: toHumanReadable(amountSolBN, btcCurrency),
-                });
-                setAmount(toHumanReadable(amountSolBN, btcCurrency).toString(10));
-                setNetwork("ln");
+                callback("send", "ln", SwapType.TO_BTCLN, amountSolBN);
                 return;
             }
             if (props.swapper.isValidLNURL(resultText)) {
@@ -168,42 +182,11 @@ export function Step2Screen(props) {
                     if (doSetState)
                         setLnurlParams(result);
                     if (result.type === "pay") {
-                        setType("send");
-                        const min = props.swapper.getMinimum(SwapType.TO_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.TO_BTCLN);
-                        if (result.min.gt(max)) {
-                            setAddressError("Minimum payable amount (" + toHumanReadable(result.min, btcCurrency).toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
-                            return;
-                        }
-                        if (result.max.lt(min)) {
-                            setAddressError("Maximum payable amount (" + toHumanReadable(result.max, btcCurrency).toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
-                            return;
-                        }
-                        setAmountConstraints({
-                            min: toHumanReadable(BN.max(result.min, min), btcCurrency),
-                            max: toHumanReadable(BN.min(result.max, max), btcCurrency),
-                        });
-                        setAmount(toHumanReadable(BN.max(result.min, min), btcCurrency).toString(10));
+                        callback("send", "ln", SwapType.TO_BTCLN, null, result.min, result.max);
                     }
                     if (result.type === "withdraw") {
-                        setType("receive");
-                        const min = props.swapper.getMinimum(SwapType.FROM_BTCLN);
-                        const max = props.swapper.getMaximum(SwapType.FROM_BTCLN);
-                        if (result.min.gt(max)) {
-                            setAddressError("Minimum withdrawable amount (" + toHumanReadable(result.min, btcCurrency).toString(10) + " BTC) is above maximum swappable amount (" + toHumanReadable(max, btcCurrency).toString(10) + " BTC)");
-                            return;
-                        }
-                        if (result.max.lt(min)) {
-                            setAddressError("Maximum withdrawable amount (" + toHumanReadable(result.max, btcCurrency).toString(10) + " BTC) is below minimum swappable amount (" + toHumanReadable(min, btcCurrency).toString(10) + " BTC)");
-                            return;
-                        }
-                        setAmountConstraints({
-                            min: toHumanReadable(BN.max(result.min, min), btcCurrency),
-                            max: toHumanReadable(BN.min(result.max, max), btcCurrency),
-                        });
-                        setAmount(toHumanReadable(BN.min(result.max, max), btcCurrency).toString(10));
+                        callback("receive", "ln", SwapType.FROM_BTCLN, null, result.min, result.max);
                     }
-                    setNetwork("ln");
                 };
                 if (stateLnurlParams != null) {
                     console.log("LNurl params passed: ", stateLnurlParams);
@@ -295,8 +278,8 @@ export function Step2Screen(props) {
     const goBack = () => {
         navigate("/scan");
     };
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: !isLocked }), _jsx("div", { className: "d-flex flex-column flex-fill justify-content-center align-items-center text-white", children: _jsxs("div", { className: "quickscan-summary-panel d-flex flex-column flex-fill", children: [_jsxs("div", { className: "p-3 d-flex flex-column tab-bg border-0 card", children: [_jsx(ValidatedInput, { type: "text", className: "", disabled: true, value: address || propAddress }), addressError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] })) : "", lnurlLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] })) : "", addressError == null && props.swapper != null && !lnurlLoading ? (_jsxs("div", { className: "mt-3 tab-accent-p3 text-center", children: [_jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "Pay" : "Withdraw" }), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs("span", { className: "text-white font-bigger d-flex align-items-center", children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints.min, max: amountConstraints?.max, disabled: (amountConstraints != null && amountConstraints.min.eq(amountConstraints.max)) ||
-                                                isLocked, size: "lg", inputRef: amountRef, value: amount, onChange: setAmount, placeholder: "Input amount" }), _jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "with" : "to" }), _jsx("div", { className: "d-flex justify-content-center", children: _jsx(CurrencyDropdown, { currencyList: smartChainCurrencies, onSelect: val => {
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 1, enabled: !isLocked }), _jsx("div", { className: "d-flex flex-column flex-fill justify-content-center align-items-center text-white", children: _jsxs("div", { className: "quickscan-summary-panel d-flex flex-column flex-fill", children: [_jsxs("div", { className: "p-3 d-flex flex-column tab-bg border-0 card", children: [_jsx(ValidatedInput, { type: "text", className: "", disabled: true, value: address || propAddress }), addressError ? (_jsxs(Alert, { variant: "danger", className: "mt-3", children: [_jsx("p", { children: _jsx("strong", { children: "Destination parsing error" }) }), addressError] })) : "", lnurlLoading ? (_jsxs("div", { className: "d-flex flex-column align-items-center justify-content-center tab-accent mt-3", children: [_jsx(Spinner, { animation: "border" }), "Loading data..."] })) : "", addressError == null && props.swapper != null && !lnurlLoading ? (_jsxs("div", { className: "mt-3 tab-accent-p3 text-center", children: [_jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "Pay" : "Withdraw" }), _jsx(ValidatedInput, { type: "number", textEnd: (_jsxs("span", { className: "text-white font-bigger d-flex align-items-center", children: [_jsx("img", { src: btcCurrency.icon, className: "currency-icon" }), "BTC"] })), step: new BigNumber(10).pow(new BigNumber(-btcCurrency.decimals)), min: amountConstraints == null ? new BigNumber(0) : amountConstraints[selectedCurrency?.address?.toString() || ""].min, max: amountConstraints == null ? null : amountConstraints[selectedCurrency?.address?.toString() || ""].max, disabled: (amountConstraints != null && amountConstraints[""].min.eq(amountConstraints[""].max)) ||
+                                                isLocked, size: "lg", inputRef: amountRef, value: amount, onChange: setAmount, placeholder: "Input amount" }), _jsx("label", { className: "fw-bold mb-1", children: type === "send" ? "with" : "to" }), _jsx("div", { className: "d-flex justify-content-center", children: _jsx(CurrencyDropdown, { currencyList: amountConstraints == null ? smartChainCurrencies : smartChainCurrencies.filter(currency => amountConstraints[currency.address.toString()] != null), onSelect: val => {
                                                     if (isLocked)
                                                         return;
                                                     setSelectedCurrency(val);

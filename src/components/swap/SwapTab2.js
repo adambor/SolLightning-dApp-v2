@@ -94,17 +94,44 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
             }
         });
     };
+    const [lpsUpdateCount, setLpsUpdateCounts] = useState(0);
+    useEffect(() => {
+        if (swapper == null)
+            return;
+        let removeListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries removed: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState + 1);
+        };
+        let addListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries added: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState + 1);
+        };
+        swapper.on("lpsRemoved", removeListener);
+        swapper.on("lpsAdded", addListener);
+        return () => {
+            swapper.off("lpsRemoved", removeListener);
+            swapper.off("lpsAdded", addListener);
+        };
+    }, [swapper]);
     const btcAmountConstraints = useMemo(() => {
         if (swapper == null) {
             return null;
         }
         const constraints = {};
-        [SwapType.FROM_BTC, SwapType.TO_BTC, SwapType.FROM_BTCLN, SwapType.TO_BTCLN].forEach(swapType => constraints[swapType] = {
-            min: toHumanReadable(swapper.getMinimum(swapType), btcCurrency),
-            max: toHumanReadable(swapper.getMaximum(swapType), btcCurrency),
-        });
+        const bounds = swapper.getSwapBounds();
+        for (let swapType in bounds) {
+            const tokenBounds = bounds[swapType];
+            constraints[swapType] = {};
+            for (let token in tokenBounds) {
+                constraints[swapType][token] = {
+                    min: toHumanReadable(tokenBounds[token].min, btcCurrency),
+                    max: toHumanReadable(tokenBounds[token].max, btcCurrency)
+                };
+            }
+        }
+        console.log("[SwapTab2] Recomputed constraints: ", constraints);
         return constraints;
-    }, [swapper]);
+    }, [swapper, lpsUpdateCount]);
     const [tokenConstraints, setTokenConstraints] = useState();
     const updateTokenConstraints = (currency, data) => {
         setTokenConstraints(val => {
@@ -141,7 +168,7 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
     if (exactIn) {
         outConstraints = defaultConstraints;
         if (kind === "frombtc") {
-            inConstraints = btcAmountConstraints == null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            inConstraints = btcAmountConstraints == null || btcAmountConstraints[swapType] == null ? defaultConstraints : (btcAmountConstraints[swapType][outCurrency.address.toString()] || defaultConstraints);
         }
         else {
             const constraint = tokenConstraints == null ? null : tokenConstraints[inCurrency.address.toString()];
@@ -165,7 +192,7 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
             }
         }
         else { //tobtc
-            outConstraints = btcAmountConstraints == null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            outConstraints = btcAmountConstraints == null || btcAmountConstraints[swapType] == null ? defaultConstraints : (btcAmountConstraints[swapType][inCurrency.address.toString()] || defaultConstraints);
         }
     }
     if (addressConstraintsOverride != null && addressConstraintsOverride.address === address) {
