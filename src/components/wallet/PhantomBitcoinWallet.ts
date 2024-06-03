@@ -65,6 +65,7 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
         if(provider==null) throw new Error("Phantom bitcoin wallet not found");
         if(provider.isPhantom==null) throw new Error("Provider is not Phantom wallet");
         const accounts: PhantomBtcAccount[] = await provider.requestAccounts();
+        console.log("Loaded wallet accounts: ", accounts);
         const paymentAccounts = accounts.filter(e => e.purpose==="payment");
         if(paymentAccounts.length===0) throw new Error("No valid payment account found");
         paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);

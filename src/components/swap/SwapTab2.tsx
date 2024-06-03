@@ -43,7 +43,7 @@ import {BitcoinWalletAnchor} from "../wallet/BitcoinWalletButton";
 import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor} from "../wallet/WebLNButton";
 import {ic_account_balance_wallet} from 'react-icons-kit/md/ic_account_balance_wallet';
-import {BitcoinWallet} from "../wallet/BitcoinWallet";
+import {ic_content_copy} from 'react-icons-kit/md/ic_content_copy'
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -296,7 +296,7 @@ function useQuote(
 
     const {inConstraints, outConstraints, updateTokenConstraints, updateAddressConstraints} = useConstraints(swapper, address, exactIn, inCurrency, outCurrency);
 
-    const [quoteError, setQuoteError] = useState<string>();
+    const [quoteError, setQuoteError] = useState<Error>();
     const [quoteAddressError, setQuoteAddressError] = useState<{address: string, error: string}>();
     const [quoteAddressLoading, setQuoteAddressLoading] = useState<boolean>(false);
     const [quoteLoading, setQuoteLoading] = useState<boolean>(false);
@@ -469,7 +469,7 @@ function useQuote(
                 setQuoteLoading(false);
                 if(doSetError) {
                     if(e.message==="Not enough liquidity") e = new Error("Not enough liquidity, please retry in 30mins-1hour");
-                    setQuoteError(e.message || e.toString());
+                    setQuoteError(e);
                 }
             });
         };
@@ -799,8 +799,27 @@ export function SwapTab(props: {
                 <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
                     <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => clearError()}>
-                        <strong>Quoting error</strong>
-                        <label>{quoteError}</label>
+                        <div className="d-flex align-items-center justify-content-center">
+                            <strong>Quoting error</strong>
+                            <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip id="scan-qr-tooltip">Copy full error stack</Tooltip>}
+                            >
+                                <a href="#" className="d-inline-flex align-items-center justify-content-middle"
+                                   onClick={(evnt) => {
+                                       evnt.preventDefault();
+                                       // @ts-ignore
+                                       navigator.clipboard.writeText(JSON.stringify({
+                                           error: quoteError.name,
+                                           message: quoteError.message,
+                                           stack: quoteError.stack
+                                       }, null, 4));
+                                   }}><Icon className="ms-1 mb-1" size={16} icon={ic_content_copy}/></a>
+                            </OverlayTrigger>
+                        </div>
+                        <label>
+                            {quoteError?.message || quoteError?.toString()}
+                        </label>
                     </Alert>
 
                     <Card className="d-flex flex-column tab-accent-p3 pt-2">

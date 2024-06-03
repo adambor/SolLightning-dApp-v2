@@ -24,6 +24,7 @@ import { BitcoinWalletAnchor } from "../wallet/BitcoinWalletButton";
 import { WebLNContext } from "../context/WebLNContext";
 import { WebLNAnchor } from "../wallet/WebLNButton";
 import { ic_account_balance_wallet } from 'react-icons-kit/md/ic_account_balance_wallet';
+import { ic_content_copy } from 'react-icons-kit/md/ic_content_copy';
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
     max: null
@@ -373,7 +374,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
                 if (doSetError) {
                     if (e.message === "Not enough liquidity")
                         e = new Error("Not enough liquidity, please retry in 30mins-1hour");
-                    setQuoteError(e.message || e.toString());
+                    setQuoteError(e);
                 }
             });
         };
@@ -647,7 +648,15 @@ export function SwapTab(props) {
                         setExactIn(false);
                     }
                     setQrScanning(false);
-                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", { className: "d-flex flex-column align-items-center text-white", children: _jsxs(Card, { className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0", children: [_jsxs(Alert, { className: "text-center", show: quoteError != null, variant: "danger", onClose: () => clearError(), children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] }), _jsxs(Card, { className: "d-flex flex-column tab-accent-p3 pt-2", children: [_jsxs("div", { className: "d-flex flex-row", children: [_jsx("small", { className: "text-light text-opacity-75 me-auto", children: "You pay" }), inCurrency.ticker === "BTC" ? (_jsx("small", { className: "", children: _jsx(BitcoinWalletAnchor, { noText: true }) })) : "", inCurrency.ticker === "BTC-LN" ? (_jsx("small", { className: "", children: _jsx(WebLNAnchor, {}) })) : "", maxSpendable != null ? (_jsxs(_Fragment, { children: [inCurrency.ticker !== "BTC" ? (_jsx(Icon, { size: 16, icon: ic_account_balance_wallet, style: { marginTop: "-0.3125rem" }, className: "" })) : "", _jsxs("small", { className: "me-2", children: [toHumanReadableString(maxSpendable.amount, inCurrency), " ", inCurrency.ticker] }), _jsx(Button, { variant: "outline-light", style: { marginBottom: "2px" }, className: "py-0 px-1", disabled: locked || inputDisabled, onClick: () => {
+                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", { className: "d-flex flex-column align-items-center text-white", children: _jsxs(Card, { className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0", children: [_jsxs(Alert, { className: "text-center", show: quoteError != null, variant: "danger", onClose: () => clearError(), children: [_jsxs("div", { className: "d-flex align-items-center justify-content-center", children: [_jsx("strong", { children: "Quoting error" }), _jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Copy full error stack" }), children: _jsx("a", { href: "#", className: "d-inline-flex align-items-center justify-content-middle", onClick: (evnt) => {
+                                                    evnt.preventDefault();
+                                                    // @ts-ignore
+                                                    navigator.clipboard.writeText(JSON.stringify({
+                                                        error: quoteError.name,
+                                                        message: quoteError.message,
+                                                        stack: quoteError.stack
+                                                    }, null, 4));
+                                                }, children: _jsx(Icon, { className: "ms-1 mb-1", size: 16, icon: ic_content_copy }) }) })] }), _jsx("label", { children: quoteError?.message || quoteError?.toString() })] }), _jsxs(Card, { className: "d-flex flex-column tab-accent-p3 pt-2", children: [_jsxs("div", { className: "d-flex flex-row", children: [_jsx("small", { className: "text-light text-opacity-75 me-auto", children: "You pay" }), inCurrency.ticker === "BTC" ? (_jsx("small", { className: "", children: _jsx(BitcoinWalletAnchor, { noText: true }) })) : "", inCurrency.ticker === "BTC-LN" ? (_jsx("small", { className: "", children: _jsx(WebLNAnchor, {}) })) : "", maxSpendable != null ? (_jsxs(_Fragment, { children: [inCurrency.ticker !== "BTC" ? (_jsx(Icon, { size: 16, icon: ic_account_balance_wallet, style: { marginTop: "-0.3125rem" }, className: "" })) : "", _jsxs("small", { className: "me-2", children: [toHumanReadableString(maxSpendable.amount, inCurrency), " ", inCurrency.ticker] }), _jsx(Button, { variant: "outline-light", style: { marginBottom: "2px" }, className: "py-0 px-1", disabled: locked || inputDisabled, onClick: () => {
                                                         setExactIn(true);
                                                         setAmount(toHumanReadableString(maxSpendable.amount, inCurrency));
                                                     }, children: _jsx("small", { className: "font-smallest", style: { marginBottom: "-2px" }, children: "MAX" }) })] })) : ""] }), _jsx(ValidatedInput, { disabled: locked || inputDisabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
