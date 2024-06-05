@@ -1,12 +1,11 @@
 import {Alert, Button, CloseButton, Dropdown, ListGroup, Modal} from "react-bootstrap";
-import {WalletMultiButton} from "@solana/wallet-adapter-react-ui";
 import * as React from "react";
-import {BitcoinNetworkType, getAddress, getCapabilities} from "sats-connect";
 import {useContext, useEffect, useState} from "react";
 import {BitcoinWalletContext} from "../context/BitcoinWalletContext";
 import {BitcoinWalletType, getInstalledBitcoinWallets} from "./BitcoinWalletUtils";
 import {ic_brightness_1} from 'react-icons-kit/md/ic_brightness_1';
 import Icon from "react-icons-kit";
+import {BitcoinWallet} from "./BitcoinWallet";
 
 export function useBitcoinWalletChooser() {
 
@@ -31,6 +30,19 @@ export function useBitcoinWalletChooser() {
             setLoading(false);
         }).catch(e => console.error(e));
     },[bitcoinWallet==null]);
+
+    useEffect(() => {
+        if(bitcoinWallet==null) return;
+        let listener: (newWallet: BitcoinWallet) => void;
+        bitcoinWallet.onWalletChanged(listener = (newWallet: BitcoinWallet) => {
+            if(bitcoinWallet.getReceiveAddress()===newWallet.getReceiveAddress()) return;
+            console.log("New bitcoin wallet set: ", newWallet);
+            setBitcoinWallet(newWallet);
+        });
+        return () => {
+           bitcoinWallet.offWalletChanged(listener);
+        }
+    },[bitcoinWallet]);
 
     const connectWallet = (wallet?: BitcoinWalletType) => {
         if(wallet!=null) {

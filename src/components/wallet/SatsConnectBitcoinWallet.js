@@ -5,7 +5,51 @@ import { ChainUtils } from "sollightning-sdk";
 import * as bitcoin from "bitcoinjs-lib";
 const network = FEConstants.chain === "DEVNET" ? BitcoinNetworkType.Testnet : BitcoinNetworkType.Mainnet;
 const bitcoinNetwork = FEConstants.chain === "DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
-function identifyAddressType(pubkey, address) {
+function identifyAddressType(address) {
+    const outputScript = bitcoin.address.toOutputScript(address, bitcoinNetwork);
+    try {
+        if (bitcoin.payments.p2pkh({
+            output: outputScript,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2pkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2wpkh({
+            output: outputScript,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2wpkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2tr({
+            output: outputScript,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2tr";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    try {
+        if (bitcoin.payments.p2sh({
+            output: outputScript,
+            network: bitcoinNetwork
+        }).address === address)
+            return "p2sh-p2wpkh";
+    }
+    catch (e) {
+        console.error(e);
+    }
+    return null;
+}
+function _identifyAddressType(pubkey, address) {
     const pubkeyBuffer = Buffer.from(pubkey, "hex");
     try {
         if (bitcoin.payments.p2pkh({
@@ -55,7 +99,7 @@ export class SatsConnectBitcoinWallet extends BitcoinWallet {
         this.account = account;
         this.walletName = walletName;
         this.iconUrl = iconUrl;
-        this.addressType = identifyAddressType(account.publicKey, account.address);
+        this.addressType = identifyAddressType(account.address);
     }
     static async isInstalled() {
         let success = false;
@@ -95,7 +139,7 @@ export class SatsConnectBitcoinWallet extends BitcoinWallet {
         await getAddress({
             payload: {
                 purposes: [AddressPurpose.Payment],
-                message: "Connect your Xverse wallet to atomiq.exchange",
+                message: "Connect your Bitcoin wallet to atomiq.exchange",
                 network: {
                     type: network
                 },
@@ -110,6 +154,7 @@ export class SatsConnectBitcoinWallet extends BitcoinWallet {
         if (result == null)
             throw new Error("Xverse bitcoin wallet not found");
         const accounts = result.addresses;
+        console.log("Loaded wallet accounts: ", accounts);
         const paymentAccounts = accounts.filter(e => e.purpose === AddressPurpose.Payment);
         if (paymentAccounts.length === 0)
             throw new Error("No valid payment account found");
@@ -190,5 +235,9 @@ export class SatsConnectBitcoinWallet extends BitcoinWallet {
     }
     getIcon() {
         return this.iconUrl;
+    }
+    offWalletChanged(cbk) {
+    }
+    onWalletChanged(cbk) {
     }
 }

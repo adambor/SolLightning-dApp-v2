@@ -247,4 +247,7 @@ export abstract class BitcoinWallet {
     abstract getName(): string;
     abstract getIcon(): string;
 
+    abstract onWalletChanged(cbk: (newWallet: BitcoinWallet) => void): void;
+    abstract offWalletChanged(cbk: (newWallet: BitcoinWallet) => void): void;
+
 }

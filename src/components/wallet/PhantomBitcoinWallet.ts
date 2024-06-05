@@ -3,6 +3,7 @@ import {ChainUtils} from "sollightning-sdk";
 import {BitcoinWallet} from "./BitcoinWallet";
 import {CoinselectAddressTypes} from "./coinselect2/utils";
 import * as bitcoin from "bitcoinjs-lib";
+import * as EventEmitter from "events";
 
 const addressTypePriorities = {
     "p2tr": 0,
@@ -30,19 +31,57 @@ type PhantomBtcProvider = {
     signMessage: (message: Uint8Array, address: string) => Promise<{signature: Uint8Array}>,
     signPSBT: (psbtHex: Uint8Array, options: {inputsToSign: {sigHash?: number | undefined, address: string, signingIndexes: number[]}[]}) => Promise<string>,
     isPhantom?: boolean
-};
+} & EventEmitter;
+
+function getPaymentAccount(accounts: PhantomBtcAccount[]): PhantomBtcAccount {
+    console.log("Loaded wallet accounts: ", accounts);
+    const paymentAccounts = accounts.filter(e => e.purpose==="payment");
+    if(paymentAccounts.length===0) throw new Error("No valid payment account found");
+    paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);
+    return paymentAccounts[0];
+}
+
+const events = new EventEmitter();
+const provider: PhantomBtcProvider = (window as any)?.phantom?.bitcoin;
+
+let currentAccount: PhantomBtcAccount = null;
+let ignoreAccountChange: boolean;
+
+if(provider!=null) provider.on("accountsChanged", (accounts: PhantomBtcAccount[]) => {
+    if(ignoreAccountChange) return;
+    if(accounts!=null) {
+        const paymentAccount: PhantomBtcAccount = getPaymentAccount(accounts);
+        if(currentAccount!=null && paymentAccount.address==currentAccount.address) return;
+
+        currentAccount = paymentAccount;
+
+        ignoreAccountChange = true;
+        provider.requestAccounts().then(accounts => {
+            ignoreAccountChange = false;
+            const paymentAccount: PhantomBtcAccount = getPaymentAccount(accounts);
+            currentAccount = paymentAccount;
+            BitcoinWallet.saveState(PhantomBitcoinWallet.walletName, {
+                account: paymentAccount
+            });
+            events.emit("newWallet", new PhantomBitcoinWallet(paymentAccount));
+        }).catch(e => {
+            ignoreAccountChange = false;
+            console.error(e);
+        })
+    } else {
+        events.emit("newWallet", null);
+    }
+});
 
 export class PhantomBitcoinWallet extends BitcoinWallet {
 
     static iconUrl: string = "wallets/btc/phantom.png";
     static walletName: string = "Phantom";
 
-    readonly provider: PhantomBtcProvider;
     readonly account: PhantomBtcAccount;
 
-    constructor(provider: PhantomBtcProvider, account: PhantomBtcAccount) {
+    constructor(account: PhantomBtcAccount) {
         super();
-        this.provider = provider;
         this.account = account;
     }
 
@@ -52,27 +91,31 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
     }
 
     static async init(_data?: any): Promise<PhantomBitcoinWallet> {
-        const provider: PhantomBtcProvider = (window as any)?.phantom?.bitcoin;
-
         if(_data!=null) {
             const data: {
                 account: PhantomBtcAccount
             } = _data;
 
-            return new PhantomBitcoinWallet(provider, data.account);
+            await new Promise(resolve => setTimeout(resolve,750));
         }
 
         if(provider==null) throw new Error("Phantom bitcoin wallet not found");
         if(provider.isPhantom==null) throw new Error("Provider is not Phantom wallet");
-        const accounts: PhantomBtcAccount[] = await provider.requestAccounts();
-        console.log("Loaded wallet accounts: ", accounts);
-        const paymentAccounts = accounts.filter(e => e.purpose==="payment");
-        if(paymentAccounts.length===0) throw new Error("No valid payment account found");
-        paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);
+        ignoreAccountChange = true;
+        let accounts: PhantomBtcAccount[];
+        try {
+            accounts = await provider.requestAccounts();
+        } catch (e) {
+            ignoreAccountChange = false;
+            throw e;
+        }
+        ignoreAccountChange = false;
+        const paymentAccount: PhantomBtcAccount = getPaymentAccount(accounts);
+        currentAccount = paymentAccount;
         BitcoinWallet.saveState(PhantomBitcoinWallet.walletName, {
-            account: paymentAccounts[0]
+            account: paymentAccount
         });
-        return new PhantomBitcoinWallet(provider, paymentAccounts[0]);
+        return new PhantomBitcoinWallet(paymentAccount);
     }
 
     getBalance(): Promise<{ confirmedBalance: BN; unconfirmedBalance: BN }> {
@@ -106,7 +149,7 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
 
         const psbtHex = psbt.toBuffer();
 
-        const resultSignedPsbtHex = await this.provider.signPSBT(psbtHex, {
+        const resultSignedPsbtHex = await provider.signPSBT(psbtHex, {
             inputsToSign: [{
                 sigHash: 0x01,
                 address: this.account.address,
@@ -130,6 +173,14 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
 
     getIcon(): string {
         return PhantomBitcoinWallet.iconUrl;
+    }
+
+    offWalletChanged(cbk: (newWallet: BitcoinWallet) => void): void {
+        events.off("newWallet", cbk);
+    }
+
+    onWalletChanged(cbk: (newWallet: BitcoinWallet) => void): void {
+        events.on("newWallet", cbk);
     }
 
 }

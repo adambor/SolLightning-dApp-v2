@@ -4,6 +4,7 @@ import {SatsConnectBitcoinWallet} from "./SatsConnectBitcoinWallet";
 import {BitcoinWallet} from "./BitcoinWallet";
 import {XverseBitcoinWallet} from "./XverseBitcoinWallet";
 import {MagicEdenBitcoinWallet} from "./MagicEdenBitcoinWallet";
+import {XdefiBitcoinWallet} from "./XdefiBitcoinWallet";
 
 export type BitcoinWalletType = {
     iconUrl: string,
@@ -30,6 +31,12 @@ const bitcoinWalletList: BitcoinWalletType[] = [
         name: XverseBitcoinWallet.walletName,
         detect: XverseBitcoinWallet.isInstalled,
         use: XverseBitcoinWallet.init
+    },
+    {
+        iconUrl: XdefiBitcoinWallet.iconUrl,
+        name: XdefiBitcoinWallet.walletName,
+        detect: XdefiBitcoinWallet.isInstalled,
+        use: XdefiBitcoinWallet.init
     }
 ];
 

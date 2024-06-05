@@ -7,13 +7,17 @@ export class MagicEdenBitcoinWallet extends SatsConnectBitcoinWallet {
 
     static async isInstalled(): Promise<boolean> {
         if(await SatsConnectBitcoinWallet.isInstalled()) {
-            if((window.BitcoinProvider as any).isMagicEden) return true;
+            if(MagicEdenBitcoinWallet.checkCorrectWallet()) return true;
         }
         return false;
     }
 
     static init(_data?: any): Promise<MagicEdenBitcoinWallet> {
         return SatsConnectBitcoinWallet.init(MagicEdenBitcoinWallet.walletName, MagicEdenBitcoinWallet.iconUrl, MagicEdenBitcoinWallet, _data);
+    }
+
+    static checkCorrectWallet(): boolean {
+        return !!(window.BitcoinProvider as any).isMagicEden;
     }
 
 }

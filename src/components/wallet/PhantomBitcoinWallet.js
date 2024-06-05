@@ -1,6 +1,7 @@
 import { ChainUtils } from "sollightning-sdk";
 import { BitcoinWallet } from "./BitcoinWallet";
 import * as bitcoin from "bitcoinjs-lib";
+import * as EventEmitter from "events";
 const addressTypePriorities = {
     "p2tr": 0,
     "p2wpkh": 1,
@@ -13,10 +14,48 @@ const ADDRESS_FORMAT_MAP = {
     "p2sh": "p2sh-p2wpkh",
     "p2pkh": "p2pkh"
 };
+function getPaymentAccount(accounts) {
+    console.log("Loaded wallet accounts: ", accounts);
+    const paymentAccounts = accounts.filter(e => e.purpose === "payment");
+    if (paymentAccounts.length === 0)
+        throw new Error("No valid payment account found");
+    paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);
+    return paymentAccounts[0];
+}
+const events = new EventEmitter();
+const provider = window?.phantom?.bitcoin;
+let currentAccount = null;
+let ignoreAccountChange;
+if (provider != null)
+    provider.on("accountsChanged", (accounts) => {
+        if (ignoreAccountChange)
+            return;
+        if (accounts != null) {
+            const paymentAccount = getPaymentAccount(accounts);
+            if (currentAccount != null && paymentAccount.address == currentAccount.address)
+                return;
+            currentAccount = paymentAccount;
+            ignoreAccountChange = true;
+            provider.requestAccounts().then(accounts => {
+                ignoreAccountChange = false;
+                const paymentAccount = getPaymentAccount(accounts);
+                currentAccount = paymentAccount;
+                BitcoinWallet.saveState(PhantomBitcoinWallet.walletName, {
+                    account: paymentAccount
+                });
+                events.emit("newWallet", new PhantomBitcoinWallet(paymentAccount));
+            }).catch(e => {
+                ignoreAccountChange = false;
+                console.error(e);
+            });
+        }
+        else {
+            events.emit("newWallet", null);
+        }
+    });
 export class PhantomBitcoinWallet extends BitcoinWallet {
-    constructor(provider, account) {
+    constructor(account) {
         super();
-        this.provider = provider;
         this.account = account;
     }
     static isInstalled() {
@@ -24,25 +63,30 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
         return Promise.resolve(isPhantomInstalled);
     }
     static async init(_data) {
-        const provider = window?.phantom?.bitcoin;
         if (_data != null) {
             const data = _data;
-            return new PhantomBitcoinWallet(provider, data.account);
+            await new Promise(resolve => setTimeout(resolve, 750));
         }
         if (provider == null)
             throw new Error("Phantom bitcoin wallet not found");
         if (provider.isPhantom == null)
             throw new Error("Provider is not Phantom wallet");
-        const accounts = await provider.requestAccounts();
-        console.log("Loaded wallet accounts: ", accounts);
-        const paymentAccounts = accounts.filter(e => e.purpose === "payment");
-        if (paymentAccounts.length === 0)
-            throw new Error("No valid payment account found");
-        paymentAccounts.sort((a, b) => addressTypePriorities[a.addressType] - addressTypePriorities[b.addressType]);
+        ignoreAccountChange = true;
+        let accounts;
+        try {
+            accounts = await provider.requestAccounts();
+        }
+        catch (e) {
+            ignoreAccountChange = false;
+            throw e;
+        }
+        ignoreAccountChange = false;
+        const paymentAccount = getPaymentAccount(accounts);
+        currentAccount = paymentAccount;
         BitcoinWallet.saveState(PhantomBitcoinWallet.walletName, {
-            account: paymentAccounts[0]
+            account: paymentAccount
         });
-        return new PhantomBitcoinWallet(provider, paymentAccounts[0]);
+        return new PhantomBitcoinWallet(paymentAccount);
     }
     getBalance() {
         return ChainUtils.getAddressBalances(this.account.address);
@@ -65,7 +109,7 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
             throw new Error("Not enough balance!");
         }
         const psbtHex = psbt.toBuffer();
-        const resultSignedPsbtHex = await this.provider.signPSBT(psbtHex, {
+        const resultSignedPsbtHex = await provider.signPSBT(psbtHex, {
             inputsToSign: [{
                     sigHash: 0x01,
                     address: this.account.address,
@@ -83,6 +127,12 @@ export class PhantomBitcoinWallet extends BitcoinWallet {
     }
     getIcon() {
         return PhantomBitcoinWallet.iconUrl;
+    }
+    offWalletChanged(cbk) {
+        events.off("newWallet", cbk);
+    }
+    onWalletChanged(cbk) {
+        events.on("newWallet", cbk);
     }
 }
 PhantomBitcoinWallet.iconUrl = "wallets/btc/phantom.png";
