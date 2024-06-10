@@ -12,7 +12,7 @@ import {
     ToBTCSwap,
     ToBTCSwapState, TokenBounds
 } from "sollightning-sdk";
-import {Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
+import {Accordion, Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {MutableRefObject, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
 import ValidatedInput, {ValidatedInputRef} from "../ValidatedInput";
 import BigNumber from "bignumber.js";
@@ -43,7 +43,7 @@ import {BitcoinWalletAnchor} from "../wallet/BitcoinWalletButton";
 import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor} from "../wallet/WebLNButton";
 import {ic_account_balance_wallet} from 'react-icons-kit/md/ic_account_balance_wallet';
-import {ic_content_copy} from 'react-icons-kit/md/ic_content_copy'
+import {ic_content_copy} from 'react-icons-kit/md/ic_content_copy';
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -52,7 +52,7 @@ const defaultConstraints = {
 
 const RANDOM_BTC_ADDRESS = bitcoin.payments.p2wsh({
     hash: randomBytes(32),
-    network: FEConstants.chain==="DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
+    network: FEConstants.chain === "DEVNET" ? bitcoin.networks.testnet : bitcoin.networks.bitcoin
 }).address;
 
 function isCreated(swap: ISwap) {
@@ -1004,7 +1004,7 @@ export function SwapTab(props: {
                     {quote!=null ? (
                         <>
                             <div className="mt-3">
-                                <SimpleFeeSummaryScreen swap={quote} btcFeeRate={inCurrency.ticker==="BTC" ? maxSpendable?.feeRate : null}/>
+                                <SimpleFeeSummaryScreen swapper={props.swapper} swap={quote} btcFeeRate={inCurrency.ticker==="BTC" ? maxSpendable?.feeRate : null}/>
                             </div>
                             {quote.getAddress()!==RANDOM_BTC_ADDRESS ? (
                                 <div className="mt-3 d-flex flex-column text-white">
