@@ -10,14 +10,14 @@ import Icon from "react-icons-kit";
 import { ic_receipt_outline } from 'react-icons-kit/md/ic_receipt_outline';
 import { FEConstants } from "../FEConstants";
 function FeePart(props) {
-    return (_jsxs("div", { className: "d-flex font-medium " + props.className, children: [_jsxs("small", { className: "d-flex align-items-center" + (props.bold ? " fw-bold" : ""), children: [props.text, props.feePPM == null ? "" : props.feeBase == null ? (_jsxs(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: [props.feePPM.toNumber() / 10000, " %"] })) : (_jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "fee-tooltip-" + props.text, children: _jsxs("span", { children: [props.feePPM.toNumber() / 10000, "% + ", toHumanReadableString(props.feeBase, props.feeCurrency), " ", props.feeCurrency.ticker] }) }), children: _jsx(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: _jsxs("span", { className: "dottedUnderline", children: [props.feePPM.toNumber() / 10000, "%"] }) }) })), props.description != null ? (_jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "fee-tooltip-desc-" + props.text, children: _jsx("span", { children: props.description }) }), children: _jsx(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: _jsx("span", { className: "dottedUnderline", children: "?" }) }) })) : ""] }), _jsx("span", { className: "ms-auto fw-bold d-flex align-items-center", children: _jsx(OverlayTrigger, { placement: "left", overlay: _jsx(Tooltip, { id: "fee-tooltip-" + props.text, className: "font-default", children: props.currency2 == null ? (_jsxs("span", { className: "ms-auto d-flex align-items-center", children: [_jsx("img", { src: props.currency1.icon, className: "currency-icon-small", style: { marginTop: "-2px" } }), _jsxs("span", { children: [toHumanReadableString(props.amount1, props.currency1), " ", props.currency1.ticker] })] })) : (_jsxs("span", { className: "ms-auto text-end", children: [_jsxs("span", { className: "d-flex align-items-center justify-content-start", children: [_jsx("img", { src: props.currency1.icon, className: "currency-icon-small", style: { marginTop: "-1px" } }), _jsxs("span", { children: [toHumanReadableString(props.amount1, props.currency1), " ", props.currency1.ticker] })] }), _jsxs("span", { className: "d-flex align-items-center justify-content-start", children: [_jsx("img", { src: props.currency2.icon, className: "currency-icon-small" }), _jsxs("span", { children: [toHumanReadableString(props.amount2, props.currency2), " ", props.currency2.ticker] })] })] })) }), children: _jsxs("span", { className: "text-decoration-dotted font-monospace", children: ["$", (props.usdValue == null ? 0 : props.usdValue).toFixed(2)] }) }) })] }));
+    return (_jsxs("div", { className: "d-flex font-medium " + props.className, children: [_jsxs("small", { className: "d-flex align-items-center" + (props.bold ? " fw-bold" : ""), children: [props.text, props.feePPM == null ? "" : props.feeBase == null ? (_jsxs(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: [props.feePPM.toNumber() / 10000, " %"] })) : (_jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "fee-tooltip-" + props.text, children: _jsxs("span", { children: [props.feePPM.toNumber() / 10000, "% + ", toHumanReadableString(props.feeBase, props.feeCurrency), " ", props.feeCurrency.ticker] }) }), children: _jsx(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: _jsxs("span", { className: "dottedUnderline", children: [props.feePPM.toNumber() / 10000, "%"] }) }) })), props.description != null ? (_jsx(OverlayTrigger, { overlay: _jsx(Tooltip, { id: "fee-tooltip-desc-" + props.text, children: _jsx("span", { children: props.description }) }), children: _jsx(Badge, { bg: "primary", className: "ms-1 pill-round px-2", pill: true, children: _jsx("span", { className: "dottedUnderline", children: "?" }) }) })) : ""] }), _jsx("span", { className: "ms-auto fw-bold d-flex align-items-center", children: _jsx(OverlayTrigger, { placement: "left", overlay: _jsx(Tooltip, { id: "fee-tooltip-" + props.text, className: "font-default", children: props.currency2 == null ? (_jsxs("span", { className: "ms-auto d-flex align-items-center", children: [_jsx("img", { src: props.currency1.icon, className: "currency-icon-small", style: { marginTop: "-2px" } }), _jsxs("span", { children: [toHumanReadableString(props.amount1, props.currency1), " ", props.currency1.ticker] })] })) : (_jsxs("span", { className: "ms-auto text-end", children: [_jsxs("span", { className: "d-flex align-items-center justify-content-start", children: [_jsx("img", { src: props.currency1.icon, className: "currency-icon-small", style: { marginTop: "-1px" } }), _jsxs("span", { children: [toHumanReadableString(props.amount1, props.currency1), " ", props.currency1.ticker] })] }), _jsx("span", { className: "d-flex align-items-center justify-content-center fw-bold", children: "=" }), _jsxs("span", { className: "d-flex align-items-center justify-content-start", children: [_jsx("img", { src: props.currency2.icon, className: "currency-icon-small" }), _jsxs("span", { children: [toHumanReadableString(props.amount2, props.currency2), " ", props.currency2.ticker] })] })] })) }), children: _jsxs("span", { className: "text-decoration-dotted font-monospace", children: ["$", (props.usdValue == null ? 0 : props.usdValue).toFixed(2)] }) }) })] }));
 }
 function FeeSummary(props) {
     const totalUsdFee = props.feeBreakdown == null ? 0 : props.feeBreakdown.reduce((value, e) => e.usdValue == null ? value : value + parseFloat(e.usdValue.toFixed(2)), 0);
     const src = toHumanReadable(props.srcAmount, props.srcCurrency);
     const dst = toHumanReadable(props.dstAmount, props.dstCurrency);
     const price = src.div(dst);
-    return (_jsx(Accordion, { children: _jsxs(Accordion.Item, { eventKey: "0", className: "tab-accent-nop", children: [_jsxs(Accordion.Header, { className: "font-bigger d-flex flex-row", bsPrefix: "fee-accordion-header", children: [_jsxs("span", { className: "me-auto", children: ["1 ", props.dstCurrency.ticker, " = ", price.toFixed(props.srcCurrency.decimals), " ", props.srcCurrency.ticker] }), _jsx(Icon, { className: "d-flex me-1", size: 16, icon: ic_receipt_outline }), _jsx("span", { className: "me-2", children: props.loading ? (_jsx(Spinner, { animation: "border", size: "sm" })) : "$" + totalUsdFee.toFixed(2) })] }), _jsx(Accordion.Body, { className: "p-2", children: props.feeBreakdown.map((e, index) => {
+    return (_jsx(Accordion, { children: _jsxs(Accordion.Item, { eventKey: "0", className: "tab-accent-nop", children: [_jsxs(Accordion.Header, { className: "font-bigger d-flex flex-row", bsPrefix: "fee-accordion-header", children: [_jsxs("small", { className: "me-auto", children: ["1 ", props.dstCurrency.ticker, " = ", price.toFixed(props.srcCurrency.decimals), " ", props.srcCurrency.ticker] }), _jsx(Icon, { className: "d-flex me-1", size: 16, icon: ic_receipt_outline }), _jsx("span", { className: "me-2", children: props.loading ? (_jsx(Spinner, { animation: "border", size: "sm" })) : "$" + totalUsdFee.toFixed(2) })] }), _jsx(Accordion.Body, { className: "p-2", children: props.feeBreakdown.map((e, index) => {
                         return (_jsx(FeePart, { className: e.className, usdValue: e.usdValue, text: e.text, description: e.description, currency1: e.currency1, currency2: e.currency2, amount1: e.amount1, amount2: e.amount2, feePPM: e.feePPM, feeBase: e.feeBase, feeCurrency: e.feeCurrency }, index));
                     }) })] }) }));
 }
@@ -99,8 +99,8 @@ export function SimpleFeeSummaryScreen(props) {
                         feeCurrency: btcCurrency,
                         currency1: currency,
                         amount1: swapFee,
-                        // currency2: btcCurrency,
-                        // amount2: swapBtcFee,
+                        currency2: btcCurrency,
+                        amount2: swapBtcFee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     },
                     {
@@ -110,8 +110,8 @@ export function SimpleFeeSummaryScreen(props) {
                             "Lightning network fee paid for routing the payment through the network",
                         currency1: currency,
                         amount1: networkFee,
-                        // currency2: btcCurrency,
-                        // amount2: networkBtcFee,
+                        currency2: btcCurrency,
+                        amount2: networkBtcFee,
                         usdValue: toHumanReadable(networkFeeUsdc, FEConstants.usdcToken).toNumber()
                     }
                 ]);
@@ -141,8 +141,8 @@ export function SimpleFeeSummaryScreen(props) {
                         feeCurrency: btcCurrency,
                         currency1: btcCurrency,
                         amount1: btcFee,
-                        // currency2: currency,
-                        // amount2: fee,
+                        currency2: currency,
+                        amount2: fee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     },
                     {
@@ -170,8 +170,8 @@ export function SimpleFeeSummaryScreen(props) {
                         feeCurrency: btcCurrency,
                         currency1: btcCurrency,
                         amount1: btcFee,
-                        // currency2: currency,
-                        // amount2: fee,
+                        currency2: currency,
+                        amount2: fee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     }
                 ]);

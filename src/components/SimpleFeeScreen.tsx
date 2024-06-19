@@ -75,8 +75,12 @@ function FeePart(props: {
                         ) : (
                             <span className="ms-auto text-end">
                                 <span className="d-flex align-items-center justify-content-start">
-                                    <img src={props.currency1.icon} className="currency-icon-small" style={{marginTop: "-1px"}}/>
+                                    <img src={props.currency1.icon} className="currency-icon-small"
+                                         style={{marginTop: "-1px"}}/>
                                     <span>{toHumanReadableString(props.amount1, props.currency1)} {props.currency1.ticker}</span>
+                                </span>
+                                <span className="d-flex align-items-center justify-content-center fw-bold">
+                                    =
                                 </span>
                                 <span className="d-flex align-items-center justify-content-start">
                                     <img src={props.currency2.icon} className="currency-icon-small"/>
@@ -86,7 +90,7 @@ function FeePart(props: {
                         )}
                     </Tooltip>
                 }>
-                    <span className="text-decoration-dotted font-monospace">${(props.usdValue==null ? 0 : props.usdValue).toFixed(2)}</span>
+                        <span className="text-decoration-dotted font-monospace">${(props.usdValue==null ? 0 : props.usdValue).toFixed(2)}</span>
                 </OverlayTrigger>
             </span>
         </div>
@@ -126,7 +130,7 @@ function FeeSummary(props: {
         <Accordion>
             <Accordion.Item eventKey="0" className="tab-accent-nop">
                 <Accordion.Header className="font-bigger d-flex flex-row" bsPrefix="fee-accordion-header">
-                    <span className="me-auto">1 {props.dstCurrency.ticker} = {price.toFixed(props.srcCurrency.decimals)} {props.srcCurrency.ticker}</span>
+                    <small className="me-auto">1 {props.dstCurrency.ticker} = {price.toFixed(props.srcCurrency.decimals)} {props.srcCurrency.ticker}</small>
                     <Icon className="d-flex me-1" size={16} icon={ic_receipt_outline}/>
                     <span className="me-2">{props.loading ? (
                         <Spinner animation="border" size="sm" />
@@ -240,8 +244,8 @@ export function SimpleFeeSummaryScreen(props: {
                         feeCurrency: btcCurrency,
                         currency1: currency,
                         amount1: swapFee,
-                        // currency2: btcCurrency,
-                        // amount2: swapBtcFee,
+                        currency2: btcCurrency,
+                        amount2: swapBtcFee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     },
                     {
@@ -251,8 +255,8 @@ export function SimpleFeeSummaryScreen(props: {
                             "Lightning network fee paid for routing the payment through the network",
                         currency1: currency,
                         amount1: networkFee,
-                        // currency2: btcCurrency,
-                        // amount2: networkBtcFee,
+                        currency2: btcCurrency,
+                        amount2: networkBtcFee,
                         usdValue: toHumanReadable(networkFeeUsdc, FEConstants.usdcToken).toNumber()
                     }
                 ])
@@ -284,8 +288,8 @@ export function SimpleFeeSummaryScreen(props: {
                         feeCurrency: btcCurrency,
                         currency1: btcCurrency,
                         amount1: btcFee,
-                        // currency2: currency,
-                        // amount2: fee,
+                        currency2: currency,
+                        amount2: fee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     },
                     {
@@ -315,8 +319,8 @@ export function SimpleFeeSummaryScreen(props: {
                         feeCurrency: btcCurrency,
                         currency1: btcCurrency,
                         amount1: btcFee,
-                        // currency2: currency,
-                        // amount2: fee,
+                        currency2: currency,
+                        amount2: fee,
                         usdValue: toHumanReadable(swapFeeUsdc, FEConstants.usdcToken).toNumber()
                     }
                 ])
