@@ -8,7 +8,7 @@ import {
     LNURLWithdraw,
     SolanaSwapper,
     Swapper,
-    SwapType,
+    SwapType, ToBTCLNSwap,
     ToBTCSwap,
     ToBTCSwapState, TokenBounds
 } from "sollightning-sdk";
@@ -659,8 +659,9 @@ export function SwapTab(props: {
     const params = new URLSearchParams(search);
     const propSwapId = params.get("swapId");
     useEffect(() => {
-        console.log("useEffect(): load existing swap");
         if(props.swapper==null || propSwapId==null) return;
+        if(quote!=null && quote.getPaymentHash().toString("hex")===propSwapId) return;
+        console.log("useEffect(): load existing swap");
         props.swapper.getAllSwaps().then(res => {
             const foundSwap = res.find(e => e.getPaymentHash().toString("hex")===propSwapId);
             if(foundSwap!=null) {
@@ -672,7 +673,11 @@ export function SwapTab(props: {
                     setInCurrency(inCurr);
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getOutAmount(), outCurr));
-                    _setAddress(foundSwap.getAddress());
+                    if(foundSwap instanceof ToBTCLNSwap && foundSwap.isLNURL()) {
+                        _setAddress(foundSwap.getLNURL());
+                    } else {
+                        _setAddress(foundSwap.getAddress());
+                    }
                     setExactIn(false);
                 } else if(foundSwap instanceof IFromBTCSwap) {
                     const inCurr = foundSwap instanceof FromBTCSwap ? bitcoinCurrencies[0] : bitcoinCurrencies[1];
@@ -955,7 +960,7 @@ export function SwapTab(props: {
                                     placeholder={"Paste Bitcoin/Lightning address"}
                                     onValidate={addressValidator}
                                     validated={quoteAddressError?.error}
-                                    disabled={lnWallet!=null && outCurrency===bitcoinCurrencies[1]}
+                                    disabled={locked || (lnWallet!=null && outCurrency===bitcoinCurrencies[1])}
                                     textStart={quoteAddressLoading ? (
                                         <Spinner size="sm" className="text-white"/>
                                     ) : null}
@@ -1009,12 +1014,17 @@ export function SwapTab(props: {
                             {quote.getAddress()!==RANDOM_BTC_ADDRESS ? (
                                 <div className="mt-3 d-flex flex-column text-white">
                                     <QuoteSummary type="swap" swapper={props.swapper} quote={quote} balance={maxSpendable?.amount} refreshQuote={refreshQuote} setAmountLock={(val) => {
+                                        // console.log("Set locked: ", val, propSwapId);
                                         setLocked(val);
-                                        if(!val && propSwapId!=null) navigate("/");
+                                        if(val && propSwapId==null && quote!=null) navigate("/?swapId="+quote.getPaymentHash().toString("hex"));
+                                        if(!val) {
+                                            // console.log("Navigate to /");
+                                            navigate("/");
+                                        }
                                     }} abortSwap={() => {
                                         setLocked(false);
                                         setQuote(null);
-                                        if(propSwapId!=null) navigate("/");
+                                        navigate("/");
                                         setAmount("");
                                     }} feeRate={maxSpendable?.feeRate}/>
                                 </div>

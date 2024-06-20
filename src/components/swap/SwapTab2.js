@@ -1,5 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
-import { FromBTCSwap, FromBTCSwapState, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCSwap, ToBTCSwapState } from "sollightning-sdk";
+import { FromBTCSwap, FromBTCSwapState, IFromBTCSwap, IToBTCSwap, SolanaSwapper, SwapType, ToBTCLNSwap, ToBTCSwap, ToBTCSwapState } from "sollightning-sdk";
 import { Alert, Button, Card, OverlayTrigger, Spinner, Tooltip } from "react-bootstrap";
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import ValidatedInput from "../ValidatedInput";
@@ -524,9 +524,11 @@ export function SwapTab(props) {
     const params = new URLSearchParams(search);
     const propSwapId = params.get("swapId");
     useEffect(() => {
-        console.log("useEffect(): load existing swap");
         if (props.swapper == null || propSwapId == null)
             return;
+        if (quote != null && quote.getPaymentHash().toString("hex") === propSwapId)
+            return;
+        console.log("useEffect(): load existing swap");
         props.swapper.getAllSwaps().then(res => {
             const foundSwap = res.find(e => e.getPaymentHash().toString("hex") === propSwapId);
             if (foundSwap != null) {
@@ -538,7 +540,12 @@ export function SwapTab(props) {
                     setInCurrency(inCurr);
                     setOutCurrency(outCurr);
                     setAmount(toHumanReadableString(foundSwap.getOutAmount(), outCurr));
-                    _setAddress(foundSwap.getAddress());
+                    if (foundSwap instanceof ToBTCLNSwap && foundSwap.isLNURL()) {
+                        _setAddress(foundSwap.getLNURL());
+                    }
+                    else {
+                        _setAddress(foundSwap.getAddress());
+                    }
                     setExactIn(false);
                 }
                 else if (foundSwap instanceof IFromBTCSwap) {
@@ -686,7 +693,7 @@ export function SwapTab(props) {
                                                 }
                                             }, value: outCurrency, className: "round-right text-white bg-black bg-opacity-10" })) }) }), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3 " + (lnWallet != null && outCurrency === bitcoinCurrencies[1] && (address == null || address === "") ? "d-none" : ""), value: address, onChange: (val) => {
                                                 setAddress(val);
-                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: lnWallet != null && outCurrency === bitcoinCurrencies[1], textStart: quoteAddressLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
+                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: locked || (lnWallet != null && outCurrency === bitcoinCurrencies[1]), textStart: quoteAddressLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
                                                         marginTop: "-3px"
                                                     }, onClick: (e) => {
                                                         e.preventDefault();
@@ -698,14 +705,18 @@ export function SwapTab(props) {
                                                             setAddress(res.paymentRequest);
                                                         }).catch(e => console.error(e));
                                                     }, children: "Fetch invoice from WebLN" }) })) : "" })) : "", lnWallet == null && outCurrency === bitcoinCurrencies[1] && !props.swapper.isValidLightningInvoice(address) && !props.swapper.isValidLNURL(address) ? (_jsx(Alert, { variant: "success", className: "mt-3 mb-0 text-center", children: _jsx("label", { children: "Only lightning invoices with pre-set amount are supported! Use lightning address/LNURL for variable amount." }) })) : ""] })) : ""] }), quoteError != null ? (_jsx(Button, { variant: "light", className: "mt-3", onClick: refreshQuote, children: "Retry" })) : "", quote != null ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "mt-3", children: _jsx(SimpleFeeSummaryScreen, { swapper: props.swapper, swap: quote, btcFeeRate: inCurrency.ticker === "BTC" ? maxSpendable?.feeRate : null }) }), quote.getAddress() !== RANDOM_BTC_ADDRESS ? (_jsx("div", { className: "mt-3 d-flex flex-column text-white", children: _jsx(QuoteSummary, { type: "swap", swapper: props.swapper, quote: quote, balance: maxSpendable?.amount, refreshQuote: refreshQuote, setAmountLock: (val) => {
+                                            // console.log("Set locked: ", val, propSwapId);
                                             setLocked(val);
-                                            if (!val && propSwapId != null)
+                                            if (val && propSwapId == null && quote != null)
+                                                navigate("/?swapId=" + quote.getPaymentHash().toString("hex"));
+                                            if (!val) {
+                                                // console.log("Navigate to /");
                                                 navigate("/");
+                                            }
                                         }, abortSwap: () => {
                                             setLocked(false);
                                             setQuote(null);
-                                            if (propSwapId != null)
-                                                navigate("/");
+                                            navigate("/");
                                             setAmount("");
                                         }, feeRate: maxSpendable?.feeRate }) })) : ""] })) : ""] }) }), _jsx("div", { className: "text-light text-opacity-50 d-flex flex-row align-items-center justify-content-center mb-3", children: _jsxs("div", { className: "cursor-pointer d-flex align-items-center justify-content-center", onClick: () => navigate("/faq?tabOpen=6"), children: [_jsx(Icon, { size: 18, icon: lock, style: { marginTop: "-0.5rem" } }), _jsx("small", { children: "Audited by" }), _jsx("img", { className: "opacity-50 d-block ms-1", height: 18, src: "/ackee_blockchain.svg", style: { marginTop: "-0.125rem" } })] }) })] }));
 }

@@ -34,6 +34,8 @@ export function ToBTCQuoteSummary(props: {
     const [refund, setRefund] = useState<boolean>();
     const [error, setError] = useState<string>();
 
+    // console.log("[ToBTCQuoteSummary] Quote Error: ", error, confidenceWarning, nonCustodialWarning, props.notEnoughForGas);
+
     const [refunding, setRefunding] = useState<boolean>();
     const [refunded, setRefunded] = useState<boolean>();
 
@@ -183,7 +185,7 @@ export function ToBTCQuoteSummary(props: {
                 <label>You need at least 0.005 SOL to pay for fees and deposits!</label>
             </Alert>
 
-            {success===null ? (
+            {success===undefined ? "" : success===null ? (
                 quoteTimeRemaining===0 && !loading ? (
                     <Button onClick={props.refreshQuote} variant="secondary">
                         New quote
