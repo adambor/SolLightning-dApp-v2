@@ -4,8 +4,10 @@ import {CoinselectAddressTypes, CoinselectTxInput, CoinselectTxOutput, DUST_THRE
 
 
 // order by descending value, minus the inputs approximate fee
-function utxoScore (x, feeRate) {
-    return x.value - (feeRate * utils.inputBytes(x))
+function utxoScore (x: CoinselectTxInput, feeRate: number) {
+    let valueAfterFee = x.value - (feeRate * utils.inputBytes(x))
+    if(x.cpfp!=null && x.cpfp.txEffectiveFeeRate<feeRate) valueAfterFee -= x.cpfp.txVsize*(feeRate - x.cpfp.txEffectiveFeeRate);
+    return valueAfterFee;
 }
 
 export function coinSelect (
@@ -18,7 +20,12 @@ export function coinSelect (
     outputs?: CoinselectTxOutput[],
     fee: number
 } {
-    utxos = utxos.sort((a, b) => utxoScore(b, feeRate) - utxoScore(a, feeRate));
+    // order by descending value, minus the inputs approximate fee
+    utxos = utxos.sort((a, b) => {
+        // if(a.cpfp!=null && b.cpfp==null) return 1;
+        // if(a.cpfp==null && b.cpfp!=null) return -1;
+        return utxoScore(b, feeRate) - utxoScore(a, feeRate);
+    });
 
     // attempt to use the blackjack strategy first (no change output)
     const base = blackjack(utxos, outputs, feeRate, type);
@@ -40,6 +47,7 @@ export function maxSendable (
     if (!isFinite(utils.uintOrNaN(feeRate))) return null;
 
     let bytesAccum = utils.transactionBytes([], [{script: outputScript}], null);
+    let cpfpAddFee = 0;
     let inAccum = 0;
     const inputs = [];
 
@@ -47,19 +55,22 @@ export function maxSendable (
         const utxo = utxos[i];
         const utxoBytes = utils.inputBytes(utxo);
         const utxoFee = feeRate * utxoBytes;
+        let cpfpFee = 0;
+        if(utxo.cpfp!=null && utxo.cpfp.txEffectiveFeeRate<feeRate) cpfpFee = utxo.cpfp.txVsize*(feeRate - utxo.cpfp.txEffectiveFeeRate);
         const utxoValue = utils.uintOrNaN(utxo.value);
 
         // skip detrimental input
-        if (utxoFee > utxo.value) {
+        if (utxoFee + cpfpFee > utxo.value) {
             continue;
         }
 
         bytesAccum += utxoBytes;
         inAccum += utxoValue;
+        cpfpAddFee += cpfpFee;
         inputs.push(utxo);
     }
 
-    const fee = feeRate * bytesAccum;
+    const fee = (feeRate * bytesAccum) + cpfpAddFee;
     const outputValue = inAccum - fee;
 
     const dustThreshold = DUST_THRESHOLDS[outputType];

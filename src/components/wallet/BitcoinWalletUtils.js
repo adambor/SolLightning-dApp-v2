@@ -1,6 +1,8 @@
 import { PhantomBitcoinWallet } from "./PhantomBitcoinWallet";
-import { XverseBitcoinWallet } from "./XverseBitcoinWallet";
 import { BitcoinWallet } from "./BitcoinWallet";
+import { XverseBitcoinWallet } from "./XverseBitcoinWallet";
+import { MagicEdenBitcoinWallet } from "./MagicEdenBitcoinWallet";
+import { XdefiBitcoinWallet } from "./XdefiBitcoinWallet";
 const bitcoinWalletList = [
     {
         iconUrl: PhantomBitcoinWallet.iconUrl,
@@ -9,10 +11,22 @@ const bitcoinWalletList = [
         use: PhantomBitcoinWallet.init
     },
     {
+        iconUrl: MagicEdenBitcoinWallet.iconUrl,
+        name: MagicEdenBitcoinWallet.walletName,
+        detect: MagicEdenBitcoinWallet.isInstalled,
+        use: MagicEdenBitcoinWallet.init
+    },
+    {
         iconUrl: XverseBitcoinWallet.iconUrl,
         name: XverseBitcoinWallet.walletName,
         detect: XverseBitcoinWallet.isInstalled,
         use: XverseBitcoinWallet.init
+    },
+    {
+        iconUrl: XdefiBitcoinWallet.iconUrl,
+        name: XdefiBitcoinWallet.walletName,
+        detect: XdefiBitcoinWallet.isInstalled,
+        use: XdefiBitcoinWallet.init
     }
 ];
 let installedBitcoinWallets;

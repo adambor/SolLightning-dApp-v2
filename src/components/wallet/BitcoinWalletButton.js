@@ -25,6 +25,20 @@ export function useBitcoinWalletChooser() {
             setLoading(false);
         }).catch(e => console.error(e));
     }, [bitcoinWallet == null]);
+    useEffect(() => {
+        if (bitcoinWallet == null)
+            return;
+        let listener;
+        bitcoinWallet.onWalletChanged(listener = (newWallet) => {
+            if (bitcoinWallet.getReceiveAddress() === newWallet.getReceiveAddress())
+                return;
+            console.log("New bitcoin wallet set: ", newWallet);
+            setBitcoinWallet(newWallet);
+        });
+        return () => {
+            bitcoinWallet.offWalletChanged(listener);
+        };
+    }, [bitcoinWallet]);
     const connectWallet = (wallet) => {
         if (wallet != null) {
             wallet.use().then(result => {

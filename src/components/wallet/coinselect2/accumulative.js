@@ -5,6 +5,8 @@ export function accumulative(utxos, outputs, feeRate, type) {
     if (!isFinite(utils.uintOrNaN(feeRate)))
         return null;
     let bytesAccum = utils.transactionBytes([], outputs, type);
+    let fee = feeRate * bytesAccum;
+    let cpfpAddFee = 0;
     let inAccum = 0;
     const inputs = [];
     const outAccum = utils.sumOrNaN(outputs);
@@ -13,20 +15,24 @@ export function accumulative(utxos, outputs, feeRate, type) {
         const utxoBytes = utils.inputBytes(utxo);
         const utxoFee = feeRate * utxoBytes;
         const utxoValue = utils.uintOrNaN(utxo.value);
+        let cpfpFee = 0;
+        if (utxo.cpfp != null && utxo.cpfp.txEffectiveFeeRate < feeRate)
+            cpfpFee = utxo.cpfp.txVsize * (feeRate - utxo.cpfp.txEffectiveFeeRate);
         // skip detrimental input
-        if (utxoFee > utxo.value) {
+        if (utxoFee + cpfpFee > utxo.value) {
             if (i === utxos.length - 1)
-                return { fee: feeRate * (bytesAccum + utxoBytes) };
+                return { fee: (feeRate * (bytesAccum + utxoBytes)) + cpfpAddFee + cpfpFee };
             continue;
         }
         bytesAccum += utxoBytes;
         inAccum += utxoValue;
+        cpfpAddFee += cpfpFee;
         inputs.push(utxo);
-        const fee = feeRate * bytesAccum;
+        fee = (feeRate * bytesAccum) + cpfpAddFee;
         // go again?
         if (inAccum < outAccum + fee)
             continue;
-        return utils.finalize(inputs, outputs, feeRate, type);
+        return utils.finalize(inputs, outputs, feeRate, type, cpfpAddFee);
     }
-    return { fee: feeRate * bytesAccum };
+    return { fee };
 }

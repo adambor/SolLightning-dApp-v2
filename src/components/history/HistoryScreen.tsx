@@ -1,7 +1,7 @@
 import {Topbar} from "../Topbar";
 import {FromBTCSwapState, SolanaSwapper} from "sollightning-sdk/dist";
 import {Alert, Badge, Button, Card, Col, ListGroup, Spinner} from "react-bootstrap";
-import {FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, ToBTCSwap} from "sollightning-sdk";
+import {FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, ISwap, IToBTCSwap, SwapType, ToBTCSwap} from "sollightning-sdk";
 import {bitcoinCurrencies, getCurrencySpec, toHumanReadableString} from "../../utils/Currencies";
 import {useContext, useState} from "react";
 import {SwapsContext} from "../context/SwapsContext";
@@ -116,6 +116,19 @@ export function HistoryScreen(props: {
 
     const {actionableSwaps} = useContext(SwapsContext);
 
+    const entries = [];
+
+    for(let actionableSwap of actionableSwaps) {
+        let shouldAdd = false;
+        if(actionableSwap.getType()===SwapType.TO_BTC || actionableSwap.getType()===SwapType.TO_BTCLN){
+            shouldAdd = (actionableSwap as IToBTCSwap<any>).isRefundable()
+        }
+        if(actionableSwap.getType()===SwapType.FROM_BTC || actionableSwap.getType()===SwapType.FROM_BTCLN){
+            shouldAdd = (actionableSwap as IFromBTCSwap<any>).isClaimable();
+        }
+        if(shouldAdd) entries.push(<HistoryEntry swap={actionableSwap} onError={setError}/>);
+    }
+
     return (
         <>
             <Topbar selected={2} enabled={true}/>
@@ -132,11 +145,7 @@ export function HistoryScreen(props: {
                 )}
 
                 <div className="swap-panel">
-                    {actionableSwaps.map(e => {
-                        return (
-                            <HistoryEntry swap={e} onError={setError}/>
-                        );
-                    })}
+                    {entries}
                 </div>
             </div>
         </>

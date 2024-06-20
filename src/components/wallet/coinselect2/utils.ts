@@ -30,7 +30,11 @@ export type CoinselectTxInput = {
     type?: CoinselectAddressTypes,
     value: number,
     outputScript?: Buffer,
-    address?: string
+    address?: string,
+    cpfp?: {
+        txVsize: number,
+        txEffectiveFeeRate: number
+    }
 };
 
 export type CoinselectTxOutput = {
@@ -136,7 +140,8 @@ function finalize(
     inputs: CoinselectTxInput[],
     outputs: CoinselectTxOutput[],
     feeRate: number,
-    changeType: CoinselectAddressTypes
+    changeType: CoinselectAddressTypes,
+    cpfpAddFee: number = 0
 ): {
     inputs?: CoinselectTxInput[],
     outputs?: CoinselectTxOutput[],
@@ -144,7 +149,7 @@ function finalize(
 } {
   const bytesAccum = transactionBytes(inputs, outputs, changeType);
 
-  const feeAfterExtraOutput = feeRate * (bytesAccum + outputBytes({type: changeType}))
+  const feeAfterExtraOutput = (feeRate * (bytesAccum + outputBytes({type: changeType}))) + cpfpAddFee;
   const remainderAfterExtraOutput = sumOrNaN(inputs) - (sumOrNaN(outputs) + feeAfterExtraOutput)
 
   // is it worth a change output?
@@ -153,7 +158,7 @@ function finalize(
   }
 
   const fee = sumOrNaN(inputs) - sumOrNaN(outputs)
-  if (!isFinite(fee)) return { fee: feeRate * bytesAccum }
+  if (!isFinite(fee)) return { fee: (feeRate * bytesAccum) + cpfpAddFee }
 
   return {
     inputs: inputs,

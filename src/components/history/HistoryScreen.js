@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-run
 import { Topbar } from "../Topbar";
 import { FromBTCSwapState } from "sollightning-sdk/dist";
 import { Alert, Badge, Button, Card, Col, ListGroup, Spinner } from "react-bootstrap";
-import { FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, IToBTCSwap, ToBTCSwap } from "sollightning-sdk";
+import { FromBTCLNSwap, FromBTCSwap, IFromBTCSwap, IToBTCSwap, SwapType, ToBTCSwap } from "sollightning-sdk";
 import { bitcoinCurrencies, getCurrencySpec, toHumanReadableString } from "../../utils/Currencies";
 import { useContext, useState } from "react";
 import { SwapsContext } from "../context/SwapsContext";
@@ -58,7 +58,17 @@ function HistoryEntry(props) {
 export function HistoryScreen(props) {
     const [error, setError] = useState();
     const { actionableSwaps } = useContext(SwapsContext);
-    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 2, enabled: true }), _jsxs("div", { className: "d-flex flex-column flex-fill align-items-center text-white mt-n2", children: [error == null ? "" : (_jsxs(Alert, { variant: "danger", className: "mb-2", children: [_jsx("div", { children: _jsx("b", { children: "Action failed" }) }), error] })), _jsx("div", { className: "swap-panel", children: actionableSwaps.map(e => {
-                            return (_jsx(HistoryEntry, { swap: e, onError: setError }));
-                        }) })] })] }));
+    const entries = [];
+    for (let actionableSwap of actionableSwaps) {
+        let shouldAdd = false;
+        if (actionableSwap.getType() === SwapType.TO_BTC || actionableSwap.getType() === SwapType.TO_BTCLN) {
+            shouldAdd = actionableSwap.isRefundable();
+        }
+        if (actionableSwap.getType() === SwapType.FROM_BTC || actionableSwap.getType() === SwapType.FROM_BTCLN) {
+            shouldAdd = actionableSwap.isClaimable();
+        }
+        if (shouldAdd)
+            entries.push(_jsx(HistoryEntry, { swap: actionableSwap, onError: setError }));
+    }
+    return (_jsxs(_Fragment, { children: [_jsx(Topbar, { selected: 2, enabled: true }), _jsxs("div", { className: "d-flex flex-column flex-fill align-items-center text-white mt-n2", children: [error == null ? "" : (_jsxs(Alert, { variant: "danger", className: "mb-2", children: [_jsx("div", { children: _jsx("b", { children: "Action failed" }) }), error] })), _jsx("div", { className: "swap-panel", children: entries })] })] }));
 }

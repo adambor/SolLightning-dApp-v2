@@ -13,7 +13,8 @@ import {useNavigate} from "react-router-dom";
 import {BitcoinWalletContext} from "../../context/BitcoinWalletContext";
 import * as BN from "bn.js";
 import {externalLink} from 'react-icons-kit/fa/externalLink';
-import {elementInViewport, getDeltaText} from "../../../utils/Utils";
+import {elementInViewport, getDeltaText, getDeltaTextHours} from "../../../utils/Utils";
+import {FEConstants} from "../../../FEConstants";
 
 export function FromBTCQuoteSummary(props: {
     quote: FromBTCSwap<any>,
@@ -106,12 +107,12 @@ export function FromBTCQuoteSummary(props: {
                 clearInterval(interval);
                 dt = 0;
             }
-            setQuoteTimeRemaining(Math.floor(dt/1000));
+            setQuoteTimeRemaining(dt);
         }, 500);
 
         expiryTime.current = props.quote.getExpiry();
 
-        const dt = Math.floor((expiryTime.current-Date.now())/1000);
+        const dt = expiryTime.current-Date.now();
         setInitialQuoteTimeout(dt);
         setQuoteTimeRemaining(dt);
 
@@ -158,11 +159,11 @@ export function FromBTCQuoteSummary(props: {
                             dt = 0;
                             if(props.setAmountLock) props.setAmountLock(false);
                         }
-                        setQuoteTimeRemaining(Math.floor(dt/1000));
+                        setQuoteTimeRemaining(dt);
                     }, 500);
 
                     expiryTime.current = props.quote.getTimeoutTime();
-                    const dt = Math.floor((expiryTime.current-Date.now())/1000);
+                    const dt = expiryTime.current-Date.now();
                     setInitialQuoteTimeout(dt);
                     setQuoteTimeRemaining(dt);
                 }
@@ -304,7 +305,7 @@ export function FromBTCQuoteSummary(props: {
                         {quoteTimeRemaining===0 ? (
                             <label>Quote expired!</label>
                         ) : (
-                            <label>Quote expires in {quoteTimeRemaining} seconds</label>
+                            <label>Quote expires in {getDeltaTextHours(quoteTimeRemaining)}</label>
                         )}
                         <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                     </div>
@@ -403,7 +404,7 @@ export function FromBTCQuoteSummary(props: {
                         {quoteTimeRemaining===0 ? (
                             <label>Swap address expired, please do not send any funds!</label>
                         ) : (
-                            <label>Swap address expires in {quoteTimeRemaining} seconds</label>
+                            <label>Swap address expires in {getDeltaTextHours(quoteTimeRemaining)}</label>
                         )}
                         <ProgressBar animated now={quoteTimeRemaining} max={initialQuoteTimeout} min={0}/>
                     </div>
@@ -425,13 +426,16 @@ export function FromBTCQuoteSummary(props: {
                     <label>{txData.confirmations} / {txData.confTarget}</label>
                     <label style={{marginTop: "-6px"}}>Confirmations</label>
 
-                    <Badge className="text-black" bg="light" pill>ETA: {txData.txEtaMs===-1 || txData.txEtaMs>(60*60*1000) ? ">1 hour" : "~"+getDeltaText(txData.txEtaMs)}</Badge>
+                    <a className="mb-2 text-overflow-ellipsis text-nowrap overflow-hidden" style={{width: "100%"}} target="_blank" href={FEConstants.btcBlockExplorer+txData.txId}><small>{txData.txId}</small></a>
+
+                    <Badge className="text-black" bg="light"
+                           pill>ETA: {txData.txEtaMs === -1 || txData.txEtaMs > (60 * 60 * 1000) ? ">1 hour" : "~" + getDeltaText(txData.txEtaMs)}</Badge>
                 </div>
             )) : ""}
 
-            {state===FromBTCSwapState.BTC_TX_CONFIRMED ? (
+            {state === FromBTCSwapState.BTC_TX_CONFIRMED ? (
                 <>
-                    <div className="d-flex flex-column align-items-center tab-accent mb-3">
+                <div className="d-flex flex-column align-items-center tab-accent mb-3">
                         <label>Transaction received & confirmed</label>
                     </div>
 

@@ -1,6 +1,22 @@
 import * as BN from "bn.js";
 import {FromBTCLNSwap, FromBTCSwap, ISwap, IToBTCSwap} from "sollightning-sdk";
 
+export function getDeltaTextHours(delta: number): string {
+    const deltaSeconds = Math.floor(delta/1000);
+    if(deltaSeconds<60) {
+        return deltaSeconds+" "+(deltaSeconds===1 ? "second" : "seconds");
+    }
+    let deltaMinutes = Math.floor(deltaSeconds/60);
+    if(deltaSeconds<60*60) {
+        return deltaMinutes+" "+(deltaMinutes===1 ? "minute" : "minutes");
+    }
+    if(deltaSeconds<60*60*24) {
+        const deltaHours = Math.floor(deltaMinutes/60);
+        deltaMinutes -= deltaHours*60;
+        return deltaHours+" "+(deltaHours===1 ? "hour" : "hours") + " " + deltaMinutes + " " + (deltaMinutes===1 ? "minute" : "minutes");
+    }
+}
+
 export function getDeltaText(delta: number): string {
     const deltaSeconds = Math.floor(delta/1000);
     if(deltaSeconds<60) {

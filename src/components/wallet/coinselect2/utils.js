@@ -81,9 +81,9 @@ function sumForgiving(range) {
 function sumOrNaN(range) {
     return range.reduce((a, x) => a + uintOrNaN(x.value), 0);
 }
-function finalize(inputs, outputs, feeRate, changeType) {
+function finalize(inputs, outputs, feeRate, changeType, cpfpAddFee = 0) {
     const bytesAccum = transactionBytes(inputs, outputs, changeType);
-    const feeAfterExtraOutput = feeRate * (bytesAccum + outputBytes({ type: changeType }));
+    const feeAfterExtraOutput = (feeRate * (bytesAccum + outputBytes({ type: changeType }))) + cpfpAddFee;
     const remainderAfterExtraOutput = sumOrNaN(inputs) - (sumOrNaN(outputs) + feeAfterExtraOutput);
     // is it worth a change output?
     if (remainderAfterExtraOutput >= dustThreshold({ type: changeType })) {
@@ -91,7 +91,7 @@ function finalize(inputs, outputs, feeRate, changeType) {
     }
     const fee = sumOrNaN(inputs) - sumOrNaN(outputs);
     if (!isFinite(fee))
-        return { fee: feeRate * bytesAccum };
+        return { fee: (feeRate * bytesAccum) + cpfpAddFee };
     return {
         inputs: inputs,
         outputs: outputs,

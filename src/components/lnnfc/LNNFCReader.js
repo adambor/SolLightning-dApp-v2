@@ -33,7 +33,8 @@ export class LNNFCReader {
                     return;
                 if (event.message.records.length === 0)
                     return;
-                const filteredRecords = event.message.records.filter(record => record.recordType === "url");
+                console.log("NFC scanned, message: ", event.message);
+                const filteredRecords = event.message.records.filter(record => record.recordType === "url" || record.recordType === "text");
                 if (filteredRecords.length === 0)
                     return;
                 if (this.callback != null)

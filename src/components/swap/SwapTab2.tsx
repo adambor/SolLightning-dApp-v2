@@ -10,7 +10,7 @@ import {
     Swapper,
     SwapType,
     ToBTCSwap,
-    ToBTCSwapState
+    ToBTCSwapState, TokenBounds
 } from "sollightning-sdk";
 import {Alert, Badge, Button, Card, OverlayTrigger, Spinner, Tooltip} from "react-bootstrap";
 import {MutableRefObject, useCallback, useContext, useEffect, useMemo, useRef, useState} from "react";
@@ -43,7 +43,7 @@ import {BitcoinWalletAnchor} from "../wallet/BitcoinWalletButton";
 import {WebLNContext} from "../context/WebLNContext";
 import {WebLNAnchor} from "../wallet/WebLNButton";
 import {ic_account_balance_wallet} from 'react-icons-kit/md/ic_account_balance_wallet';
-import {BitcoinWallet} from "../wallet/BitcoinWallet";
+import {ic_content_copy} from 'react-icons-kit/md/ic_content_copy'
 
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
@@ -143,10 +143,33 @@ function useConstraints(swapper: Swapper<any, any, any, any>, address: string, e
         });
     };
 
+    const [lpsUpdateCount, setLpsUpdateCounts] = useState<number>(0);
+
+    useEffect(() => {
+        if(swapper==null) return;
+        let removeListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries removed: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState+1);
+        };
+        let addListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries added: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState+1);
+        };
+        swapper.on("lpsRemoved",  removeListener);
+        swapper.on("lpsAdded",  addListener);
+
+        return () => {
+            swapper.off("lpsRemoved", removeListener);
+            swapper.off("lpsAdded", addListener);
+        }
+    }, [swapper]);
+
     const btcAmountConstraints = useMemo<{
-        [key: number]: {
-            min: BigNumber,
-            max: BigNumber
+        [key in SwapType]?: {
+            [token: string]: {
+                min: BigNumber,
+                max: BigNumber
+            }
         }
     }>(() => {
         if(swapper==null) {
@@ -155,18 +178,30 @@ function useConstraints(swapper: Swapper<any, any, any, any>, address: string, e
 
         const constraints: {
             [key in SwapType]?: {
-                min: BigNumber,
-                max: BigNumber
+                [token: string]: {
+                    min: BigNumber,
+                    max: BigNumber
+                }
             }
         } = {};
-        [SwapType.FROM_BTC, SwapType.TO_BTC, SwapType.FROM_BTCLN, SwapType.TO_BTCLN].forEach(swapType =>
-            constraints[swapType] = {
-                min: toHumanReadable(swapper.getMinimum(swapType), btcCurrency),
-                max: toHumanReadable(swapper.getMaximum(swapType), btcCurrency),
+
+        const bounds = swapper.getSwapBounds();
+
+        for(let swapType in bounds) {
+            const tokenBounds: TokenBounds = bounds[swapType];
+            constraints[swapType] = {};
+            for(let token in tokenBounds) {
+                constraints[swapType][token] = {
+                    min: toHumanReadable(tokenBounds[token].min, btcCurrency),
+                    max: toHumanReadable(tokenBounds[token].max, btcCurrency)
+                };
             }
-        );
+        }
+
+        console.log("[SwapTab2] Recomputed constraints: ", constraints);
+
         return constraints;
-    }, [swapper]);
+    }, [swapper, lpsUpdateCount]);
 
     const [tokenConstraints, setTokenConstraints] = useState<{
         [token: string] : {
@@ -207,7 +242,7 @@ function useConstraints(swapper: Swapper<any, any, any, any>, address: string, e
     if(exactIn) {
         outConstraints = defaultConstraints;
         if(kind==="frombtc") {
-            inConstraints = btcAmountConstraints==null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            inConstraints = btcAmountConstraints==null || btcAmountConstraints[swapType]==null ? defaultConstraints : (btcAmountConstraints[swapType][outCurrency.address.toString()] || defaultConstraints);
         } else {
             const constraint = tokenConstraints==null ? null : tokenConstraints[inCurrency.address.toString()];
             if(constraint!=null) {
@@ -226,7 +261,7 @@ function useConstraints(swapper: Swapper<any, any, any, any>, address: string, e
                 outConstraints = defaultConstraints;
             }
         } else { //tobtc
-            outConstraints = btcAmountConstraints==null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            outConstraints = btcAmountConstraints==null || btcAmountConstraints[swapType]==null ? defaultConstraints : (btcAmountConstraints[swapType][inCurrency.address.toString()] || defaultConstraints);
         }
     }
 
@@ -261,8 +296,9 @@ function useQuote(
 
     const {inConstraints, outConstraints, updateTokenConstraints, updateAddressConstraints} = useConstraints(swapper, address, exactIn, inCurrency, outCurrency);
 
-    const [quoteError, setQuoteError] = useState<string>();
+    const [quoteError, setQuoteError] = useState<Error>();
     const [quoteAddressError, setQuoteAddressError] = useState<{address: string, error: string}>();
+    const [quoteAddressLoading, setQuoteAddressLoading] = useState<boolean>(false);
     const [quoteLoading, setQuoteLoading] = useState<boolean>(false);
     const [quote, _setQuote] = useState<ISwap>();
     const quoteRef = useRef<ISwap>();
@@ -328,8 +364,10 @@ function useQuote(
                 };
             }
 
+            setQuoteAddressLoading(true);
             const lnurlResult = await lnurlData.current.data;
             if(quoteUpdates.current!==updateNum) return;
+            setQuoteAddressLoading(false);
             if(lnurlResult==null) {
                 setQuoteAddressError({
                     address: useAddress,
@@ -431,7 +469,7 @@ function useQuote(
                 setQuoteLoading(false);
                 if(doSetError) {
                     if(e.message==="Not enough liquidity") e = new Error("Not enough liquidity, please retry in 30mins-1hour");
-                    setQuoteError(e.message || e.toString());
+                    setQuoteError(e);
                 }
             });
         };
@@ -452,6 +490,7 @@ function useQuote(
         outConstraints,
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -605,6 +644,7 @@ export function SwapTab(props: {
 
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -759,8 +799,27 @@ export function SwapTab(props: {
                 <Card className="p-3 swap-panel tab-bg mx-3 mb-3 border-0">
 
                     <Alert className="text-center" show={quoteError!=null} variant="danger" onClose={() => clearError()}>
-                        <strong>Quoting error</strong>
-                        <label>{quoteError}</label>
+                        <div className="d-flex align-items-center justify-content-center">
+                            <strong>Quoting error</strong>
+                            <OverlayTrigger
+                                placement="top"
+                                overlay={<Tooltip id="scan-qr-tooltip">Copy full error stack</Tooltip>}
+                            >
+                                <a href="#" className="d-inline-flex align-items-center justify-content-middle"
+                                   onClick={(evnt) => {
+                                       evnt.preventDefault();
+                                       // @ts-ignore
+                                       navigator.clipboard.writeText(JSON.stringify({
+                                           error: quoteError.name,
+                                           message: quoteError.message,
+                                           stack: quoteError.stack
+                                       }, null, 4));
+                                   }}><Icon className="ms-1 mb-1" size={16} icon={ic_content_copy}/></a>
+                            </OverlayTrigger>
+                        </div>
+                        <label>
+                            {quoteError?.message || quoteError?.toString()}
+                        </label>
                     </Alert>
 
                     <Card className="d-flex flex-column tab-accent-p3 pt-2">
@@ -897,6 +956,9 @@ export function SwapTab(props: {
                                     onValidate={addressValidator}
                                     validated={quoteAddressError?.error}
                                     disabled={lnWallet!=null && outCurrency===bitcoinCurrencies[1]}
+                                    textStart={quoteAddressLoading ? (
+                                        <Spinner size="sm" className="text-white"/>
+                                    ) : null}
                                     textEnd={lnWallet!=null && outCurrency===bitcoinCurrencies[1] ? null : (
                                         <OverlayTrigger
                                             placement="top"

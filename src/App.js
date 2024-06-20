@@ -78,17 +78,17 @@ function WrappedApp() {
         abortController.current = new AbortController();
         try {
             console.log("init start");
-            const options = createSwapperOptions(FEConstants.chain, null, [
+            const options = createSwapperOptions(FEConstants.chain, new BN(50000), /*[
                 "https://161-97-73-23.sslip.io:4000",
                 "https://node3.gethopa.com:14003"
-            ], null, {
+            ]*/ null, null, {
                 getTimeout: 15000,
                 postTimeout: 30000,
             });
             options.retryPolicy = {
                 transactionResendInterval: 3000
             };
-            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 2, 100, "auto", () => new BN(20000) /*, {
+            options.feeEstimator = new SolanaFeeEstimator(_provider.connection, 250000, 2, 100, "auto", () => new BN(25000) /*, {
                 address: jitoPubkey,
                 endpoint: jitoEndpoint,
                 getStaticFee:() => new BN(250000)

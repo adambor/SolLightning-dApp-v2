@@ -24,6 +24,7 @@ import { BitcoinWalletAnchor } from "../wallet/BitcoinWalletButton";
 import { WebLNContext } from "../context/WebLNContext";
 import { WebLNAnchor } from "../wallet/WebLNButton";
 import { ic_account_balance_wallet } from 'react-icons-kit/md/ic_account_balance_wallet';
+import { ic_content_copy } from 'react-icons-kit/md/ic_content_copy';
 const defaultConstraints = {
     min: new BigNumber("0.000001"),
     max: null
@@ -94,17 +95,44 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
             }
         });
     };
+    const [lpsUpdateCount, setLpsUpdateCounts] = useState(0);
+    useEffect(() => {
+        if (swapper == null)
+            return;
+        let removeListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries removed: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState + 1);
+        };
+        let addListener = (intermediaries) => {
+            console.log("[SwapTab2] Intermediaries added: ", intermediaries);
+            setLpsUpdateCounts(prevState => prevState + 1);
+        };
+        swapper.on("lpsRemoved", removeListener);
+        swapper.on("lpsAdded", addListener);
+        return () => {
+            swapper.off("lpsRemoved", removeListener);
+            swapper.off("lpsAdded", addListener);
+        };
+    }, [swapper]);
     const btcAmountConstraints = useMemo(() => {
         if (swapper == null) {
             return null;
         }
         const constraints = {};
-        [SwapType.FROM_BTC, SwapType.TO_BTC, SwapType.FROM_BTCLN, SwapType.TO_BTCLN].forEach(swapType => constraints[swapType] = {
-            min: toHumanReadable(swapper.getMinimum(swapType), btcCurrency),
-            max: toHumanReadable(swapper.getMaximum(swapType), btcCurrency),
-        });
+        const bounds = swapper.getSwapBounds();
+        for (let swapType in bounds) {
+            const tokenBounds = bounds[swapType];
+            constraints[swapType] = {};
+            for (let token in tokenBounds) {
+                constraints[swapType][token] = {
+                    min: toHumanReadable(tokenBounds[token].min, btcCurrency),
+                    max: toHumanReadable(tokenBounds[token].max, btcCurrency)
+                };
+            }
+        }
+        console.log("[SwapTab2] Recomputed constraints: ", constraints);
         return constraints;
-    }, [swapper]);
+    }, [swapper, lpsUpdateCount]);
     const [tokenConstraints, setTokenConstraints] = useState();
     const updateTokenConstraints = (currency, data) => {
         setTokenConstraints(val => {
@@ -141,7 +169,7 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
     if (exactIn) {
         outConstraints = defaultConstraints;
         if (kind === "frombtc") {
-            inConstraints = btcAmountConstraints == null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            inConstraints = btcAmountConstraints == null || btcAmountConstraints[swapType] == null ? defaultConstraints : (btcAmountConstraints[swapType][outCurrency.address.toString()] || defaultConstraints);
         }
         else {
             const constraint = tokenConstraints == null ? null : tokenConstraints[inCurrency.address.toString()];
@@ -165,7 +193,7 @@ function useConstraints(swapper, address, exactIn, inCurrency, outCurrency) {
             }
         }
         else { //tobtc
-            outConstraints = btcAmountConstraints == null ? defaultConstraints : (btcAmountConstraints[swapType] || defaultConstraints);
+            outConstraints = btcAmountConstraints == null || btcAmountConstraints[swapType] == null ? defaultConstraints : (btcAmountConstraints[swapType][inCurrency.address.toString()] || defaultConstraints);
         }
     }
     if (addressConstraintsOverride != null && addressConstraintsOverride.address === address) {
@@ -188,6 +216,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
     const { inConstraints, outConstraints, updateTokenConstraints, updateAddressConstraints } = useConstraints(swapper, address, exactIn, inCurrency, outCurrency);
     const [quoteError, setQuoteError] = useState();
     const [quoteAddressError, setQuoteAddressError] = useState();
+    const [quoteAddressLoading, setQuoteAddressLoading] = useState(false);
     const [quoteLoading, setQuoteLoading] = useState(false);
     const [quote, _setQuote] = useState();
     const quoteRef = useRef();
@@ -242,9 +271,11 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
                     })
                 };
             }
+            setQuoteAddressLoading(true);
             const lnurlResult = await lnurlData.current.data;
             if (quoteUpdates.current !== updateNum)
                 return;
+            setQuoteAddressLoading(false);
             if (lnurlResult == null) {
                 setQuoteAddressError({
                     address: useAddress,
@@ -343,7 +374,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
                 if (doSetError) {
                     if (e.message === "Not enough liquidity")
                         e = new Error("Not enough liquidity, please retry in 30mins-1hour");
-                    setQuoteError(e.message || e.toString());
+                    setQuoteError(e);
                 }
             });
         };
@@ -358,6 +389,7 @@ function useQuote(swapper, address, amount, inCurrency, outCurrency, exactIn, lo
         outConstraints,
         quoteError,
         quoteAddressError,
+        quoteAddressLoading,
         quoteLoading,
         quoteRef,
         quote,
@@ -486,7 +518,7 @@ export function SwapTab(props) {
         const supportedCurrencies = props.swapper.getSupportedTokens(swapType);
         allowedSCTokens = props.supportedCurrencies.filter(currency => supportedCurrencies.has(currency.address.toString()));
     }
-    const { inConstraints, outConstraints, quoteError, quoteAddressError, quoteLoading, quoteRef, quote, clearError, setQuote, refreshQuote } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
+    const { inConstraints, outConstraints, quoteError, quoteAddressError, quoteAddressLoading, quoteLoading, quoteRef, quote, clearError, setQuote, refreshQuote } = useQuote(props.swapper, address, amount, inCurrency, outCurrency, exactIn, locked, addressRef, inAmountRef, outAmountRef);
     //Load existing swap
     const { search } = useLocation();
     const params = new URLSearchParams(search);
@@ -616,7 +648,15 @@ export function SwapTab(props) {
                         setExactIn(false);
                     }
                     setQrScanning(false);
-                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", { className: "d-flex flex-column align-items-center text-white", children: _jsxs(Card, { className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0", children: [_jsxs(Alert, { className: "text-center", show: quoteError != null, variant: "danger", onClose: () => clearError(), children: [_jsx("strong", { children: "Quoting error" }), _jsx("label", { children: quoteError })] }), _jsxs(Card, { className: "d-flex flex-column tab-accent-p3 pt-2", children: [_jsxs("div", { className: "d-flex flex-row", children: [_jsx("small", { className: "text-light text-opacity-75 me-auto", children: "You pay" }), inCurrency.ticker === "BTC" ? (_jsx("small", { className: "", children: _jsx(BitcoinWalletAnchor, { noText: true }) })) : "", inCurrency.ticker === "BTC-LN" ? (_jsx("small", { className: "", children: _jsx(WebLNAnchor, {}) })) : "", maxSpendable != null ? (_jsxs(_Fragment, { children: [inCurrency.ticker !== "BTC" ? (_jsx(Icon, { size: 16, icon: ic_account_balance_wallet, style: { marginTop: "-0.3125rem" }, className: "" })) : "", _jsxs("small", { className: "me-2", children: [toHumanReadableString(maxSpendable.amount, inCurrency), " ", inCurrency.ticker] }), _jsx(Button, { variant: "outline-light", style: { marginBottom: "2px" }, className: "py-0 px-1", disabled: locked || inputDisabled, onClick: () => {
+                }, show: qrScanning, onHide: () => setQrScanning(false) }), _jsx("div", { className: "d-flex flex-column align-items-center text-white", children: _jsxs(Card, { className: "p-3 swap-panel tab-bg mx-3 mb-3 border-0", children: [_jsxs(Alert, { className: "text-center", show: quoteError != null, variant: "danger", onClose: () => clearError(), children: [_jsxs("div", { className: "d-flex align-items-center justify-content-center", children: [_jsx("strong", { children: "Quoting error" }), _jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Copy full error stack" }), children: _jsx("a", { href: "#", className: "d-inline-flex align-items-center justify-content-middle", onClick: (evnt) => {
+                                                    evnt.preventDefault();
+                                                    // @ts-ignore
+                                                    navigator.clipboard.writeText(JSON.stringify({
+                                                        error: quoteError.name,
+                                                        message: quoteError.message,
+                                                        stack: quoteError.stack
+                                                    }, null, 4));
+                                                }, children: _jsx(Icon, { className: "ms-1 mb-1", size: 16, icon: ic_content_copy }) }) })] }), _jsx("label", { children: quoteError?.message || quoteError?.toString() })] }), _jsxs(Card, { className: "d-flex flex-column tab-accent-p3 pt-2", children: [_jsxs("div", { className: "d-flex flex-row", children: [_jsx("small", { className: "text-light text-opacity-75 me-auto", children: "You pay" }), inCurrency.ticker === "BTC" ? (_jsx("small", { className: "", children: _jsx(BitcoinWalletAnchor, { noText: true }) })) : "", inCurrency.ticker === "BTC-LN" ? (_jsx("small", { className: "", children: _jsx(WebLNAnchor, {}) })) : "", maxSpendable != null ? (_jsxs(_Fragment, { children: [inCurrency.ticker !== "BTC" ? (_jsx(Icon, { size: 16, icon: ic_account_balance_wallet, style: { marginTop: "-0.3125rem" }, className: "" })) : "", _jsxs("small", { className: "me-2", children: [toHumanReadableString(maxSpendable.amount, inCurrency), " ", inCurrency.ticker] }), _jsx(Button, { variant: "outline-light", style: { marginBottom: "2px" }, className: "py-0 px-1", disabled: locked || inputDisabled, onClick: () => {
                                                         setExactIn(true);
                                                         setAmount(toHumanReadableString(maxSpendable.amount, inCurrency));
                                                     }, children: _jsx("small", { className: "font-smallest", style: { marginBottom: "-2px" }, children: "MAX" }) })] })) : ""] }), _jsx(ValidatedInput, { disabled: locked || inputDisabled, inputRef: inAmountRef, className: "flex-fill", type: "number", value: !exactIn ? (quote == null ? "" : toHumanReadableString(quote.getInAmount(), inCurrency)) : amount, size: "lg", textStart: !exactIn && quoteLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, onChange: val => {
@@ -646,7 +686,7 @@ export function SwapTab(props) {
                                                 }
                                             }, value: outCurrency, className: "round-right text-white bg-black bg-opacity-10" })) }) }), kind === "tobtc" ? (_jsxs(_Fragment, { children: [_jsx(ValidatedInput, { type: "text", className: "flex-fill mt-3 " + (lnWallet != null && outCurrency === bitcoinCurrencies[1] && (address == null || address === "") ? "d-none" : ""), value: address, onChange: (val) => {
                                                 setAddress(val);
-                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: lnWallet != null && outCurrency === bitcoinCurrencies[1], textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
+                                            }, inputRef: addressRef, placeholder: "Paste Bitcoin/Lightning address", onValidate: addressValidator, validated: quoteAddressError?.error, disabled: lnWallet != null && outCurrency === bitcoinCurrencies[1], textStart: quoteAddressLoading ? (_jsx(Spinner, { size: "sm", className: "text-white" })) : null, textEnd: lnWallet != null && outCurrency === bitcoinCurrencies[1] ? null : (_jsx(OverlayTrigger, { placement: "top", overlay: _jsx(Tooltip, { id: "scan-qr-tooltip", children: "Scan QR code" }), children: _jsx("a", { href: "#", style: {
                                                         marginTop: "-3px"
                                                     }, onClick: (e) => {
                                                         e.preventDefault();
